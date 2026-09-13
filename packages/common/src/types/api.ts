@@ -782,6 +782,9 @@ export type HealthState = {
         enabled: boolean;
         retentionDays: number;
     };
+    learnSandbox: {
+        enabled: boolean;
+    };
     dashboardComments: {
         enabled: boolean;
     };
