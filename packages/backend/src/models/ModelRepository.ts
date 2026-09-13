@@ -35,6 +35,7 @@ import { HeadlessBrowserLoginGrantModel } from './HeadlessBrowserLoginGrantModel
 import { InviteLinkModel } from './InviteLinkModel';
 import { JiraAppInstallationsModel } from './JiraAppInstallations/JiraAppInstallationsModel';
 import { JobModel } from './JobModel/JobModel';
+import { LearnWorkspaceModel } from './LearnWorkspaceModel';
 import { LinearAppInstallationsModel } from './LinearAppInstallations/LinearAppInstallationsModel';
 import { ManagedSignInModel } from './ManagedSignInModel';
 import { McpContextModel } from './McpContextModel';
@@ -216,6 +217,7 @@ export type ModelManifest = {
     externalConnectionModel: unknown;
     schedulerAiAugmentationModel: unknown;
     dataAppAnalysisModel: unknown;
+    learnWorkspaceModel: LearnWorkspaceModel;
 };
 
 /**
@@ -545,6 +547,13 @@ export class ModelRepository
         return this.getModel(
             'jobModel',
             () => new JobModel({ database: this.database }),
+        );
+    }
+
+    public getLearnWorkspaceModel(): LearnWorkspaceModel {
+        return this.getModel(
+            'learnWorkspaceModel',
+            () => new LearnWorkspaceModel({ database: this.database }),
         );
     }
 

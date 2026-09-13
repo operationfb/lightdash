@@ -180,6 +180,14 @@ import {
     JobStepsTableName,
 } from '../database/entities/jobs';
 import {
+    LearnCommandOutputTable,
+    LearnCommandOutputTableName,
+    LearnCommandsTable,
+    LearnCommandsTableName,
+    LearnWorkspaceFilesTable,
+    LearnWorkspaceFilesTableName,
+} from '../database/entities/learnSandbox';
+import {
     LinearAppInstallationTable,
     LinearAppInstallationTableName,
 } from '../database/entities/linearAppInstallation';
@@ -878,5 +886,8 @@ declare module 'knex/types/tables' {
         [ExternalConnectionRateCountersTableName]: ExternalConnectionRateCountersTable;
         [ExternalConnectionSamplesTableName]: ExternalConnectionSamplesTable;
         [SchedulerAiAugmentationTableName]: SchedulerAiAugmentationTable;
+        [LearnWorkspaceFilesTableName]: LearnWorkspaceFilesTable;
+        [LearnCommandsTableName]: LearnCommandsTable;
+        [LearnCommandOutputTableName]: LearnCommandOutputTable;
     }
 }
