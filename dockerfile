@@ -59,6 +59,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tar \
     libsystemd0
 
+# -----------------------------
+# Stage 0b: dbt virtualenvs
+# -----------------------------
+
+# Split out of `base` so the application build no longer descends from it.
+# These venvs are ~7 GiB and minutes of pip, and `prod-builder` needs the apt
+# toolchain above but never a dbt binary, so building them on the way to the
+# application was pure cost. Only `dev` and `runtime-dbt` consume this stage
+# now, which is what lets RUNTIME_VARIANT=runtime-nodbt drop it from the graph
+# so BuildKit never runs it at all.
+FROM base AS dbt-venvs
+
 # Installing multiple versions of dbt
 # dbt 1.4 is the default
 # NOTE: keep the per-version adapter list in sync with
@@ -182,7 +194,8 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # -----------------------------
 # Stage 1: stop here for dev environment
 # -----------------------------
-FROM base AS dev
+# From dbt-venvs, not base: a dev container is expected to have dbt on PATH.
+FROM dbt-venvs AS dev
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
@@ -218,6 +231,13 @@ COPY packages/warehouses/package.json ./packages/warehouses/
 COPY packages/backend/package.json ./packages/backend/
 COPY packages/backend/src/ee/services/McpService/mcp-chart-app/package.json ./packages/backend/src/ee/services/McpService/mcp-chart-app/
 COPY packages/frontend/package.json ./packages/frontend/
+
+# --frozen-lockfile materialises the whole lockfile, including importers whose
+# package.json this stage never copies, so cypress is installed here and its
+# postinstall downloads a browser binary no build stage can use. Inherited by
+# build-final, so it covers the production install too. Set it to 1 if a stage
+# ever needs to actually run cypress.
+ENV CYPRESS_INSTALL_BINARY=0
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile --prefer-offline
@@ -472,18 +492,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Taken from `base` rather than `prod-builder`: the virtualenvs are identical in
-# both, and sourcing them from `base` keeps this stage off the application build
-# graph entirely.
-COPY --link --from=base /usr/local/dbt1.4 /usr/local/dbt1.4
-COPY --link --from=base /usr/local/dbt1.5 /usr/local/dbt1.5
-COPY --link --from=base /usr/local/dbt1.6 /usr/local/dbt1.6
-COPY --link --from=base /usr/local/dbt1.7 /usr/local/dbt1.7
-COPY --link --from=base /usr/local/dbt1.8 /usr/local/dbt1.8
-COPY --link --from=base /usr/local/dbt1.9 /usr/local/dbt1.9
-COPY --link --from=base /usr/local/dbt1.10 /usr/local/dbt1.10
-COPY --link --from=base /usr/local/dbt1.11 /usr/local/dbt1.11
-COPY --link --from=base /usr/local/dbt1.12 /usr/local/dbt1.12
+# Taken from `dbt-venvs` rather than `prod-builder`: sourcing them from a stage
+# the application build does not touch keeps this stage off that graph, and
+# keeps that graph off the venvs.
+COPY --link --from=dbt-venvs /usr/local/dbt1.4 /usr/local/dbt1.4
+COPY --link --from=dbt-venvs /usr/local/dbt1.5 /usr/local/dbt1.5
+COPY --link --from=dbt-venvs /usr/local/dbt1.6 /usr/local/dbt1.6
+COPY --link --from=dbt-venvs /usr/local/dbt1.7 /usr/local/dbt1.7
+COPY --link --from=dbt-venvs /usr/local/dbt1.8 /usr/local/dbt1.8
+COPY --link --from=dbt-venvs /usr/local/dbt1.9 /usr/local/dbt1.9
+COPY --link --from=dbt-venvs /usr/local/dbt1.10 /usr/local/dbt1.10
+COPY --link --from=dbt-venvs /usr/local/dbt1.11 /usr/local/dbt1.11
+COPY --link --from=dbt-venvs /usr/local/dbt1.12 /usr/local/dbt1.12
 
 RUN ln -s /usr/local/dbt1.4/bin/dbt /usr/local/bin/dbt \
     && ln -s /usr/local/dbt1.5/bin/dbt /usr/local/bin/dbt1.5 \
