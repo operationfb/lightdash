@@ -3,8 +3,10 @@ import {
     OrganizationSsoProvider,
 } from '@lightdash/common';
 import { Request } from 'express';
+import { Issuer } from 'openid-client';
 import { Profile as PassportProfile } from 'passport';
-import { genericOidcHandler } from './oidcStrategy';
+import Logger from '../../../logging/logger';
+import { discoverIssuerWithRetry, genericOidcHandler } from './oidcStrategy';
 
 const makeRequest = ({
     loginWithOpenId = vi.fn(),
@@ -155,5 +157,65 @@ describe('genericOidcHandler', () => {
             expect(isEmailDomainAllowedForOrgSso).not.toHaveBeenCalled();
             expect(loginWithOpenId).toHaveBeenCalledTimes(1);
         });
+    });
+});
+
+describe('discoverIssuerWithRetry', () => {
+    // A discovery that times out here does not degrade single sign-on, it stops
+    // the process from ever listening: App.initExpress awaits it. So what these
+    // assert is that one slow moment on the provider cannot cost us the boot.
+    const endpoint = 'https://idp.example.com/.well-known/openid-configuration';
+    const issuer = {} as Awaited<ReturnType<typeof Issuer.discover>>;
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+        vi.spyOn(Logger, 'warn').mockImplementation((() => undefined) as never);
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    test('calls discovery once and does not wait when it succeeds', async () => {
+        const discover = vi.spyOn(Issuer, 'discover').mockResolvedValue(issuer);
+
+        await expect(discoverIssuerWithRetry(endpoint)).resolves.toBe(issuer);
+        expect(discover).toHaveBeenCalledTimes(1);
+    });
+
+    test('retries a failing discovery and succeeds on a later attempt', async () => {
+        const discover = vi
+            .spyOn(Issuer, 'discover')
+            .mockRejectedValueOnce(new Error('outgoing request timed out'))
+            .mockRejectedValueOnce(new Error('outgoing request timed out'))
+            .mockResolvedValue(issuer);
+
+        const result = discoverIssuerWithRetry(endpoint);
+        await vi.runAllTimersAsync();
+
+        await expect(result).resolves.toBe(issuer);
+        expect(discover).toHaveBeenCalledTimes(3);
+        // A dependency slow enough to need retrying is worth seeing in the log,
+        // otherwise the only symptom is a boot that is occasionally slower.
+        expect(Logger.warn).toHaveBeenCalledTimes(2);
+    });
+
+    test('gives up after a bounded number of attempts rather than hanging', async () => {
+        const discover = vi
+            .spyOn(Issuer, 'discover')
+            .mockRejectedValue(new Error('outgoing request timed out'));
+
+        // Settle into a value rather than asserting on the rejection directly:
+        // the handler has to be attached before the timers run, or the interval
+        // between the final failure and the assertion is an unhandled rejection.
+        const settled = discoverIssuerWithRetry(endpoint).then(
+            () => 'resolved',
+            (e: Error) => e.message,
+        );
+        await vi.runAllTimersAsync();
+
+        await expect(settled).resolves.toBe('outgoing request timed out');
+        expect(discover).toHaveBeenCalledTimes(3);
     });
 });

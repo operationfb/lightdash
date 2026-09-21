@@ -9,9 +9,11 @@ import {
     OrganizationSsoProvider,
 } from '@lightdash/common';
 import {
+    custom,
     Issuer,
     Strategy as OpenIdClientStrategy,
     StrategyVerifyCallback,
+    type BaseClient,
 } from 'openid-client';
 import type { Profile as PassportProfile } from 'passport';
 import { VerifyFunctionWithRequest } from 'passport-openidconnect';
@@ -23,6 +25,68 @@ import Logger from '../../../logging/logger';
 export const isGenericOidcPassportStrategyAvailableToUse =
     lightdashConfig.auth.oidc.clientId &&
     lightdashConfig.auth.oidc.metadataDocumentEndpoint;
+
+// KONTALA: openid-client defaults every HTTP call it makes to a 3500ms timeout,
+// discovery and token exchange alike.
+//
+// ⚠ DISCOVERY IS A BOOT DEPENDENCY. createGenericOidcPassportStrategy below is
+// awaited inside App.initExpress, so a discovery that times out does not
+// degrade single sign-on: it stops the process from ever listening, and the
+// platform then reports a container that failed its health check rather than
+// anything about OIDC. This service and the provider it discovers both scale to
+// zero, so a cold start on one routinely races a cold start on the other.
+// Measured on three consecutive boots against Kontala, that request took 2.9s,
+// 2.9s and 3.4s, every one of them answered 200, and the third one lost the
+// race. Warm, the same call is about 1.5ms.
+//
+// setHttpOptionsDefaults is global to openid-client, which is what we want: the
+// same argument applies to the token exchange on every login, where the request
+// is on a person's critical path and 3.5s is just as arbitrary. It runs at
+// import time, and App.ts imports every strategy module before it builds any of
+// them, so it is in place before the first call.
+const OIDC_HTTP_TIMEOUT_MS = 10_000;
+custom.setHttpOptionsDefaults({ timeout: OIDC_HTTP_TIMEOUT_MS });
+
+const DISCOVERY_ATTEMPTS = 3;
+const DISCOVERY_BACKOFF_MS = 1_000;
+
+/**
+ * Discovery for the boot path, retried.
+ *
+ * A longer timeout on its own would still let one slow moment become a service
+ * that never starts, so the timeout buys patience and the retries buy a second
+ * and third chance at it. The worst case is about 33s (three 10s attempts plus
+ * 1s and 2s of backoff), which fits inside the startup probe's budget with a
+ * large margin: boot is otherwise ~45s against 20s of initial delay plus 24
+ * probes at 10s.
+ *
+ * The per-org path further down is deliberately NOT retried. Its failure costs
+ * one login attempt rather than the process, and holding somebody's request
+ * open for half a minute to discover that is worse than failing it quickly.
+ *
+ * Exported for its tests, which is the only way to assert the attempt count
+ * without standing up the whole strategy around it.
+ */
+export const discoverIssuerWithRetry = async (
+    endpoint: string,
+    attempt = 1,
+): Promise<Issuer<BaseClient>> => {
+    try {
+        return await Issuer.discover(endpoint);
+    } catch (e) {
+        if (attempt >= DISCOVERY_ATTEMPTS) {
+            throw e;
+        }
+        Logger.warn(
+            `OIDC discovery of ${endpoint} failed on attempt ${attempt} of ${DISCOVERY_ATTEMPTS}, retrying: ${e}`,
+        );
+        await new Promise<void>((resolve) => {
+            // unref so a pending backoff cannot by itself hold the process open.
+            setTimeout(resolve, DISCOVERY_BACKOFF_MS * attempt).unref?.();
+        });
+        return discoverIssuerWithRetry(endpoint, attempt + 1);
+    }
+};
 
 const createOpenIdUserFromProfile = (
     profile: PassportProfile & {
@@ -193,7 +257,9 @@ export const genericOidcHandler =
 
 export const createGenericOidcPassportStrategy = async () => {
     const { oidc } = lightdashConfig.auth;
-    const issuer = await Issuer.discover(oidc.metadataDocumentEndpoint!);
+    const issuer = await discoverIssuerWithRetry(
+        oidc.metadataDocumentEndpoint!,
+    );
 
     const hasJwtConfig =
         (oidc.privateKeyFile || oidc.privateKeyFilePath) &&
