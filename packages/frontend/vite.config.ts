@@ -23,7 +23,24 @@ const trackingChunkNames: Record<string, string> = {
 //   - src/api.ts already reads import.meta.env.BASE_URL for its API prefix;
 //   - App.tsx passes it to the router as a basename.
 // Unset it and the build is upstream's, served at the origin root.
-const basePath = process.env.LIGHTDASH_BASE_PATH || '/';
+//
+// ⚠ IT MUST END IN A SLASH, and that is why this normalises rather than
+// trusting the caller. vite's base is a prefix the rest of the code
+// CONCATENATES onto: api.ts builds its prefix as `${BASE_URL}api/v1`, which is
+// upstream's own code and correct under vite's convention that base begins and
+// ends with a slash (its default here is '/', and api.ts's test fallback is
+// 'http://test.lightdash/'). Given '/analytics' the bundle asks for
+// '/analyticsapi/v1/...', which matches no proxy mount, falls through to the
+// surrounding app and comes back as that app's index.html. The frontend then
+// reports "unable to reach the Lightdash server", because from its side that is
+// exactly what happened: it got HTML where JSON belonged.
+//
+// The environment keeps the slashless form, because the other two consumers
+// need it that way: SITE_URL's path becomes express's mount point and App.tsx's
+// router basename, and a trailing slash is wrong for both. One value, formatted
+// per consumer, rather than three spellings to keep in step.
+const rawBasePath = process.env.LIGHTDASH_BASE_PATH || '/';
+const basePath = rawBasePath.endsWith('/') ? rawBasePath : `${rawBasePath}/`;
 
 export default defineConfig({
     base: basePath,
