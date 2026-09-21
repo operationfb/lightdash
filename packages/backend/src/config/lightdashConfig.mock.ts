@@ -285,6 +285,10 @@ export const lightdashConfigMock: LightdashConfig = {
         returnPathSubdomain: 'pm-bounces',
     },
     siteUrl: 'https://test.lightdash.cloud',
+    // KONTALA: the path siteUrl is served under; '' is the origin root, which
+    // is what the site URL above is.
+    basePath: '',
+    kontala: { adminSecret: undefined },
     query: {
         maxPageSize: 2500,
         maxLimit: 5000,

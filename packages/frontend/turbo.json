@@ -3,7 +3,9 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "outputs": ["build/**"]
+      "outputs": ["build/**"],
+      "//": "KONTALA: the base path is compiled into every asset URL in the bundle, so it is part of what identifies a build. Without it here, a cached artefact built for another prefix would be served for this one.",
+      "env": ["LIGHTDASH_BASE_PATH"]
     }
   }
 }

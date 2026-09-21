@@ -1618,6 +1618,25 @@ export type LightdashConfig = {
     pylon: PylonConfig;
     headway: HeadwayConfig;
     siteUrl: string;
+    /**
+     * KONTALA: the path SITE_URL is served under, '' at the origin root.
+     *
+     * Derived rather than configured, so it cannot drift from siteUrl. With
+     * SITE_URL=https://konta.la/analytics this is '/analytics', the whole
+     * express app is mounted there, and the frontend is built with the same
+     * value as vite's base.
+     */
+    basePath: string;
+    /** KONTALA: the integration with Kontala Marketing. */
+    kontala: {
+        /**
+         * Authenticates Kontala to the member-reconciliation endpoint. Unset
+         * means the endpoint is not served at all, which is the right default
+         * for an instance that is not part of that product: it can place
+         * anyone in any organization, so it must not fall open.
+         */
+        adminSecret: string | undefined;
+    };
     staticIp: string;
     signupUrl: string | undefined;
     helpMenuUrl: string | undefined;
@@ -3404,6 +3423,10 @@ export const parseConfig = (): LightdashConfig => {
             enabled: process.env.HEADWAY_ENABLED !== 'false',
         },
         siteUrl,
+        // KONTALA: '' at the root, otherwise '/analytics' and the like. The
+        // trailing slash is stripped so it concatenates cleanly.
+        basePath: new URL(siteUrl).pathname.replace(/\/+$/, ''),
+        kontala: { adminSecret: process.env.KONTALA_ADMIN_SECRET },
         helpMenuUrl: process.env.HELP_MENU_URL,
         staticIp: process.env.STATIC_IP || '',
         signupUrl: process.env.SIGNUP_URL,

@@ -30,6 +30,8 @@ const buildApp = (secrets: LightdashSecrets, store: Store) => {
                     cookiesMaxAgeHours: 1,
                     secureCookies: false,
                     cookieSameSite: 'lax',
+                    // KONTALA: served at the origin root in this test.
+                    basePath: '',
                 },
                 store,
                 8080,

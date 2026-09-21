@@ -1168,6 +1168,8 @@ export class UserService extends BaseService {
             const organization = await this.loginToOrganization(
                 openIdSession?.userUuid,
                 openIdUser.openId.issuerType,
+                // KONTALA: see loginToOrganization.
+                openIdUser.openId.organizationUuid,
             );
             const loginUser: SessionUser = {
                 ...openIdSession,
@@ -2930,6 +2932,9 @@ export class UserService extends BaseService {
     async loginToOrganization(
         userUuid: string,
         loginMethod: LoginOptionTypes,
+        // KONTALA: the organization the identity provider says this login is
+        // for. Without it the behaviour below is upstream's unchanged.
+        claimedOrganizationUuid?: string,
     ): Promise<
         | Pick<
               LightdashUser,
@@ -2939,6 +2944,22 @@ export class UserService extends BaseService {
     > {
         const organizations =
             await this.userModel.getOrganizationsForUser(userUuid);
+        // KONTALA: a provider that names the organization resolves the
+        // ambiguity the refusal below exists for. It is still a membership
+        // check: a claim naming an organization this user is not in is
+        // refused rather than obeyed, so the assertion can choose among their
+        // organizations but cannot grant one.
+        if (claimedOrganizationUuid) {
+            const claimed = organizations.find(
+                (org) => org.organizationUuid === claimedOrganizationUuid,
+            );
+            if (!claimed) {
+                throw new ForbiddenError(
+                    'You are not a member of the organization this login is for.',
+                );
+            }
+            return claimed;
+        }
         if (organizations.length > 1) {
             throw new ForbiddenError('User is part of multiple organizations');
         }

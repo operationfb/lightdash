@@ -14,6 +14,7 @@ import BrowseMenu from './BrowseMenu';
 import ExploreMenu from './ExploreMenu';
 import HeadwayMenuItem from './HeadwayMenuItem';
 import HelpMenu from './HelpMenu';
+import KontalaReturnButton from './KontalaReturnButton';
 import classes from './MainNavBarContent.module.css';
 import { MetricsLink } from './MetricsLink';
 import {
@@ -145,6 +146,10 @@ export const MainNavBarContent: FC<Props> = ({
             <Group className={classes.rightGroup}>
                 {compact && <Text className={classes.sectionLabel}>More</Text>}
                 <NavGroup className={classes.buttonGroup}>
+                    {/* KONTALA: only rendered when this page load was a
+                        crossing from Kontala; see KontalaReturnButton. */}
+                    <KontalaReturnButton withLabel={compact} />
+
                     <SettingsMenu withLabel={compact} />
 
                     {!isLoadingActiveProject && activeProjectUuid && (

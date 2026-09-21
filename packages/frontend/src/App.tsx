@@ -49,47 +49,55 @@ const embedForcedColorScheme = window.location.pathname.startsWith('/embed')
 const sentryCreateBrowserRouter =
     wrapCreateBrowserRouterV7(createBrowserRouter);
 
-const router = sentryCreateBrowserRouter([
-    {
-        path: '/',
-        errorElement: <ChunkErrorRouteBoundary />,
-        element: (
-            <AppProvider>
-                <FullscreenProvider enabled={!isMinimalPage}>
-                    <VersionAutoUpdater />
-                    <BuildSkewRefresher />
-                    <ThirdPartyProvider enabled={!isMinimalPage}>
-                        <ErrorBoundary wrapper={{ mt: '4xl' }}>
-                            <TrackingProvider enabled={!isMinimalPage}>
-                                <AbilityProvider>
-                                    <ActiveJobProvider>
-                                        <SchedulerJobsProvider>
-                                            <ChartColorMappingContextProvider>
-                                                <SourceCodeEditorProvider>
-                                                    <AiAgentsGlobalProvider>
-                                                        {!isMinimalPage && (
-                                                            <Suspense
-                                                                fallback={null}
-                                                            >
-                                                                <AgentOnboardingCompletionWatcher />
-                                                            </Suspense>
-                                                        )}
-                                                        <Outlet />
-                                                    </AiAgentsGlobalProvider>
-                                                </SourceCodeEditorProvider>
-                                            </ChartColorMappingContextProvider>
-                                        </SchedulerJobsProvider>
-                                    </ActiveJobProvider>
-                                </AbilityProvider>
-                            </TrackingProvider>
-                        </ErrorBoundary>
-                    </ThirdPartyProvider>
-                </FullscreenProvider>
-            </AppProvider>
-        ),
-        children: APP_ROUTES,
-    },
-]);
+const router = sentryCreateBrowserRouter(
+    [
+        {
+            path: '/',
+            errorElement: <ChunkErrorRouteBoundary />,
+            element: (
+                <AppProvider>
+                    <FullscreenProvider enabled={!isMinimalPage}>
+                        <VersionAutoUpdater />
+                        <BuildSkewRefresher />
+                        <ThirdPartyProvider enabled={!isMinimalPage}>
+                            <ErrorBoundary wrapper={{ mt: '4xl' }}>
+                                <TrackingProvider enabled={!isMinimalPage}>
+                                    <AbilityProvider>
+                                        <ActiveJobProvider>
+                                            <SchedulerJobsProvider>
+                                                <ChartColorMappingContextProvider>
+                                                    <SourceCodeEditorProvider>
+                                                        <AiAgentsGlobalProvider>
+                                                            {!isMinimalPage && (
+                                                                <Suspense
+                                                                    fallback={
+                                                                        null
+                                                                    }
+                                                                >
+                                                                    <AgentOnboardingCompletionWatcher />
+                                                                </Suspense>
+                                                            )}
+                                                            <Outlet />
+                                                        </AiAgentsGlobalProvider>
+                                                    </SourceCodeEditorProvider>
+                                                </ChartColorMappingContextProvider>
+                                            </SchedulerJobsProvider>
+                                        </ActiveJobProvider>
+                                    </AbilityProvider>
+                                </TrackingProvider>
+                            </ErrorBoundary>
+                        </ThirdPartyProvider>
+                    </FullscreenProvider>
+                </AppProvider>
+            ),
+            children: APP_ROUTES,
+        },
+    ],
+    // KONTALA: the prefix this build is served under (vite's base). Without it
+    // every route in the table above would be matched against a path that still
+    // carries the prefix, and nothing would match.
+    { basename: import.meta.env.BASE_URL },
+);
 
 const flushRouterUpdate = (callback: () => unknown) => {
     flushSync(callback);

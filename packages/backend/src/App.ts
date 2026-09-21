@@ -81,6 +81,7 @@ import { ModelProviderMap, ModelRepository } from './models/ModelRepository';
 import PrometheusMetrics from './prometheus/PrometheusMetrics';
 import { apiV1Router } from './routers/apiV1Router';
 import { createAppPreviewRouter } from './routers/appPreviewRouter';
+import { kontalaRouter } from './routers/kontalaRouter';
 import {
     createAndroidAssetLinksHandler,
     createAppleAppSiteAssociationHandler,
@@ -784,6 +785,21 @@ export default class App {
         });
 
         // api router
+        // KONTALA: the member-reconciliation endpoint, mounted beside the
+        // stock API rather than inside it. Its own router because it is
+        // authenticated by a shared secret rather than by a session, and
+        // keeping it apart is what makes that impossible to confuse.
+        expressApp.use(
+            '/api/v1/kontala',
+            kontalaRouter({
+                lightdashConfig: this.lightdashConfig,
+                userModel: this.models.getUserModel(),
+                emailModel: this.models.getEmailModel(),
+                organizationMemberProfileModel:
+                    this.models.getOrganizationMemberProfileModel(),
+            }),
+        );
+
         expressApp.use('/api/v1', apiV1Router);
         RegisterRoutes(expressApp);
         // Api docs
@@ -929,8 +945,26 @@ export default class App {
             );
         });
 
+        // KONTALA: serve the whole app under SITE_URL's path.
+        //
+        // Mounting once here rather than prefixing every route is what keeps
+        // this diff small enough to carry across upstream releases: express
+        // strips the prefix before the inner app sees a request, so every
+        // route, router and middleware below is untouched and still reasons
+        // about '/api/v1'. The frontend is built with the same prefix as
+        // vite's base, so the two halves cannot disagree about it.
+        //
+        // What this does NOT fix is code that writes an absolute path of its
+        // own (res.redirect('/login'), a redirect_uri built with new URL from
+        // a leading slash). Those escape the mount and have to be found and
+        // fixed one at a time; see the oidcStrategy change in this series.
+        const { basePath } = this.lightdashConfig;
+        const listener = basePath
+            ? express().use(basePath, expressApp)
+            : expressApp;
+
         // Start the server
-        const server = expressApp.listen(this.port, () => {
+        const server = listener.listen(this.port, () => {
             if (this.environment === 'production') {
                 Logger.info(
                     `\n   |     |     |     |     |     |     |\n   |     |     |     |     |     |     |\n   |     |     |     |     |     |     |  \n \\ | / \\ | / \\ | / \\ | / \\ | / \\ | / \\ | /\n  \\|/   \\|/   \\|/   \\|/   \\|/   \\|/   \\|/\n------------------------------------------\nLaunch lightdash at http://localhost:${this.port}\n------------------------------------------\n  /|\\   /|\\   /|\\   /|\\   /|\\   /|\\   /|\\\n / | \\ / | \\ / | \\ / | \\ / | \\ / | \\ / | \\\n   |     |     |     |     |     |     |\n   |     |     |     |     |     |     |\n   |     |     |     |     |     |     |`,

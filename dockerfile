@@ -293,6 +293,16 @@ COPY --from=build-common /usr/app/packages/common/ ./packages/common/
 COPY --from=build-formula /usr/app/packages/formula/ ./packages/formula/
 COPY packages/frontend ./packages/frontend
 
+# KONTALA: the path this build will be served under, compiled in as vite's
+# base. Empty builds upstream's bundle, served at the origin root.
+#
+# ⚠ IT MUST MATCH SITE_URL's PATH AT RUNTIME. The backend derives its express
+# mount point from SITE_URL (lightdashConfig.basePath); this decides where the
+# bundle looks for its own assets and where its router thinks it lives. Set one
+# without the other and the page loads from nowhere.
+ARG LIGHTDASH_BASE_PATH=""
+ENV LIGHTDASH_BASE_PATH=${LIGHTDASH_BASE_PATH}
+
 ARG SENTRY_AUTH_TOKEN=""
 ARG SENTRY_ORG=""
 ARG SENTRY_RELEASE_VERSION=""

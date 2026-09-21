@@ -17,7 +17,16 @@ const trackingChunkNames: Record<string, string> = {
     useTracking: 'useInteractionContext',
 };
 
+// KONTALA: the path this build is served under, matching the backend's basePath
+// (derived there from SITE_URL). It reaches three places at once:
+//   - vite rewrites every asset URL in index.html and the bundle with it;
+//   - src/api.ts already reads import.meta.env.BASE_URL for its API prefix;
+//   - App.tsx passes it to the router as a basename.
+// Unset it and the build is upstream's, served at the origin root.
+const basePath = process.env.LIGHTDASH_BASE_PATH || '/';
+
 export default defineConfig({
+    base: basePath,
     publicDir: 'public',
     define: {
         __APP_VERSION__: JSON.stringify(process.env.npm_package_version),

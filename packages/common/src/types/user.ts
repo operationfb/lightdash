@@ -198,6 +198,17 @@ export interface OpenIdUser {
         lastName: string | undefined;
         groups?: string[] | undefined;
         teamId?: string | undefined;
+        /**
+         * KONTALA: which organization this login is for, asserted by the
+         * identity provider.
+         *
+         * A person's email is unique across the whole instance, so one person
+         * is one user however many organizations they belong to, and the
+         * product has no organization switcher to choose between them. When
+         * the provider knows which one a login is for it says so here, and
+         * loginToOrganization honours it instead of refusing.
+         */
+        organizationUuid?: string | undefined;
     };
 }
 

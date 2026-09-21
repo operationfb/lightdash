@@ -91,6 +91,14 @@ const createOpenIdUserFromProfile = (
         profile.family_name ||
         fallbackLastName;
 
+    // KONTALA: the organization this login is for, when the provider says.
+    // Read from the raw claims rather than from a passport-normalised field,
+    // because it is a private claim and passport knows nothing about it.
+    const claimedOrganizationUuid =
+        typeof profile._json?.lightdash_organization_uuid === 'string'
+            ? profile._json.lightdash_organization_uuid
+            : undefined;
+
     const openIdUser: OpenIdUser = {
         openId: {
             issuer: issuer || '',
@@ -99,6 +107,7 @@ const createOpenIdUserFromProfile = (
             firstName,
             lastName,
             issuerType: issuerType || '',
+            organizationUuid: claimedOrganizationUuid,
         },
     };
 
@@ -215,9 +224,13 @@ export const createGenericOidcPassportStrategy = async () => {
             usePKCE: !!keySet,
             passReqToCallback: true,
             params: {
+                // KONTALA: a leading slash resolves against the ORIGIN, which
+                // silently threw away SITE_URL's path and produced a callback
+                // pointing at whatever else lives at that origin's /api/v1.
+                // Resolved against the site URL's own path instead.
                 redirect_uri: new URL(
-                    `/api/v1${oidc.callbackPath}`,
-                    lightdashConfig.siteUrl,
+                    `api/v1${oidc.callbackPath}`,
+                    `${lightdashConfig.siteUrl.replace(/\/*$/, '')}/`,
                 ).href,
             },
             extras: {
@@ -265,9 +278,10 @@ export const createGenericOidcStrategyForConfig = async (
             client,
             passReqToCallback: true,
             params: {
+                // KONTALA: see the note on the other redirect_uri above.
                 redirect_uri: new URL(
-                    `/api/v1${lightdashConfig.auth.oidc.callbackPath}`,
-                    lightdashConfig.siteUrl,
+                    `api/v1${lightdashConfig.auth.oidc.callbackPath}`,
+                    `${lightdashConfig.siteUrl.replace(/\/*$/, '')}/`,
                 ).href,
                 scope: config.scopes || 'openid profile email',
             },

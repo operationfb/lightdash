@@ -8,6 +8,8 @@ type SessionRelevantConfig = Pick<
     | 'cookiesMaxAgeHours'
     | 'secureCookies'
     | 'cookieSameSite'
+    // KONTALA: the path this instance is served under.
+    | 'basePath'
 >;
 
 export const buildExpressSessionOptions = (
@@ -30,6 +32,11 @@ export const buildExpressSessionOptions = (
         secure: lightdashConfig.secureCookies,
         httpOnly: true,
         sameSite: lightdashConfig.cookieSameSite,
+        // KONTALA: scoped to the path this instance is served under, so that
+        // on a shared origin our session cookie is not sent to the other app
+        // living at '/' on every one of its requests. '' means the root, and
+        // express-session wants '/' for that.
+        path: lightdashConfig.basePath || '/',
     },
     resave: false,
     saveUninitialized: false,
