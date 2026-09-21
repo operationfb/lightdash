@@ -44,6 +44,7 @@ import {
 } from '../../../hooks/slack/useSlack';
 import { useServerFeatureFlag } from '../../../hooks/useServerOrClientFeatureFlag';
 import slackSvg from '../../../svgs/slack.svg';
+import { toBrowserPath } from '../../../utils/url';
 import Callout from '../../common/Callout';
 import { default as MantineIcon } from '../../common/MantineIcon';
 import { SettingsGridCard } from '../../common/Settings/SettingsCard';
@@ -51,7 +52,7 @@ import { SlackChannelSelect } from '../../common/SlackChannelSelect';
 import { ProjectSelect } from './ProjectSelect';
 import { SlackSettingRow } from './SlackSettingRow';
 
-const SLACK_INSTALL_URL = `/api/v1/slack/install/`;
+const SLACK_INSTALL_URL = toBrowserPath('/api/v1/slack/install/');
 
 type SlackSettingsFormValues = SlackAppCustomSettings & {
     requireExplicitSlackChannelLinking: boolean;

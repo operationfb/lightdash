@@ -272,6 +272,38 @@ describe('network error messages', () => {
         expect(globalThis.fetch).toHaveBeenCalledTimes(1);
     });
 
+    it('keeps the status a server answered with when the body is not the envelope', async () => {
+        globalThis.fetch = vi.fn().mockResolvedValue(
+            new Response('Unauthorized', {
+                status: 401,
+                headers: { 'Content-Type': 'text/html' },
+            }),
+        );
+
+        await expect(
+            lightdashApi({ method: 'GET', url: '/org', body: undefined }),
+        ).rejects.toMatchObject({
+            error: {
+                name: 'NetworkError',
+                statusCode: 401,
+                message:
+                    'We are currently unable to reach the Lightdash server. Please try again in a few moments.',
+            },
+        });
+    });
+
+    it('reports a request that was never answered as a 500', async () => {
+        globalThis.fetch = vi
+            .fn()
+            .mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+        await expect(
+            lightdashApi({ method: 'GET', url: '/org', body: undefined }),
+        ).rejects.toMatchObject({
+            error: { name: 'NetworkError', statusCode: 500 },
+        });
+    });
+
     it('says the request was blocked when fetch rejects but the server answers a probe', async () => {
         globalThis.fetch = vi
             .fn()

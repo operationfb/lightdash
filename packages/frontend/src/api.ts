@@ -158,12 +158,18 @@ const handleError = async (
     // Surface the real transport error (abort, CORS, DNS, connection reset)
     // instead of silently masking it as the generic message below.
     console.error('Failed to reach the Lightdash server:', err);
+    // A body we could not parse still arrived with a status a server chose, so
+    // that status is kept: callers that branch on 401/403 (session expiry,
+    // permission checks) must still see one. Only a request that was never
+    // answered at all is reported as 500.
+    const statusCode =
+        err instanceof UnexpectedResponseError ? err.status : 500;
     if (request.hosted || !request.diagnose) {
         return {
             status: 'error',
             error: {
                 name: 'NetworkError',
-                statusCode: 500,
+                statusCode,
                 message: GENERIC_NETWORK_FAILURE_MESSAGE,
                 data: {},
             },
@@ -183,7 +189,7 @@ const handleError = async (
         status: 'error',
         error: {
             name: 'NetworkError',
-            statusCode: 500,
+            statusCode,
             message: networkFailureMessage(diagnostics),
             data: diagnostics,
         },

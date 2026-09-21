@@ -5,6 +5,7 @@ import {
 } from '@lightdash/common';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { lightdashApi } from '../../../api';
+import { toBrowserPath } from '../../../utils/url';
 
 type UploadAppThumbnailParams = {
     projectUuid: string;
@@ -18,7 +19,9 @@ const uploadAppThumbnail = async ({
     file,
 }: UploadAppThumbnailParams): Promise<void> => {
     const response = await fetch(
-        `/api/v1/ee/projects/${projectUuid}/apps/${appUuid}/thumbnail`,
+        toBrowserPath(
+            `/api/v1/ee/projects/${projectUuid}/apps/${appUuid}/thumbnail`,
+        ),
         {
             method: 'POST',
             body: file,

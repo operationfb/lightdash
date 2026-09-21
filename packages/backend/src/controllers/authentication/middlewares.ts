@@ -130,29 +130,54 @@ export const allowApiKeyAuthentication: RequestHandler = (req, res, next) => {
                     'Personal access tokens are disabled',
                 );
             }
-            passport.authenticate('headerapikey', { session: false })(
-                req,
-                res,
-                () => {
-                    if (req?.account?.isAuthenticated()) {
-                        Logger.warn(
-                            buildAccountExistsWarning('ApiKey'),
-                            req.account?.authentication?.type,
-                        );
-                    }
+            const onAuthenticated = () => {
+                if (req?.account?.isAuthenticated()) {
+                    Logger.warn(
+                        buildAccountExistsWarning('ApiKey'),
+                        req.account?.authentication?.type,
+                    );
+                }
 
-                    if (req.user) {
-                        req.account = fromApiKey(
-                            req.user!,
-                            req.headers.authorization || '',
-                        );
-                        const requestContext = requestContextFromExpress(req);
-                        req.account.requestContext = requestContext;
-                        req.user.requestContext = requestContext;
+                if (req.user) {
+                    req.account = fromApiKey(
+                        req.user!,
+                        req.headers.authorization || '',
+                    );
+                    const requestContext = requestContextFromExpress(req);
+                    req.account.requestContext = requestContext;
+                    req.user.requestContext = requestContext;
+                }
+                next();
+            };
+            // Passport's own failure handling ends the response with a bare
+            // `Unauthorized` body, which is not the error envelope every API
+            // client parses. Delegating failure to this callback keeps the
+            // rejection identical and routes it through the error handler
+            // instead. The callback also takes on `req.logIn`, the success
+            // step passport skips once failure is delegated.
+            passport.authenticate(
+                'headerapikey',
+                { session: false },
+                (authError: unknown, user?: Express.User | false | null) => {
+                    if (authError) {
+                        next(authError);
+                        return;
                     }
-                    next();
+                    if (!user) {
+                        next(
+                            new AuthorizationError('Failed to authorize user'),
+                        );
+                        return;
+                    }
+                    req.logIn(user, { session: false }, (loginError) => {
+                        if (loginError) {
+                            next(loginError);
+                            return;
+                        }
+                        onAuthenticated();
+                    });
                 },
-            );
+            )(req, res, next);
         };
         try {
             authenticateServiceAccount(req, res, authenticateWithPat);

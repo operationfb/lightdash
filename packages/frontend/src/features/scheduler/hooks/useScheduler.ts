@@ -25,6 +25,7 @@ import {
 import { useMemo } from 'react';
 import { lightdashApi } from '../../../api';
 import useToaster from '../../../hooks/toaster/useToaster';
+import { toBrowserPath } from '../../../utils/url';
 import { type DestinationType } from './useSchedulerFilters';
 
 const getScheduler = async (uuid: string) =>
@@ -98,9 +99,12 @@ const getSchedulerRuns = async (
 };
 
 const getRunLogs = async (runId: string) => {
-    const response = await fetch(`/api/v1/schedulers/runs/${runId}/logs`, {
-        credentials: 'include',
-    });
+    const response = await fetch(
+        toBrowserPath(`/api/v1/schedulers/runs/${runId}/logs`),
+        {
+            credentials: 'include',
+        },
+    );
     if (!response.ok) {
         throw new Error(`Failed to fetch run logs: ${response.statusText}`);
     }

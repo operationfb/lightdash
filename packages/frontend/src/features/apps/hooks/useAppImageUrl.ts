@@ -1,5 +1,6 @@
 import { type ApiAppImageUrlResponse } from '@lightdash/common';
 import { useQuery } from '@tanstack/react-query';
+import { toBrowserPath } from '../../../utils/url';
 
 const fetchImageUrl = async (
     projectUuid: string,
@@ -7,7 +8,9 @@ const fetchImageUrl = async (
     imageId: string,
 ): Promise<ApiAppImageUrlResponse['results']> => {
     const response = await fetch(
-        `/api/v1/ee/projects/${projectUuid}/apps/${appUuid}/images/${imageId}`,
+        toBrowserPath(
+            `/api/v1/ee/projects/${projectUuid}/apps/${appUuid}/images/${imageId}`,
+        ),
     );
     if (!response.ok) {
         throw new Error(`Failed to fetch image URL: ${response.status}`);

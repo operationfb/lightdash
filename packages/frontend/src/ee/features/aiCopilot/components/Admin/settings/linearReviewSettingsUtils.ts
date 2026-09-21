@@ -1,5 +1,10 @@
 export const buildLinearAppSetupUrl = (siteUrl: string): string => {
-    const callbackUrl = new URL('/api/v1/linear/oauth/callback', siteUrl).href;
+    // KONTALA: resolved relative to siteUrl. A leading slash resolves against
+    // the origin alone and drops the path Lightdash is served under.
+    const callbackUrl = new URL(
+        'api/v1/linear/oauth/callback',
+        siteUrl.endsWith('/') ? siteUrl : `${siteUrl}/`,
+    ).href;
     const params = new URLSearchParams({
         distribution: 'private',
         'display.description':

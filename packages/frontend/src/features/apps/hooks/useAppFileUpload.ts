@@ -3,6 +3,7 @@ import {
     type ApiError,
 } from '@lightdash/common';
 import { useMutation } from '@tanstack/react-query';
+import { toBrowserPath } from '../../../utils/url';
 
 type UploadFileParams = {
     projectUuid: string;
@@ -26,9 +27,11 @@ const uploadFile = async ({
     if (file.name) params.set('filename', file.name);
     if (kind) params.set('kind', kind);
     const query = params.toString();
-    const url = `/api/v1/ee/projects/${projectUuid}/apps/${appUuid}/upload-file${
-        query ? `?${query}` : ''
-    }`;
+    const url = toBrowserPath(
+        `/api/v1/ee/projects/${projectUuid}/apps/${appUuid}/upload-file${
+            query ? `?${query}` : ''
+        }`,
+    );
     const response = await fetch(url, {
         method: 'POST',
         body: file,

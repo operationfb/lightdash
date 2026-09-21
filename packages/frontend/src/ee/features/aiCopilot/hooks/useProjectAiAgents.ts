@@ -55,6 +55,7 @@ import useToaster from '../../../../hooks/toaster/useToaster';
 import { useActiveProject } from '../../../../hooks/useActiveProject';
 import { type UserWithAbility } from '../../../../hooks/user/useUser';
 import useApp from '../../../../providers/App/useApp';
+import { toBrowserPath } from '../../../../utils/url';
 import { useAiAgentThreadStreamMutation } from '../streaming/useAiAgentThreadStreamMutation';
 import {
     type AiAgentToolCallHandler,
@@ -225,7 +226,9 @@ const uploadProjectAgentAvatar = async (
     file: File,
 ) => {
     const response = await fetch(
-        `/api/v1/projects/${projectUuid}/aiAgents/${agentUuid}/avatar`,
+        toBrowserPath(
+            `/api/v1/projects/${projectUuid}/aiAgents/${agentUuid}/avatar`,
+        ),
         {
             method: 'POST',
             body: file,

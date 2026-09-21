@@ -33,6 +33,7 @@ import {
     triggerGdriveLogin,
 } from '../../../hooks/gdrive/useGdrive';
 import useApp from '../../../providers/App/useApp';
+import { toBrowserPath } from '../../../utils/url';
 import type { DeliveryCaptureAccumulator } from '../deliveryCapture/deliveryCaptureAccumulator';
 import {
     handleGsheetExport,
@@ -53,7 +54,9 @@ const LIGHTDASH_SDK_INSTANCE_URL_KEY = '__lightdash_sdk_instance_url';
 const resolveFetchUrl = (path: string): string => {
     if (typeof window === 'undefined') return path;
     const instanceUrl = sessionStorage.getItem(LIGHTDASH_SDK_INSTANCE_URL_KEY);
-    if (!instanceUrl) return path;
+    // KONTALA: `path` starts with `/`, so on our own origin it has to carry
+    // the base path this build is served under. See utils/url.ts.
+    if (!instanceUrl) return toBrowserPath(path);
     // SDK persists with a trailing slash; `path` always starts with `/`.
     return `${instanceUrl.replace(/\/$/, '')}${path}`;
 };

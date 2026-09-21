@@ -5,16 +5,32 @@ import {
 } from '@lightdash/common';
 import { EMBED_KEY, type InMemoryEmbed } from '../ee/providers/Embed/types';
 import { getFromInMemoryStorage } from './inMemoryStorage';
+import { isRootRelativePath } from './redirectUrl';
 
 const LIGHTDASH_SDK_INSTANCE_URL_LOCAL_STORAGE_KEY =
     '__lightdash_sdk_instance_url';
 
+/**
+ * KONTALA: resolve a Lightdash request path against the base this build is
+ * served under, not against the bare origin.
+ *
+ * The path is resolved RELATIVE to that base. A leading slash resolves against
+ * the origin alone, which drops the prefix: `/api/v2/...` instead of
+ * `/analytics/api/v2/...`, landing on whatever else shares the origin. This
+ * mirrors how `lightdashApi` builds its own prefix (see api.ts).
+ */
 export const resolveRequestUrl = (url: string) => {
     const sdkInstanceUrl = sessionStorage.getItem(
         LIGHTDASH_SDK_INSTANCE_URL_LOCAL_STORAGE_KEY,
     );
+    const base =
+        sdkInstanceUrl ??
+        `${window.location.origin}${import.meta.env.BASE_URL}`;
 
-    return new URL(url, sdkInstanceUrl ?? window.location.origin).toString();
+    return new URL(
+        isRootRelativePath(url) ? url.slice(1) : url,
+        base.endsWith('/') ? base : `${base}/`,
+    ).toString();
 };
 
 // To be reused across all hooks that need to fetch SQL query results

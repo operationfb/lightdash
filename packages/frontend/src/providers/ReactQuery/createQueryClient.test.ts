@@ -7,6 +7,9 @@ const serverError = {
 };
 const synthesizedQueryError = { error: { name: 'Error', statusCode: 500 } };
 const notFound = { error: { name: 'NotFoundError', statusCode: 404 } };
+// A 401 whose body was not the API envelope: synthesized as a NetworkError by
+// api.ts, but a server answered it and will answer the same way again.
+const unauthorized = { error: { name: 'NetworkError', statusCode: 401 } };
 
 describe('shouldRetryQuery', () => {
     it('retries transient NetworkError up to 5 times', () => {
@@ -19,6 +22,10 @@ describe('shouldRetryQuery', () => {
         expect(shouldRetryQuery(0, serverError)).toBe(false);
         expect(shouldRetryQuery(0, synthesizedQueryError)).toBe(false);
         expect(shouldRetryQuery(0, notFound)).toBe(false);
+    });
+
+    it('does not retry a NetworkError a server answered with a 4xx', () => {
+        expect(shouldRetryQuery(0, unauthorized)).toBe(false);
     });
 
     it('does not retry malformed errors', () => {

@@ -28,6 +28,7 @@ import { useEffect, useRef, useState, type FC } from 'react';
 import Callout from '../../../components/common/Callout';
 import MantineIcon from '../../../components/common/MantineIcon';
 import MantineModal from '../../../components/common/MantineModal';
+import { toBrowserPath } from '../../../utils/url';
 import {
     useClearDefaultOrganizationDesign,
     useDeleteAllDesignFiles,
@@ -63,7 +64,9 @@ const FileRow: FC<{
     onDelete: () => void;
     deleting: boolean;
 }> = ({ designUuid, file, onDelete, deleting }) => {
-    const downloadUrl = `/api/v1/org/designs/${designUuid}/files/${file.fileUuid}`;
+    const downloadUrl = toBrowserPath(
+        `/api/v1/org/designs/${designUuid}/files/${file.fileUuid}`,
+    );
     return (
         <Group justify="space-between" wrap="nowrap" gap="sm">
             <Group gap="xs" wrap="nowrap" flex={1} miw={0}>
