@@ -88,9 +88,41 @@ export const discoverIssuerWithRetry = async (
     }
 };
 
+/**
+ * KONTALA: the verified id_token claims, when the second argument to the
+ * verify callback is the openid-client TokenSet it actually is at runtime.
+ *
+ * ⚠ THAT ARGUMENT IS DECLARED `issuer: string`, and the declaration is wrong.
+ * It comes from @types/passport-openidconnect, which describes a different
+ * library; openid-client's own passport strategy builds the argument list as
+ * [tokenset, userinfo, done] and unshifts `req`. The lie has never bitten
+ * because both call sites pass `issuerOverride`, so `issuerOverride || issuer`
+ * never reads it - which is also why the runtime shape has to be sniffed here
+ * rather than trusted from the type.
+ */
+const idTokenClaimsOf = (candidate: unknown): Record<string, unknown> => {
+    if (
+        typeof candidate !== 'object' ||
+        candidate === null ||
+        typeof (candidate as { claims?: unknown }).claims !== 'function'
+    ) {
+        return {};
+    }
+    try {
+        const claims = (
+            candidate as { claims: () => Record<string, unknown> }
+        ).claims();
+        return typeof claims === 'object' && claims !== null ? claims : {};
+    } catch {
+        // A TokenSet with no id_token throws rather than returning nothing.
+        return {};
+    }
+};
+
 const createOpenIdUserFromProfile = (
     profile: PassportProfile & {
         email_verified?: boolean;
+        lightdash_organization_uuid?: unknown;
         _json?: {
             email_verified?: boolean;
             given_name?: string;
@@ -101,6 +133,7 @@ const createOpenIdUserFromProfile = (
     issuer: string,
     issuerType: OpenIdIdentityIssuerType,
     done: ArgumentsOf<VerifyFunctionWithRequest>['3'],
+    idTokenClaims: Record<string, unknown> = {},
 ) => {
     const email = profile.emails?.[0]?.value || profile.email;
     const subject = profile.id || profile.sub;
@@ -156,11 +189,27 @@ const createOpenIdUserFromProfile = (
         fallbackLastName;
 
     // KONTALA: the organization this login is for, when the provider says.
-    // Read from the raw claims rather than from a passport-normalised field,
-    // because it is a private claim and passport knows nothing about it.
+    //
+    // ⚠ THE ID TOKEN IS THE SOURCE, not `profile`. `profile` here is the
+    // USERINFO RESPONSE - openid-client fetches it whenever the verify
+    // callback declares more than three parameters, which ours does, and
+    // passes it where passport would have put a normalised profile. It is a
+    // flat object with no `_json`, so reading `profile._json` alone resolved
+    // to undefined on every login: the claim was sent, was never read, and
+    // every session silently fell back to the member's oldest organization.
+    //
+    // Taking it from the id_token is also the right place on the merits. It is
+    // signed and already verified by `client.callback`, where userinfo is a
+    // separately fetched body; which organization a login is for decides what
+    // the session may read. The two `profile` reads stay as fallbacks for a
+    // provider that publishes the claim there instead.
+    const claimedOrganization =
+        idTokenClaims.lightdash_organization_uuid ??
+        profile.lightdash_organization_uuid ??
+        profile._json?.lightdash_organization_uuid;
     const claimedOrganizationUuid =
-        typeof profile._json?.lightdash_organization_uuid === 'string'
-            ? profile._json.lightdash_organization_uuid
+        typeof claimedOrganization === 'string'
+            ? claimedOrganization
             : undefined;
 
     const openIdUser: OpenIdUser = {
@@ -205,6 +254,7 @@ export const genericOidcHandler =
                 issuerOverride || issuer,
                 issuerType,
                 done,
+                idTokenClaimsOf(issuer),
             );
 
             if (openIdUser) {
