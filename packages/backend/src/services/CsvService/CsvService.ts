@@ -52,6 +52,7 @@ import { AttachmentUrl } from '../../clients/EmailClient/EmailClient';
 import { type FileStorageClient } from '../../clients/FileStorage/FileStorageClient';
 import { S3ResultsFileStorageClient } from '../../clients/ResultsFileStorageClients/S3ResultsFileStorageClient';
 import { LightdashConfig } from '../../config/parseConfig';
+import { siteUrlFor } from '../../config/siteUrl';
 import Logger from '../../logging/logger';
 import { DashboardModel } from '../../models/DashboardModel/DashboardModel';
 import { DownloadFileModel } from '../../models/DownloadFileModel';
@@ -556,10 +557,10 @@ export class CsvService extends BaseService {
             projectUuid,
         );
 
-        const localUrl = new URL(
+        const localUrl = siteUrlFor(
+            this.lightdashConfig,
             `/api/v1/projects/${projectUuid}/csv/${downloadFileId}`,
-            this.lightdashConfig.siteUrl,
-        ).href;
+        );
 
         return {
             filename: fileName,

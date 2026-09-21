@@ -13,6 +13,7 @@ import {
 import { IconAlertCircle, IconRefresh, IconTrash } from '@tabler/icons-react';
 import { type FC } from 'react';
 import gitlabIcon from '../../../svgs/gitlab-icon.svg';
+import { toBrowserPath } from '../../../utils/url';
 import {
     useDeleteGitlabInstallationMutation,
     useGitlabRepositories,
@@ -20,7 +21,7 @@ import {
 import MantineIcon from '../../common/MantineIcon';
 import { SettingsGridCard } from '../../common/Settings/SettingsCard';
 
-const GITLAB_INSTALL_URL = `/api/v1/gitlab/install`;
+const GITLAB_INSTALL_URL = toBrowserPath('/api/v1/gitlab/install');
 
 const GitlabSettingsPanel: FC = () => {
     const { data, isError, isInitialLoading } = useGitlabRepositories();

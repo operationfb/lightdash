@@ -78,7 +78,7 @@ const makeService = () => {
     const service = new JiraAppService({
         jiraAppInstallationsModel: model,
         encryptionUtil,
-        lightdashConfig: { siteUrl: 'https://app.example.com' },
+        lightdashConfig: { siteUrl: 'https://app.example.com', basePath: '' },
         analytics: { track: vi.fn() },
         onWorkspaceChanged,
     } as unknown as ConstructorParameters<typeof JiraAppService>[0]);

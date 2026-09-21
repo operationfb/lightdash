@@ -27,6 +27,7 @@ import MantineIcon from '../../../../../../components/common/MantineIcon';
 import { useProjects } from '../../../../../../hooks/useProjects';
 import useApp from '../../../../../../providers/App/useApp';
 import linearSvg from '../../../../../../svgs/linear.svg';
+import { toBrowserPath } from '../../../../../../utils/url';
 import {
     useBackfillReviewLinearIssues,
     useReviewLinearRouting,
@@ -95,7 +96,9 @@ export const LinearReviewSettings = () => {
         const clientId = linearClientId.trim();
         if (!clientId) return;
         window.location.assign(
-            `/api/v1/linear/install?clientId=${encodeURIComponent(clientId)}`,
+            `${toBrowserPath('/api/v1/linear/install')}?clientId=${encodeURIComponent(
+                clientId,
+            )}`,
         );
     };
 
@@ -435,7 +438,7 @@ export const LinearReviewSettings = () => {
                             size="xs"
                             variant="default"
                             component="a"
-                            href="/api/v1/linear/install"
+                            href={toBrowserPath('/api/v1/linear/install')}
                             disabled={!canEdit || isUpdating}
                         >
                             Reconnect

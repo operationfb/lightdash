@@ -39,6 +39,7 @@ import MantineIcon from '../../../../../../components/common/MantineIcon';
 import { useProjects } from '../../../../../../hooks/useProjects';
 import useApp from '../../../../../../providers/App/useApp';
 import jiraSvg from '../../../../../../svgs/jira.svg';
+import { toBrowserPath } from '../../../../../../utils/url';
 import {
     useBackfillReviewJiraIssues,
     useReviewJiraRouting,
@@ -465,7 +466,7 @@ export const JiraReviewSettings = () => {
                             size="xs"
                             variant="default"
                             component="a"
-                            href="/api/v1/jira/install"
+                            href={toBrowserPath('/api/v1/jira/install')}
                             disabled={!canEdit || isUpdating}
                         >
                             Reconnect

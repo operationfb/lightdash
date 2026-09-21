@@ -26,6 +26,7 @@ import {
     getOrRefreshToken,
 } from '../../clients/github/Github';
 import { LightdashConfig } from '../../config/parseConfig';
+import { siteUrlFor } from '../../config/siteUrl';
 import { GithubAppInstallationsModel } from '../../models/GithubAppInstallations/GithubAppInstallationsModel';
 import { GitUserCredentialsModel } from '../../models/GitUserCredentials/GitUserCredentialsModel';
 import { UserModel } from '../../models/UserModel';
@@ -96,9 +97,13 @@ export class GithubAppService extends BaseService {
             },
         });
 
-        const returnToUrl = new URL(
+        // KONTALA: GitHub sends the user back here afterwards, so it has to
+        // name this instance rather than the origin's root. The paths below
+        // are the router's; siteUrlFor puts the base path back on. See
+        // config/siteUrl.ts.
+        const returnToUrl = siteUrlFor(
+            this.lightdashConfig,
             '/generalSettings/integrations',
-            this.lightdashConfig.siteUrl,
         );
         const randomID = nanoid().replace('_', ''); // we use _ as separator, don't allow this character on the nanoid
         const subdomain = this.lightdashConfig.github.redirectDomain;
@@ -107,7 +112,7 @@ export class GithubAppService extends BaseService {
 
         return {
             installUrl: `https://github.com/apps/${githubAppName}/installations/new?state=${state}`,
-            returnToUrl: returnToUrl.href,
+            returnToUrl,
             state,
             githubAppName,
             inviteCode: user.userUuid,
@@ -143,7 +148,9 @@ export class GithubAppService extends BaseService {
             if (refreshToken === undefined)
                 throw new ForbiddenError('Invalid authentication token');
 
-            const redirectUrl = new URL(oauth?.returnTo || '/');
+            const redirectUrl = new URL(
+                oauth?.returnTo || siteUrlFor(this.lightdashConfig, '/'),
+            );
 
             if (setup_action === 'request') {
                 // User attempted to setup the app, didn't have permission in GitHub and sent a request to the admins
@@ -434,13 +441,21 @@ export class GithubAppService extends BaseService {
     }
 
     /**
-     * Coerce a caller-supplied return path into a safe same-origin relative
-     * path. Rejects absolute URLs and protocol-relative (`//host`) values so a
+     * Coerce a caller-supplied return path into a safe same-origin absolute
+     * URL. Rejects absolute URLs and protocol-relative (`//host`) values so a
      * malicious `returnTo` cannot turn the post-OAuth redirect into an open
      * redirect. Falls back to the integrations settings page.
+     *
+     * KONTALA: `returnToPath` arrives from the browser and already carries the
+     * base path this instance is served under, so it resolves against the
+     * origin. Only the fallback is a router path, and it goes through
+     * siteUrlFor. See config/siteUrl.ts.
      */
-    private toSameOriginPath(returnToPath?: string): string {
-        const fallback = '/generalSettings/integrations';
+    private toSameOriginUrl(returnToPath?: string): string {
+        const fallback = siteUrlFor(
+            this.lightdashConfig,
+            '/generalSettings/integrations',
+        );
         if (
             !returnToPath ||
             !returnToPath.startsWith('/') ||
@@ -459,7 +474,7 @@ export class GithubAppService extends BaseService {
             if (candidate.origin !== siteOrigin) {
                 return fallback;
             }
-            return `${candidate.pathname}${candidate.search}${candidate.hash}`;
+            return candidate.href;
         } catch {
             return fallback;
         }
@@ -483,17 +498,14 @@ export class GithubAppService extends BaseService {
             },
         });
 
-        const returnToUrl = new URL(
-            this.toSameOriginPath(returnToPath),
-            this.lightdashConfig.siteUrl,
-        );
+        const returnToUrl = this.toSameOriginUrl(returnToPath);
         const randomID = nanoid().replace('_', '');
         const subdomain = this.lightdashConfig.github.redirectDomain;
         const state = `${subdomain}_${randomID}`;
 
         return {
             authorizeUrl: getGithubUserAuthorizeUrl(state),
-            returnToUrl: returnToUrl.href,
+            returnToUrl,
             state,
         };
     }
@@ -544,8 +556,7 @@ export class GithubAppService extends BaseService {
             });
 
             const redirectUrl = new URL(
-                oauth?.returnTo || '/',
-                this.lightdashConfig.siteUrl,
+                oauth?.returnTo || siteUrlFor(this.lightdashConfig, '/'),
             );
             return redirectUrl.href;
         } catch (error) {

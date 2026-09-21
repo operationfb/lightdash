@@ -15,6 +15,7 @@ import { Strategy as OpenIDConnectStrategy } from 'passport-openidconnect';
 import { URL } from 'url';
 import { buildJwtKeySet } from '../../../config/jwtKeySet';
 import { lightdashConfig } from '../../../config/lightdashConfig';
+import { siteUrlFor } from '../../../config/siteUrl';
 import Logger from '../../../logging/logger';
 import { genericOidcHandler } from './oidcStrategy';
 
@@ -75,10 +76,12 @@ const azureAdPrivateKeyJksStrategy = async (): Promise<
             usePKCE: true,
             passReqToCallback: true,
             params: {
-                redirect_uri: new URL(
+                // KONTALA: the IdP sends the browser back here, to a route this
+                // app serves under its base path. See config/siteUrl.ts.
+                redirect_uri: siteUrlFor(
+                    lightdashConfig,
                     `/api/v1${azuread.callbackPath}`,
-                    lightdashConfig.siteUrl,
-                ).href,
+                ),
             },
             extras: {
                 clientAssertionPayload: {
@@ -122,10 +125,10 @@ export const createAzureAdOidcStrategyForConfig = (
             userInfoURL: 'https://graph.microsoft.com/oidc/userinfo',
             clientID: config.oauth2ClientId,
             clientSecret: config.oauth2ClientSecret,
-            callbackURL: new URL(
+            callbackURL: siteUrlFor(
+                lightdashConfig,
                 `/api/v1${lightdashConfig.auth.azuread.callbackPath}`,
-                lightdashConfig.siteUrl,
-            ).href,
+            ),
             passReqToCallback: true,
         },
         genericOidcHandler(

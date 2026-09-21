@@ -15,6 +15,7 @@ import { generators, Issuer, UserinfoResponse } from 'openid-client';
 import { Strategy } from 'passport-strategy';
 import { URL } from 'url';
 import { lightdashConfig } from '../../../config/lightdashConfig';
+import { siteUrlFor } from '../../../config/siteUrl';
 import Logger from '../../../logging/logger';
 import { getLoginHint } from '../utils';
 
@@ -74,10 +75,12 @@ const setupOktaIssuerClient = async (config: OktaSsoConfig) => {
 
     const oktaIssuer = await Issuer.discover(oktaIssuerUri);
 
-    const redirectUri = new URL(
+    // KONTALA: the IdP sends the browser back here, to a route this
+    // app serves under its base path. See config/siteUrl.ts.
+    const redirectUri = siteUrlFor(
+        lightdashConfig,
         `/api/v1${lightdashConfig.auth.okta.callbackPath}`,
-        lightdashConfig.siteUrl,
-    ).href;
+    );
 
     const client = new oktaIssuer.Client({
         client_id: config.oauth2ClientId,
@@ -205,10 +208,10 @@ export class OpenIDClientOktaStrategy extends Strategy {
 
             const client = await setupOktaIssuerClient(config);
 
-            const redirectUri = new URL(
+            const redirectUri = siteUrlFor(
+                lightdashConfig,
                 `/api/v1${lightdashConfig.auth.okta.callbackPath}`,
-                lightdashConfig.siteUrl,
-            ).href;
+            );
 
             const params = client.callbackParams(req);
             const tokenSet = await client.callback(redirectUri, params, {
@@ -317,10 +320,10 @@ export const initiateOktaOpenIdLogin: RequestHandler = async (
 
         const client = await setupOktaIssuerClient(config);
 
-        const redirectUri = new URL(
+        const redirectUri = siteUrlFor(
+            lightdashConfig,
             `/api/v1${lightdashConfig.auth.okta.callbackPath}`,
-            lightdashConfig.siteUrl,
-        ).href;
+        );
 
         const state = generators.state();
         const codeVerifier = generators.codeVerifier();

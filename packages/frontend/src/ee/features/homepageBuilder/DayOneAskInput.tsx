@@ -20,6 +20,7 @@ import MantineIcon from '../../../components/common/MantineIcon';
 import useApp from '../../../providers/App/useApp';
 import useTracking from '../../../providers/Tracking/useTracking';
 import { EventName } from '../../../types/Events';
+import { toBrowserPath } from '../../../utils/url';
 import {
     AI_ROUTING_AUTO_VALUE,
     AI_ROUTING_SEARCH_PARAM,
@@ -464,7 +465,10 @@ const DayOneAskInputInner: FC<Props> = ({
         return (
             <div className={blockClasses.dashedEmpty}>
                 Set up an AI agent to enable Ask AI here —{' '}
-                <Anchor size="xs" href="/generalSettings/ai/agents">
+                <Anchor
+                    size="xs"
+                    href={toBrowserPath('/generalSettings/ai/agents')}
+                >
                     go to settings
                 </Anchor>
                 .

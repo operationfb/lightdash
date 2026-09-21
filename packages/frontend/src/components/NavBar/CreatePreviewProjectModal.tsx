@@ -46,6 +46,7 @@ import { useProject } from '../../hooks/useProject';
 import { useCreatePreviewMutation } from '../../hooks/useProjectPreview';
 import { useProjects } from '../../hooks/useProjects';
 import useApp from '../../providers/App/useApp';
+import { toBrowserPath } from '../../utils/url';
 import MantineIcon from '../common/MantineIcon';
 import MantineModal from '../common/MantineModal';
 import DocumentationHelpButton from '../DocumentationHelpButton';
@@ -611,7 +612,9 @@ const CreatePreviewModal: FC<Props> = ({
                             <Anchor
                                 target="_blank"
                                 fz="sm"
-                                href={`/generalSettings/projectManagement/${selectedProjectUuid}/settings`}
+                                href={toBrowserPath(
+                                    `/generalSettings/projectManagement/${selectedProjectUuid}/settings`,
+                                )}
                             >
                                 project settings
                             </Anchor>

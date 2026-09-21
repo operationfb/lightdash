@@ -198,7 +198,10 @@ const buildService = (overrides: Overrides = {}) => {
         }),
     };
     const service = new ContentAsCodeWritebackService({
-        lightdashConfig: { siteUrl: 'https://app.lightdash.dev' } as never,
+        lightdashConfig: {
+            siteUrl: 'https://app.lightdash.dev',
+            basePath: '',
+        } as never,
         analytics: analyticsMock,
         projectModel: {
             get: vi.fn().mockResolvedValue({

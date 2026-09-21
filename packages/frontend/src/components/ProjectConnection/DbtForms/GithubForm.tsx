@@ -17,6 +17,7 @@ import { IconCheck, IconRefresh } from '@tabler/icons-react';
 import React, { useEffect, type FC } from 'react';
 import useToaster from '../../../hooks/toaster/useToaster';
 import githubIcon from '../../../svgs/github-icon.svg';
+import { toBrowserPath } from '../../../utils/url';
 import {
     useGithubConfig,
     useGitHubRepositories,
@@ -29,7 +30,7 @@ import { useProjectFormContext } from '../useProjectFormContext';
 import { githubDefaultValues } from './defaultValues';
 import styles from './GithubForm.module.css';
 
-const GITHUB_INSTALL_URL = `/api/v1/github/install`;
+const GITHUB_INSTALL_URL = toBrowserPath('/api/v1/github/install');
 
 const GithubLoginForm: FC<{ disabled: boolean }> = ({ disabled }) => {
     const form = useFormContext();
@@ -322,7 +323,9 @@ const GithubForm: FC<{ disabled: boolean }> = ({ disabled }) => {
                                     You are connected to GitHub.{' '}
                                     <Anchor
                                         inherit
-                                        href="/generalSettings/integrations"
+                                        href={toBrowserPath(
+                                            '/generalSettings/integrations',
+                                        )}
                                         target="_blank"
                                     >
                                         Click here to use another account

@@ -24,6 +24,7 @@ import useApp from '../providers/App/useApp';
 import useTracking from '../providers/Tracking/useTracking';
 import { EventName } from '../types/Events';
 import { sanitizeRedirectUrl } from '../utils/redirectUrl';
+import { toBrowserPath } from '../utils/url';
 
 const registerQuery = async (data: CreateUserArgs | CreateEmailOnlyUserArgs) =>
     lightdashApi<LightdashUser>({
@@ -68,7 +69,9 @@ const Register: FC = () => {
         mutationKey: ['login'],
         onSuccess: (data) => {
             identify({ id: data.userUuid });
-            window.location.href = redirectUrl;
+            // KONTALA: `redirectUrl` is a router path; this leaves the router,
+            // so the base path goes back on. See utils/url.ts.
+            window.location.href = toBrowserPath(redirectUrl);
         },
         onError: ({ error }) => {
             showToastApiError({

@@ -35,6 +35,7 @@ import {
     useCreateMutation,
     useSpaceSummaries,
 } from '../../../../hooks/useSpaces';
+import { toBrowserPath } from '../../../../utils/url';
 import { useCustomRoles } from '../../customRoles/useCustomRoles';
 import { useServiceAccounts } from '../../serviceAccounts/useServiceAccounts';
 import styles from './EmbedWriteActionsForm.module.css';
@@ -527,7 +528,10 @@ const EmbedWriteActionsForm: FC<Props> = ({
                             Lightdash user instead, include a proposed{' '}
                             <Code>userUuid</Code> claim in the embed JWT. You
                             can find user UUIDs from{' '}
-                            <Anchor href="/api/v1/org/users" target="_blank">
+                            <Anchor
+                                href={toBrowserPath('/api/v1/org/users')}
+                                target="_blank"
+                            >
                                 <Code>/api/v1/org/users</Code>
                             </Anchor>
                             .

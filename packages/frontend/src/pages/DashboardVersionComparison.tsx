@@ -46,6 +46,7 @@ import { getConditionalRuleLabel } from '../components/common/Filters/FilterInpu
 import MantineIcon from '../components/common/MantineIcon';
 import { useDashboardVersion } from '../hooks/dashboard/useDashboard';
 import NoTableIcon from '../svgs/emptystate-no-table.svg?react';
+import { toBrowserPath } from '../utils/url';
 import classes from './DashboardVersionComparison.module.css';
 
 interface DashboardVersionComparisonProps {
@@ -442,7 +443,9 @@ const ChartsTable = ({
                         return (
                             <Text
                                 component="a"
-                                href={`/projects/${projectUuid}/saved/${chartUuid}/history`}
+                                href={toBrowserPath(
+                                    `/projects/${projectUuid}/saved/${chartUuid}/history`,
+                                )}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 size="xs"

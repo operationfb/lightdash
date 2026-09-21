@@ -12,6 +12,7 @@ import {
 import { IconBrandGithub, IconTrash } from '@tabler/icons-react';
 import { type FC } from 'react';
 import githubIcon from '../../../svgs/github-icon.svg';
+import { toBrowserPath } from '../../../utils/url';
 import {
     GITHUB_USER_AUTHORIZE_URL,
     useGithubUserCredential,
@@ -69,7 +70,11 @@ const GithubUserSettingsPanel: FC = () => {
                             size="xs"
                             component="a"
                             target="_blank"
-                            href={`${GITHUB_USER_AUTHORIZE_URL}?redirect=/generalSettings/profile`}
+                            href={`${toBrowserPath(
+                                GITHUB_USER_AUTHORIZE_URL,
+                            )}?redirect=${toBrowserPath(
+                                '/generalSettings/profile',
+                            )}`}
                             leftSection={<MantineIcon icon={IconBrandGithub} />}
                         >
                             Connect GitHub account

@@ -28,6 +28,7 @@ import {
     refreshLinearToken,
 } from '../../clients/linear/Linear';
 import { LightdashConfig } from '../../config/parseConfig'; // pragma: allowlist secret
+import { siteUrlFor } from '../../config/siteUrl';
 import { LinearAppInstallationsModel } from '../../models/LinearAppInstallations/LinearAppInstallationsModel';
 import { BaseService } from '../BaseService';
 
@@ -93,10 +94,10 @@ export class LinearAppService extends BaseService {
     }
 
     private getRedirectUri() {
-        return new URL(
+        return siteUrlFor(
+            this.lightdashConfig,
             '/api/v1/linear/oauth/callback',
-            this.lightdashConfig.siteUrl, // pragma: allowlist secret
-        ).href;
+        );
     }
 
     private async getClientId(
@@ -150,10 +151,10 @@ export class LinearAppService extends BaseService {
                 state,
                 codeChallenge,
             ),
-            returnToUrl: new URL(
+            returnToUrl: siteUrlFor(
+                this.lightdashConfig,
                 '/generalSettings/ai/general',
-                this.lightdashConfig.siteUrl, // pragma: allowlist secret
-            ).href,
+            ),
             state,
             linear: {
                 clientId: resolvedClientId,

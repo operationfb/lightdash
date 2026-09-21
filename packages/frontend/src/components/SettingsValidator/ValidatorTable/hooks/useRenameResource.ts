@@ -15,6 +15,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { lightdashApi } from '../../../../api';
 import { pollJobStatus } from '../../../../features/scheduler/hooks/useScheduler';
 import useToaster from '../../../../hooks/toaster/useToaster';
+import { toBrowserPath } from '../../../../utils/url';
 
 const getFieldsForChart = async ({
     projectUuid,
@@ -87,8 +88,9 @@ export const useRenameChart = () => {
                     children: 'Open',
                     icon: IconArrowRight,
                     onClick: () => {
+                        if (!resourceUrl) return;
                         window.open(
-                            resourceUrl,
+                            toBrowserPath(resourceUrl),
                             '_blank',
                             'noopener,noreferrer',
                         );
@@ -237,8 +239,9 @@ export const useRenameDashboard = () => {
                     children: 'Open',
                     icon: IconArrowRight,
                     onClick: () => {
+                        if (!resourceUrl) return;
                         window.open(
-                            resourceUrl,
+                            toBrowserPath(resourceUrl),
                             '_blank',
                             'noopener,noreferrer',
                         );

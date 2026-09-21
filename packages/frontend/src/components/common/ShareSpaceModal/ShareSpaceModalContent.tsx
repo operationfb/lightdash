@@ -41,6 +41,7 @@ import {
     useUpdateMutation,
 } from '../../../hooks/useSpaces';
 import useApp from '../../../providers/App/useApp';
+import { toBrowserPath } from '../../../utils/url';
 import { LightdashUserAvatar } from '../../Avatar';
 import Callout from '../Callout';
 import MantineIcon from '../MantineIcon';
@@ -530,7 +531,9 @@ const ShareSpaceModalContent: FC<ShareSpaceProps> = ({
                                                     several individual users.
                                                     Consider using{' '}
                                                     <Anchor
-                                                        href="/generalSettings/userManagement"
+                                                        href={toBrowserPath(
+                                                            '/generalSettings/userManagement',
+                                                        )}
                                                         target="_blank"
                                                         fz="sm"
                                                     >

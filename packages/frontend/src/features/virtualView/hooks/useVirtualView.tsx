@@ -10,6 +10,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { lightdashApi } from '../../../api';
 import useToaster from '../../../hooks/toaster/useToaster';
+import { toBrowserPath } from '../../../utils/url';
 
 const createVirtualView = async ({
     projectUuid,
@@ -58,7 +59,9 @@ export const useCreateVirtualView = ({
                     icon: IconArrowRight,
                     onClick: () => {
                         window.open(
-                            `/projects/${projectUuid}/tables/${data.name}`,
+                            toBrowserPath(
+                                `/projects/${projectUuid}/tables/${data.name}`,
+                            ),
                             '_blank',
                         );
                     },

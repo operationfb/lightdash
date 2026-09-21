@@ -15,6 +15,7 @@ import { fromApiKey, fromOauth } from '../../auth/account/account';
 import { requestContextFromExpress } from '../../auth/account/requestContext';
 import { buildAccountExistsWarning } from '../../auth/account/warnAccountExists';
 import { lightdashConfig } from '../../config/lightdashConfig';
+import { siteUrlFor } from '../../config/siteUrl';
 import { authenticateServiceAccount } from '../../ee/authentication';
 import Logger from '../../logging/logger';
 
@@ -289,11 +290,15 @@ export const storeSlackContext: RequestHandler = (req, res, next) => {
 export const getOidcRedirectURL =
     (isSuccess: boolean) =>
     (req: Request): string => {
+        // KONTALA: every URL below is one this app writes for itself, so it
+        // goes through siteUrlFor rather than resolving a leading slash against
+        // the origin - which would land the reader outside the base path this
+        // instance is mounted under. See config/siteUrl.ts.
         if (req.session.oauth?.isPopup) {
-            return new URL(
+            return siteUrlFor(
+                lightdashConfig,
                 isSuccess ? '/auth/popup/success' : '/auth/popup/failure',
-                lightdashConfig.siteUrl,
-            ).href;
+            );
         }
         if (
             req.session.oauth?.returnTo &&
@@ -307,7 +312,7 @@ export const getOidcRedirectURL =
                 return returnUrl.href;
             }
         }
-        return new URL('/', lightdashConfig.siteUrl).href;
+        return siteUrlFor(lightdashConfig, '/');
     };
 
 export const invalidUserErrorHandler: ErrorRequestHandler = (

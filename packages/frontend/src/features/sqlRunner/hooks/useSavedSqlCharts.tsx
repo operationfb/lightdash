@@ -19,6 +19,7 @@ import { lightdashApi } from '../../../api';
 import useToaster from '../../../hooks/toaster/useToaster';
 import { invalidateContent } from '../../../hooks/useContent';
 import useApp from '../../../providers/App/useApp';
+import { toBrowserPath } from '../../../utils/url';
 
 export type GetSavedSqlChartParams = {
     projectUuid: string;
@@ -255,7 +256,9 @@ export const usePromoteSqlChartMutation = (projectUuid: string) => {
                         icon: IconArrowRight,
                         onClick: () => {
                             window.open(
-                                `/projects/${data.project.projectUuid}/sql-runner/${data.slug}`,
+                                toBrowserPath(
+                                    `/projects/${data.project.projectUuid}/sql-runner/${data.slug}`,
+                                ),
                                 '_blank',
                             );
                         },

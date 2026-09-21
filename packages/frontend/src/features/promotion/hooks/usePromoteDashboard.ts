@@ -7,6 +7,7 @@ import { IconArrowRight } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
 import { lightdashApi } from '../../../api';
 import useToaster from '../../../hooks/toaster/useToaster';
+import { toBrowserPath } from '../../../utils/url';
 
 const promoteDashboard = async (dashboardUuid: string): Promise<Dashboard> => {
     return lightdashApi<Dashboard>({
@@ -30,7 +31,9 @@ export const usePromoteDashboardMutation = () => {
                         icon: IconArrowRight,
                         onClick: () => {
                             window.open(
-                                `/projects/${data.projectUuid}/dashboards/${data.slug}`,
+                                toBrowserPath(
+                                    `/projects/${data.projectUuid}/dashboards/${data.slug}`,
+                                ),
                                 '_blank',
                             );
                         },

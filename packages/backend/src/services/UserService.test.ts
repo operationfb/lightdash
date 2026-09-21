@@ -5761,3 +5761,81 @@ describe('UserService learn progress (CS-186)', () => {
         });
     });
 });
+
+// KONTALA: what an instance offers somebody who has not said who they are yet.
+//
+// This is the first thing a crossing from Kontala Marketing meets: the reader
+// arrives at a deep link with no session here, the frontend routes them to the
+// login page, and this answer is the whole of what that page can do. When the
+// instance has exactly one way in, the answer is to take it.
+describe('getLoginOptions, before an email is known', () => {
+    const underKontala: LightdashConfig = {
+        ...lightdashConfigMock,
+        siteUrl: 'https://konta.la/analytics',
+        basePath: '/analytics',
+        auth: {
+            ...lightdashConfigMock.auth,
+            disablePasswordAuthentication: true,
+            oidc: {
+                ...lightdashConfigMock.auth.oidc,
+                clientId: 'kontala-marketing',
+                loginPath: '/login/oidc',
+            },
+        },
+    };
+
+    it('sends the reader straight to the one provider when SSO is the only way in', async () => {
+        const options = await createUserService(underKontala).getLoginOptions();
+
+        expect(options.showOptions).toEqual([
+            OpenIdIdentityIssuerType.GENERIC_OIDC,
+        ]);
+        expect(options.forceRedirect).toBe(true);
+        // ⚠ THE BASE PATH IS THE POINT. Without it this names
+        // https://konta.la/api/v1/login/oidc, which belongs to the product
+        // sharing this origin rather than to Lightdash, and the crossing dies
+        // on somebody else's 404.
+        expect(options.redirectUri).toBe(
+            'https://konta.la/analytics/api/v1/login/oidc',
+        );
+    });
+
+    it('leaves the choice alone when a password is also accepted', async () => {
+        const options = await createUserService({
+            ...underKontala,
+            auth: {
+                ...underKontala.auth,
+                disablePasswordAuthentication: false,
+            },
+        }).getLoginOptions();
+
+        expect(options.showOptions).toEqual([
+            LocalIssuerTypes.EMAIL,
+            OpenIdIdentityIssuerType.GENERIC_OIDC,
+        ]);
+        expect(options.forceRedirect).toBe(false);
+        expect(options.redirectUri).toBeUndefined();
+    });
+
+    it('leaves the choice alone when a second provider is configured', async () => {
+        const options = await createUserService({
+            ...underKontala,
+            auth: {
+                ...underKontala.auth,
+                google: { ...underKontala.auth.google, enabled: true },
+            },
+        }).getLoginOptions();
+
+        expect(options.showOptions).toHaveLength(2);
+        expect(options.forceRedirect).toBe(false);
+        expect(options.redirectUri).toBeUndefined();
+    });
+
+    it('does not redirect an instance whose only option is a password', async () => {
+        const options =
+            await createUserService(lightdashConfigMock).getLoginOptions();
+
+        expect(options.showOptions).toEqual([LocalIssuerTypes.EMAIL]);
+        expect(options.forceRedirect).toBe(false);
+    });
+});

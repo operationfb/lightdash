@@ -89,6 +89,7 @@ function createService(
     return new UnfurlService({
         lightdashConfig: {
             siteUrl: 'https://app.lightdash.cloud',
+            basePath: '',
             headlessBrowser: {
                 internalLightdashHost: 'http://headless-browser:8080',
                 screenshotTimeoutMs: 45_000,

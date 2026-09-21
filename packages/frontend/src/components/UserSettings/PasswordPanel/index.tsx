@@ -9,6 +9,7 @@ import {
     useUserHasPassword,
     useUserUpdatePasswordMutation,
 } from '../../../hooks/user/usePassword';
+import { toBrowserPath } from '../../../utils/url';
 import PasswordTextInput from '../../PasswordTextInput';
 
 const passwordSchema = getPasswordSchema();
@@ -46,7 +47,7 @@ const PasswordPanel: FC = () => {
                     title: 'Your password has been updated',
                 });
 
-                window.location.href = '/login';
+                window.location.href = toBrowserPath('/login');
             },
             onError: ({ error }) => {
                 showToastApiError({

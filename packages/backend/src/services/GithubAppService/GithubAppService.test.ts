@@ -54,10 +54,12 @@ const buildService = ({
     findCredential,
     deleteCredential = vi.fn(),
     updateTokens = vi.fn(),
+    lightdashConfig = lightdashConfigMock,
 }: {
     findCredential?: import('vitest').Mock;
     deleteCredential?: import('vitest').Mock;
     updateTokens?: import('vitest').Mock;
+    lightdashConfig?: typeof lightdashConfigMock;
 } = {}) =>
     new GithubAppService({
         githubAppInstallationsModel:
@@ -69,7 +71,7 @@ const buildService = ({
             updateTokens,
         } as unknown as GitUserCredentialsModel,
         userModel: {} as unknown as UserModel,
-        lightdashConfig: lightdashConfigMock,
+        lightdashConfig,
         analytics: analyticsMock,
     });
 
@@ -118,6 +120,39 @@ describe('GithubAppService', () => {
             expect(returnToUrl).toBe(
                 `${lightdashConfigMock.siteUrl}/projects/abc/settings?tab=git`,
             );
+        });
+
+        // KONTALA: `returnToPath` comes from the browser and already carries
+        // the base path, so it must not be prefixed twice. Only the fallback
+        // is a router path. See config/siteUrl.ts.
+        describe('under a base path', () => {
+            const underPath = {
+                ...lightdashConfigMock,
+                siteUrl: 'https://konta.la/analytics',
+                basePath: '/analytics',
+            };
+
+            it('takes a browser path as given rather than prefixing it twice', async () => {
+                const service = buildService({ lightdashConfig: underPath });
+                const { returnToUrl } = await service.linkUserRedirect(
+                    user,
+                    '/analytics/projects/abc/settings?tab=git',
+                );
+                expect(returnToUrl).toBe(
+                    'https://konta.la/analytics/projects/abc/settings?tab=git',
+                );
+            });
+
+            it('keeps the fallback inside this instance', async () => {
+                const service = buildService({ lightdashConfig: underPath });
+                const { returnToUrl } = await service.linkUserRedirect(
+                    user,
+                    'https://evil.com/phish',
+                );
+                expect(returnToUrl).toBe(
+                    'https://konta.la/analytics/generalSettings/integrations',
+                );
+            });
         });
     });
 

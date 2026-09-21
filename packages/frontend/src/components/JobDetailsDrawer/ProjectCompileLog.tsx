@@ -4,6 +4,7 @@ import { type FC } from 'react';
 import ReactJson from 'react-json-view';
 import { useProjectCompileLogByJob } from '../../hooks/useProjectCompileLogs';
 import { useRjvTheme } from '../../hooks/useRjvTheme';
+import { toBrowserPath } from '../../utils/url';
 import MantineIcon from '../common/MantineIcon';
 import { CollapsablePaper } from './../common/CollapsablePaper';
 
@@ -37,7 +38,9 @@ const ProjectCompileLog: FC<ProjectCompileLogProps> = ({
                     rightSection={<MantineIcon icon={IconExternalLink} />}
                     component="a"
                     target="_blank"
-                    href={`/generalSettings/projectManagement/${projectUuid}/compilationHistory`}
+                    href={toBrowserPath(
+                        `/generalSettings/projectManagement/${projectUuid}/compilationHistory`,
+                    )}
                 >
                     See history
                 </Button>

@@ -1,6 +1,7 @@
 import { type ApiError } from '@lightdash/common';
 import { useMutation } from '@tanstack/react-query';
 import { lightdashApi } from '../../api';
+import { toBrowserPath } from '../../utils/url';
 import useToaster from '../toaster/useToaster';
 
 const leaveOrganizationQuery = async () =>
@@ -15,7 +16,7 @@ export const useLeaveOrganizationMutation = () => {
     return useMutation<null, ApiError>(leaveOrganizationQuery, {
         mutationKey: ['leave_organization'],
         onSuccess: () => {
-            window.location.href = '/login';
+            window.location.href = toBrowserPath('/login');
         },
         onError: ({ error }) => {
             showToastApiError({

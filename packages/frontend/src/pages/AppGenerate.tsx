@@ -174,6 +174,7 @@ import { useServerFeatureFlag } from '../hooks/useServerOrClientFeatureFlag';
 import { useSpaceSummaries } from '../hooks/useSpaces';
 import { useAbilityContext } from '../providers/Ability/useAbilityContext';
 import useApp from '../providers/App/useApp';
+import { toBrowserPath } from '../utils/url';
 import classes from './AppGenerate.module.css';
 
 // Run a layout-changing state update inside a native View Transition so the
@@ -1137,7 +1138,9 @@ const AppGenerate: FC = () => {
         }) => {
             if (!projectUuid) return;
             window.open(
-                getAiAgentThreadPath(projectUuid, agentUuid, threadUuid),
+                toBrowserPath(
+                    getAiAgentThreadPath(projectUuid, agentUuid, threadUuid),
+                ),
                 '_blank',
                 'noopener',
             );

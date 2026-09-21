@@ -13,6 +13,7 @@ import {
 import { lightdashApi } from '../../../api';
 import useToaster from '../../../hooks/toaster/useToaster';
 import useQueryError from '../../../hooks/useQueryError';
+import { toBrowserPath } from '../../../utils/url';
 
 export type LoginParams = { email: string; password: string };
 
@@ -56,7 +57,7 @@ export const useFetchLoginOptions = ({
             setErrorResponse(result);
             if (
                 result.error.name === InvalidUser.name &&
-                window.location.pathname === '/login'
+                window.location.pathname === toBrowserPath('/login')
             ) {
                 showToastError({
                     title: 'Your login has expired',

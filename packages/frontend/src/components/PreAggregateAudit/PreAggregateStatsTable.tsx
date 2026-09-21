@@ -10,6 +10,7 @@ import {
     IconTarget,
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState, type FC } from 'react';
+import { toBrowserPath } from '../../utils/url';
 import {
     ContentTable,
     useContentTable,
@@ -176,7 +177,9 @@ const PreAggregateStatsTable: FC<Props> = ({
                 Cell: ({ row }) =>
                     row.original.chartUuid ? (
                         <Anchor
-                            href={`/projects/${projectUuid}/saved/${row.original.chartUuid}`}
+                            href={toBrowserPath(
+                                `/projects/${projectUuid}/saved/${row.original.chartUuid}`,
+                            )}
                             target="_blank"
                             size="xs"
                         >
@@ -205,7 +208,9 @@ const PreAggregateStatsTable: FC<Props> = ({
                 Cell: ({ row }) =>
                     row.original.dashboardUuid ? (
                         <Anchor
-                            href={`/projects/${projectUuid}/dashboards/${row.original.dashboardSlug ?? row.original.dashboardUuid}`}
+                            href={toBrowserPath(
+                                `/projects/${projectUuid}/dashboards/${row.original.dashboardSlug ?? row.original.dashboardUuid}`,
+                            )}
                             target="_blank"
                             size="xs"
                         >

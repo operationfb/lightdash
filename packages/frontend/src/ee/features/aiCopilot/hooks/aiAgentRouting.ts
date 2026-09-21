@@ -1,6 +1,10 @@
+import { toBrowserPath } from '../../../../utils/url';
+
+// KONTALA: `window.location.pathname` carries the base path this build is
+// served under; the router's paths do not. See utils/url.ts.
 export const isEmbedAiAgentRoute = () =>
     typeof window !== 'undefined' &&
-    window.location.pathname.startsWith('/embed/');
+    window.location.pathname.startsWith(toBrowserPath('/embed/'));
 
 export const getAiAgentApiBase = (projectUuid: string) =>
     `/projects/${projectUuid}/aiAgents`;

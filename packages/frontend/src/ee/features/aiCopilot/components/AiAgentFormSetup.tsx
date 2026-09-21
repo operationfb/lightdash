@@ -58,6 +58,7 @@ import { useGetSlack } from '../../../../hooks/slack/useSlack';
 import { useOrganizationGroups } from '../../../../hooks/useOrganizationGroups';
 import { useServerFeatureFlag } from '../../../../hooks/useServerOrClientFeatureFlag';
 import useApp from '../../../../providers/App/useApp';
+import { toBrowserPath } from '../../../../utils/url';
 import { UserAccessMultiSelect } from '../../../components/UserAccessMultiSelect';
 import AiExploreAccessTree from '../../../pages/AiAgents/AiExploreAccessTree';
 import {
@@ -1083,7 +1084,9 @@ export const AiAgentFormSetup = ({
                                         <Anchor
                                             c="dimmed"
                                             underline="always"
-                                            href="/generalSettings/integrations"
+                                            href={toBrowserPath(
+                                                '/generalSettings/integrations',
+                                            )}
                                             target="_blank"
                                         >
                                             Integrations settings

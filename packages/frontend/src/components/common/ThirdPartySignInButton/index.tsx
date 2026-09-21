@@ -6,6 +6,7 @@ import { Badge, Box, Button, Image, type ButtonProps } from '@mantine/core';
 import { IconLock } from '@tabler/icons-react';
 import { type FC, type ReactNode } from 'react';
 import useApp from '../../../providers/App/useApp';
+import { toBrowserPath } from '../../../utils/url';
 import MantineIcon from '../MantineIcon';
 import {
     GOOGLE_LOGO,
@@ -69,8 +70,15 @@ const ThirdPartySignInButtonBase: FC<
             variant="default"
             color="gray"
             component="a"
-            href={`/api/v1${loginPath}?redirect=${encodeURIComponent(
-                redirect || window.location.href,
+            // KONTALA: both halves are paths on the ORIGIN rather than the
+            // router's, so the base path this build is served under goes back
+            // on. A bare `/api/v1...` here points at whatever else shares the
+            // origin. `redirect` arrives as a router path (LoginLanding passes
+            // one); the current location is already a browser URL.
+            href={`${toBrowserPath(
+                `/api/v1${loginPath}`,
+            )}?redirect=${encodeURIComponent(
+                redirect ? toBrowserPath(redirect) : window.location.href,
             )}${
                 inviteCode
                     ? `&inviteCode=${encodeURIComponent(inviteCode)}`

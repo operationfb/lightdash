@@ -30,6 +30,7 @@ import MantineModal, {
 } from '../../../components/common/MantineModal';
 import useHealth from '../../../hooks/health/useHealth';
 import { useProject } from '../../../hooks/useProject';
+import { toBrowserPath } from '../../../utils/url';
 import { useGithubDbtWriteBack } from '../hooks/useGithubDbtWriteBack';
 import { useGithubDbtWritePreview } from '../hooks/useGithubDbtWritePreview';
 import { useAppSelector } from '../store/hooks';
@@ -241,7 +242,9 @@ export const WriteBackToDbtModal: FC<Props> = ({ opened, onClose }) => {
                                 bot.{' '}
                                 <Anchor
                                     fz="sm"
-                                    href={`${GITHUB_USER_AUTHORIZE_URL}?redirect=${encodeURIComponent(
+                                    href={`${toBrowserPath(
+                                        GITHUB_USER_AUTHORIZE_URL,
+                                    )}?redirect=${encodeURIComponent(
                                         window.location.pathname,
                                     )}`}
                                     target="_blank"

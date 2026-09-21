@@ -46,6 +46,7 @@ import { useGetApp } from '../../../../../features/apps/hooks/useGetApp';
 import { useSdkUpgradeStatus } from '../../../../../features/apps/hooks/useSdkUpgradeStatus';
 import { usePreviewOrigin } from '../../../../../features/apps/previewOrigin';
 import { type ElementRef } from '../../../../../features/apps/utils/elementRefs';
+import { toBrowserPath } from '../../../../../utils/url';
 import { useRestoreAiAgentThreadDataAppVersionMutation } from '../../hooks/useProjectAiAgents';
 import { addThreadElementReference } from '../../store/aiAgentThreadElementRefsSlice';
 import {
@@ -553,7 +554,9 @@ export const AiDataAppPreviewPanel: FC<Props> = ({
                             }
                             onDuplicated={({ appUuid: newAppUuid }) =>
                                 window.open(
-                                    `/projects/${projectUuid}/apps/${newAppUuid}`,
+                                    toBrowserPath(
+                                        `/projects/${projectUuid}/apps/${newAppUuid}`,
+                                    ),
                                     '_blank',
                                 )
                             }

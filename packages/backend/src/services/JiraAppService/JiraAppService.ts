@@ -30,6 +30,7 @@ import {
     refreshJiraToken,
 } from '../../clients/jira/Jira';
 import { type LightdashConfig } from '../../config/parseConfig'; // pragma: allowlist secret
+import { siteUrlFor } from '../../config/siteUrl';
 import { type JiraAppInstallationsModel } from '../../models/JiraAppInstallations/JiraAppInstallationsModel';
 import { type EncryptionUtil } from '../../utils/EncryptionUtil/EncryptionUtil';
 import { BaseService } from '../BaseService';
@@ -122,10 +123,7 @@ export class JiraAppService extends BaseService {
     }
 
     private getRedirectUri() {
-        return new URL(
-            '/api/v1/jira/oauth/callback',
-            this.config.siteUrl, // pragma: allowlist secret
-        ).href;
+        return siteUrlFor(this.config, '/api/v1/jira/oauth/callback');
     }
 
     async installRedirect(
@@ -145,10 +143,7 @@ export class JiraAppService extends BaseService {
         });
         return {
             installUrl: getJiraAuthorizationUrl(clientId, redirectUri, state),
-            returnToUrl: new URL(
-                '/generalSettings/ai/general',
-                this.config.siteUrl, // pragma: allowlist secret
-            ).href,
+            returnToUrl: siteUrlFor(this.config, '/generalSettings/ai/general'),
             state,
             jira: {
                 redirectUri,

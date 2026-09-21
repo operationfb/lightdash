@@ -21,6 +21,7 @@ import { useEffect, type FC } from 'react';
 import useToaster from '../../../hooks/toaster/useToaster';
 import useSearchParams from '../../../hooks/useSearchParams';
 import githubIcon from '../../../svgs/github-icon.svg';
+import { toBrowserPath } from '../../../utils/url';
 import {
     useDeleteGithubInstallationMutation,
     useGitHubRepositories,
@@ -29,7 +30,7 @@ import MantineIcon from '../../common/MantineIcon';
 import { SettingsGridCard } from '../../common/Settings/SettingsCard';
 import classes from './GithubSettingsPanel.module.css';
 
-const GITHUB_INSTALL_URL = `/api/v1/github/install`;
+const GITHUB_INSTALL_URL = toBrowserPath('/api/v1/github/install');
 
 const GithubSettingsPanel: FC = () => {
     const { data, isError, isInitialLoading } = useGitHubRepositories();

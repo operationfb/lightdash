@@ -10,6 +10,7 @@ import { createHash } from 'crypto';
 import { Strategy as OAuth2Strategy, VerifyCallback } from 'passport-oauth2';
 import { URL } from 'url';
 import { lightdashConfig } from '../../../config/lightdashConfig';
+import { siteUrlFor } from '../../../config/siteUrl';
 import Logger from '../../../logging/logger';
 
 type DatabricksStrategyConfig = {
@@ -115,10 +116,12 @@ export const createDatabricksStrategy = ({
             clientID: clientId,
             // U2M OAuth can use a public client without a secret, but passport-oauth2 requires this field
             clientSecret: clientSecret || '',
-            callbackURL: new URL(
+            // KONTALA: the IdP sends the browser back here, to a route this
+            // app serves under its base path. See config/siteUrl.ts.
+            callbackURL: siteUrlFor(
+                lightdashConfig,
                 `/api/v1${lightdashConfig.auth.databricks.callbackPath}`,
-                lightdashConfig.siteUrl,
-            ).href,
+            ),
             scope: ['sql', 'offline_access'],
             passReqToCallback: true,
             // PKCE is required for Databricks U2M OAuth

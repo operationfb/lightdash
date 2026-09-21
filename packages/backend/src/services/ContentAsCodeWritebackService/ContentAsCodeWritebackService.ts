@@ -37,6 +37,7 @@ import { LightdashAnalytics } from '../../analytics/LightdashAnalytics';
 import * as GithubClient from '../../clients/github/Github';
 import * as GitlabClient from '../../clients/gitlab/Gitlab';
 import { LightdashConfig } from '../../config/parseConfig';
+import { siteUrlFor } from '../../config/siteUrl';
 import { ContentAsCodeProjectSettingsModel } from '../../models/ContentAsCodeProjectSettingsModel';
 import { ContentAsCodeSnapshotModel } from '../../models/ContentAsCodeSnapshotModel';
 import {
@@ -1737,10 +1738,10 @@ export class ContentAsCodeWritebackService extends BaseService {
                 buildCommitMessage(
                     slug,
                     author,
-                    new URL(
+                    siteUrlFor(
+                        this.lightdashConfig,
                         `/projects/${projectUuid}`,
-                        this.lightdashConfig.siteUrl,
-                    ).href,
+                    ),
                 ),
             );
         } catch (error) {
@@ -1769,10 +1770,10 @@ export class ContentAsCodeWritebackService extends BaseService {
                 buildCommitMessage(
                     slug,
                     author,
-                    new URL(
+                    siteUrlFor(
+                        this.lightdashConfig,
                         `/projects/${projectUuid}`,
-                        this.lightdashConfig.siteUrl,
-                    ).href,
+                    ),
                 ),
             );
         }

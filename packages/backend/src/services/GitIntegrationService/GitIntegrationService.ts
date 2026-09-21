@@ -52,6 +52,7 @@ import * as BitbucketClient from '../../clients/bitbucket/Bitbucket';
 import * as GithubClient from '../../clients/github/Github';
 import * as GitlabClient from '../../clients/gitlab/Gitlab';
 import { LightdashConfig } from '../../config/parseConfig';
+import { siteUrlFor } from '../../config/siteUrl';
 import Logger from '../../logging/logger';
 import { GithubAppInstallationsModel } from '../../models/GithubAppInstallations/GithubAppInstallationsModel';
 import { ProjectDbtSourcesModel } from '../../models/ProjectDbtSourcesModel';
@@ -340,12 +341,10 @@ Triggered by user ${user.firstName} ${user.lastName} (${user.email})
         const chartDetails = chart
             ? `
 Affected charts: 
-- [${chart.name}](${
-                  new URL(
-                      `/projects/${projectUuid}/charts/${chart.uuid}`,
-                      this.lightdashConfig.siteUrl,
-                  ).href
-              })
+- [${chart.name}](${siteUrlFor(
+                  this.lightdashConfig,
+                  `/projects/${projectUuid}/charts/${chart.uuid}`,
+              )})
         `
             : ``;
 

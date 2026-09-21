@@ -50,6 +50,7 @@ import { BetaBadge } from '../../../../components/common/BetaBadge';
 import MantineIcon from '../../../../components/common/MantineIcon';
 import MantineModal from '../../../../components/common/MantineModal';
 import useToaster from '../../../../hooks/toaster/useToaster';
+import { toBrowserPath } from '../../../../utils/url';
 import { useProjectUpdateAiAgentMutation } from '../hooks/useProjectAiAgents';
 import {
     useConnectGithubMcpServerAppMutation,
@@ -1834,7 +1835,9 @@ export const AiAgentMcpServersInput = ({
                         To get started, an organization admin needs to install
                         the Lightdash GitHub App from{' '}
                         <Anchor
-                            href="/generalSettings/integrations"
+                            href={toBrowserPath(
+                                '/generalSettings/integrations',
+                            )}
                             target="_blank"
                         >
                             Organization settings → Integrations

@@ -51,6 +51,7 @@ import useApp from '../../../providers/App/useApp';
 import MantineBaseProvider from '../../../providers/MantineBaseProvider';
 import useTracking from '../../../providers/Tracking/useTracking';
 import { EventName } from '../../../types/Events';
+import { toBrowserPath } from '../../../utils/url';
 import { useOmnibarSettingsItems } from '../hooks/useOmnibarSettingsItems';
 import useSearch, { hasMinQueryLength } from '../hooks/useSearch';
 import {
@@ -233,7 +234,9 @@ const Omnibar: FC<Props> = ({ projectUuid }) => {
         // Settings pages always navigate in place, never a new tab.
         if (redirect && item.type !== SearchItemType.SETTINGS) {
             window.open(
-                item.location.pathname + (item.location.search || ''),
+                toBrowserPath(
+                    item.location.pathname + (item.location.search || ''),
+                ),
                 '_blank',
                 'noopener,noreferrer',
             );

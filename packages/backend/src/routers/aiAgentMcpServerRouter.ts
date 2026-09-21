@@ -1,5 +1,6 @@
 import express, { type Router } from 'express';
 import { lightdashConfig } from '../config/lightdashConfig';
+import { siteUrlFor } from '../config/siteUrl';
 import { AiAgentService } from '../ee/services/AiAgentService/AiAgentService';
 import Logger from '../logging/logger';
 
@@ -13,14 +14,11 @@ const handleOAuthCallback = async (
     res: express.Response,
 ) => {
     const { code, state } = req.query;
-    const successRedirect = new URL(
-        '/auth/popup/success',
-        lightdashConfig.siteUrl,
-    ).toString();
-    const failureRedirect = new URL(
-        '/auth/popup/failure',
-        lightdashConfig.siteUrl,
-    ).toString();
+    // KONTALA: the popup these close is served by this instance, so both go
+    // through siteUrlFor rather than resolving a leading slash against the
+    // origin. See config/siteUrl.ts.
+    const successRedirect = siteUrlFor(lightdashConfig, '/auth/popup/success');
+    const failureRedirect = siteUrlFor(lightdashConfig, '/auth/popup/failure');
 
     try {
         await getAiAgentService(req).completeMcpOAuthConnection({

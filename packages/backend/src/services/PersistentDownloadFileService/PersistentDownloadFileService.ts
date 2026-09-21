@@ -17,6 +17,7 @@ import {
 } from '../../analytics/LightdashAnalytics';
 import { type FileStorageClient } from '../../clients/FileStorage/FileStorageClient';
 import { LightdashConfig } from '../../config/parseConfig';
+import { siteUrlFor } from '../../config/siteUrl';
 import { type DbPersistentDownloadFile } from '../../database/entities/persistentDownloadFile';
 import { PersistentDownloadFileModel } from '../../models/PersistentDownloadFileModel';
 import { BaseService } from '../BaseService';
@@ -157,8 +158,7 @@ export class PersistentDownloadFileService extends BaseService {
         });
 
         const url = new URL(
-            `/api/v1/file/${fileNanoid}`,
-            this.lightdashConfig.siteUrl,
+            siteUrlFor(this.lightdashConfig, `/api/v1/file/${fileNanoid}`),
         );
 
         if (data.accessMode === PersistentDownloadFileAccessMode.SIGNED) {

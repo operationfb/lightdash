@@ -64,6 +64,7 @@ import {
     Unfurl,
 } from '../../clients/Slack/SlackMessageBlocks';
 import { LightdashConfig } from '../../config/parseConfig';
+import { siteUrlFor } from '../../config/siteUrl';
 import { slackErrorHandler } from '../../errors';
 import Logger from '../../logging/logger';
 import { AppModel } from '../../models/AppModel';
@@ -784,10 +785,10 @@ export class UnfurlService extends BaseService {
                     s3Key: `${imageId}.png`,
                     organizationUuid,
                 });
-                imageUrl = new URL(
+                imageUrl = siteUrlFor(
+                    this.lightdashConfig,
                     `/api/v1/slack/preview/${previewId}`,
-                    this.lightdashConfig.siteUrl,
-                ).href;
+                );
             }
             return imageUrl;
         }
@@ -800,10 +801,10 @@ export class UnfurlService extends BaseService {
             DownloadFileType.IMAGE,
         );
 
-        return new URL(
+        return siteUrlFor(
+            this.lightdashConfig,
             `/api/v1/slack/image/${downloadFileId}`,
-            this.lightdashConfig.siteUrl,
-        ).href;
+        );
     }
 
     /**

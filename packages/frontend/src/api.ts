@@ -23,6 +23,7 @@ import {
     networkFailureMessage,
     UnexpectedResponseError,
 } from './utils/networkDiagnostics';
+import { toBrowserPath } from './utils/url';
 
 // TODO: import from common or fix the instantiation of the request module
 const LIGHTDASH_SDK_INSTANCE_URL_LOCAL_STORAGE_KEY =
@@ -141,12 +142,16 @@ const handleError = async (
     request: FailedRequest,
 ): Promise<ApiError> => {
     if (isApiError(err) && err.error?.statusCode && err.error?.name) {
+        // KONTALA: `window.location.pathname` carries the base path this
+        // build is served under, so the comparison and the redirect are both
+        // in browser space rather than the router's. See utils/url.ts.
+        const loginPath = toBrowserPath('/login');
         if (
             err.error.name === 'DeactivatedAccountError' &&
-            window.location.pathname !== '/login'
+            window.location.pathname !== loginPath
         ) {
             // redirect to login page when account is deactivated
-            window.location.href = '/login';
+            window.location.href = loginPath;
         }
         return err;
     }

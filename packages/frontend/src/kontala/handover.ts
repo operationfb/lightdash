@@ -20,8 +20,23 @@ const FROM_ANALYTICS = 'km.handover-from-analytics.v1';
 
 const HANDOVER_VERSION = 1;
 
-/** A crossing is one navigation, so a minute is already generous. */
-const HANDOVER_MAX_AGE_MS = 60_000;
+/**
+ * How long a payload Kontala wrote stays meaningful.
+ *
+ * ⚠ LONGER THAN THE KONTALA SIDE ALLOWS ITS OWN, deliberately: the two legs are
+ * not the same journey. Going back is one navigation between two builds, and a
+ * minute is generous for it. Coming here is that navigation plus, for a reader
+ * with no session in this build yet, a whole single sign-on round trip - the
+ * login page, the redirect out, the provider, the token exchange and the
+ * redirect back - against two services that scale to zero and may both be cold.
+ * A minute does not reliably cover it, and what it costs when it runs out is
+ * the way home quietly disappearing from a crossing that otherwise worked.
+ *
+ * Five minutes still says the thing the budget is for: context nobody came back
+ * to within the span of one crossing is context to forget, rather than to
+ * restore into some later visit that happens to reuse this tab.
+ */
+const HANDOVER_MAX_AGE_MS = 5 * 60_000;
 
 export type Handover = {
     version: number;

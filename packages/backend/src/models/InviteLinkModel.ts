@@ -7,8 +7,8 @@ import {
 } from '@lightdash/common';
 import * as crypto from 'crypto';
 import { Knex } from 'knex';
-import { URL } from 'url';
 import { LightdashConfig } from '../config/parseConfig';
+import { siteUrlFor } from '../config/siteUrl';
 import { DbEmail, EmailTableName } from '../database/entities/emails';
 import {
     DbInviteLink,
@@ -61,7 +61,9 @@ export class InviteLinkModel {
     }
 
     private transformInviteCodeToUrl(code: string): string {
-        return new URL(`/invite/${code}`, this.lightdashConfig.siteUrl).href;
+        // KONTALA: emailed to the invitee, so it has to name this instance
+        // rather than the origin's root. See config/siteUrl.ts.
+        return siteUrlFor(this.lightdashConfig, `/invite/${code}`);
     }
 
     static _hash(s: string): string {

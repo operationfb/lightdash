@@ -161,6 +161,7 @@ import useDashboardContext from '../../providers/Dashboard/useDashboardContext';
 import useDashboardTileStatusContext from '../../providers/Dashboard/useDashboardTileStatusContext';
 import useTracking from '../../providers/Tracking/useTracking';
 import { EventName } from '../../types/Events';
+import { toBrowserPath } from '../../utils/url';
 import { CHART_TYPES_WITHOUT_IMAGE_EXPORT } from '../common/ChartDownload/chartDownloadUtils';
 import { getConditionalRuleLabelFromItem } from '../common/Filters/FilterInputs/utils';
 import MantineIcon from '../common/MantineIcon';
@@ -927,7 +928,10 @@ const DashboardChartTileMain: FC<DashboardChartTileMainProps> = memo(
                         `?` + chartSearch + `&fromDashboard=${dashboardUuid}`,
                 });
 
-                window.open(`/share/${shareUrl.nanoid}`, '_blank');
+                window.open(
+                    toBrowserPath(`/share/${shareUrl.nanoid}`),
+                    '_blank',
+                );
             },
             [createShareUrl, dashboardUuid],
         );

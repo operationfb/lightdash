@@ -44,7 +44,7 @@ import useApp from '../../../providers/App/useApp';
 import useTracking from '../../../providers/Tracking/useTracking';
 import { EventName } from '../../../types/Events';
 import { sanitizeRedirectUrl } from '../../../utils/redirectUrl';
-import { resolveInternalPath } from '../../../utils/url';
+import { resolveInternalPath, toBrowserPath } from '../../../utils/url';
 import {
     useFetchLoginOptions,
     useLoginWithEmailMutation,
@@ -341,6 +341,11 @@ const Login: FC<{}> = () => {
 
     const { showToastError, showToastApiError } = useToaster();
     const flashMessages = useFlashMessages();
+    // KONTALA: whether the flash has answered yet, either way. An errored query
+    // counts as settled: it says nothing about a previous login attempt, and
+    // holding an automatic redirect open on it would strand a reader whose only
+    // way in is that redirect. See the forceRedirect effect below.
+    const flashSettled = flashMessages.isSuccess || flashMessages.isError;
     useEffect(() => {
         if (flashMessages.data?.error) {
             showToastError({
@@ -413,17 +418,40 @@ const Login: FC<{}> = () => {
     useEffect(() => {
         if (loginOptions && loginOptionsSuccess) {
             if (loginOptions.forceRedirect && loginOptions.redirectUri) {
+                // KONTALA: never bounce straight back out to the provider that
+                // has just refused us.
+                //
+                // ⚠ THIS IS WHAT STOPS AN AUTOMATIC REDIRECT BECOMING A LOOP. A
+                // failed SSO callback lands back here with the reason in the
+                // flash, and an instance whose only login option is that
+                // provider would otherwise send the reader out again
+                // immediately, forever, as fast as both services can answer.
+                // Waiting for the flash to settle costs one request on a page
+                // that is already fetching it, and turns a hot loop into one
+                // bounce and a message somebody can act on.
+                if (!flashSettled || flashMessages.data?.error) return;
                 // Forward the post-login redirect target so the backend can
                 // persist it as `returnTo` (see `storeOIDCRedirect`). Without
                 // this, SSO-only orgs always land on `/` after auth.
                 const ssoUrl = new URL(loginOptions.redirectUri);
                 if (redirectUrl && redirectUrl !== '/') {
-                    ssoUrl.searchParams.set('redirect', redirectUrl);
+                    // KONTALA: `redirect` is read by the server, so it travels
+                    // as a path on the origin rather than as the router's.
+                    ssoUrl.searchParams.set(
+                        'redirect',
+                        toBrowserPath(redirectUrl),
+                    );
                 }
                 window.location.href = ssoUrl.href;
             }
         }
-    }, [loginOptionsSuccess, loginOptions, redirectUrl]);
+    }, [
+        loginOptionsSuccess,
+        loginOptions,
+        redirectUrl,
+        flashSettled,
+        flashMessages.data,
+    ]);
 
     const trackedMethodForEmail = useRef<string | undefined>(undefined);
     useEffect(() => {
@@ -498,7 +526,8 @@ const Login: FC<{}> = () => {
                 });
             }
             identify({ id: data.userUuid });
-            window.location.href = redirectUrl;
+            // KONTALA: leaving the router, so the base path goes back on.
+            window.location.href = toBrowserPath(redirectUrl);
         },
         [identify, redirectUrl],
     );

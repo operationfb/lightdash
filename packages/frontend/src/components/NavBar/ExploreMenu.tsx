@@ -18,6 +18,7 @@ import useCreateInAnySpaceAccess from '../../hooks/user/useCreateInAnySpaceAcces
 import { useServerFeatureFlag } from '../../hooks/useServerOrClientFeatureFlag';
 import { Can } from '../../providers/Ability';
 import useApp from '../../providers/App/useApp';
+import { toBrowserPath } from '../../utils/url';
 import LargeMenuItem from '../common/LargeMenuItem';
 import MantineIcon from '../common/MantineIcon';
 import DashboardCreateModal from '../common/modal/DashboardCreateModal';
@@ -134,7 +135,9 @@ const ExploreMenu: FC<Props> = memo((props) => {
                                         ) {
                                             event.preventDefault();
                                             window.open(
-                                                `/projects/${projectUrlIdentifier}/sql-runner`,
+                                                toBrowserPath(
+                                                    `/projects/${projectUrlIdentifier}/sql-runner`,
+                                                ),
                                                 '_blank',
                                             );
                                         }

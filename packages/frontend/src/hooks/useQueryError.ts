@@ -2,6 +2,7 @@ import { InvalidUser, PaginationError, type ApiError } from '@lightdash/common';
 import { captureException } from '@sentry/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { toBrowserPath } from '../utils/url';
 import useToaster from './toaster/useToaster';
 
 type opts = {
@@ -69,8 +70,9 @@ const useQueryError = ({
                         });
                     }
                 } else if (error.name === InvalidUser.name) {
-                    if (window.location.pathname !== '/login') {
-                        window.location.href = '/login';
+                    const loginPath = toBrowserPath('/login');
+                    if (window.location.pathname !== loginPath) {
+                        window.location.href = loginPath;
                     }
                 } else {
                     addToastError({

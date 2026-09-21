@@ -28,6 +28,7 @@ import { CategoryBadge } from '../../../../../components/common/CategoryBadge';
 import MantineIcon from '../../../../../components/common/MantineIcon';
 import MantineModal from '../../../../../components/common/MantineModal';
 import { useProjects } from '../../../../../hooks/useProjects';
+import { toBrowserPath } from '../../../../../utils/url';
 import { useAiAgentAdminReviewItems } from '../../hooks/useAiAgentAdmin';
 import {
     useAiAgentThread,
@@ -507,7 +508,9 @@ export const IssueDetailModal: FC<Props> = ({
                     bodyScrollAreaMaxHeight="calc(85vh - 130px)"
                     headerActions={
                         <Anchor
-                            href={`/projects/${projectUuid}/ai-agents/${agentUuid}/threads/${threadUuid}`}
+                            href={toBrowserPath(
+                                `/projects/${projectUuid}/ai-agents/${agentUuid}/threads/${threadUuid}`,
+                            )}
                             target="_blank"
                             rel="noopener noreferrer"
                             className={styles.toggle}

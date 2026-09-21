@@ -12,6 +12,7 @@ import { useActiveProjectUuid } from '../../hooks/useActiveProject';
 import useLogoutMutation from '../../hooks/user/useUserLogoutMutation';
 import { useServerFeatureFlag } from '../../hooks/useServerOrClientFeatureFlag';
 import useApp from '../../providers/App/useApp';
+import { toBrowserPath } from '../../utils/url';
 import MantineIcon from '../common/MantineIcon';
 import { UserAvatar } from '../UserAvatar';
 import { useNavBarMenuProps } from './NavBarPortalContext';
@@ -24,7 +25,7 @@ const UserMenu: FC<{ withLabel?: boolean }> = ({ withLabel = false }) => {
     const queryHistoryFlag = useServerFeatureFlag(FeatureFlags.QueryHistory);
     const { mutate: logout } = useLogoutMutation({
         onSuccess: () => {
-            window.location.href = '/login';
+            window.location.href = toBrowserPath('/login');
         },
     });
 

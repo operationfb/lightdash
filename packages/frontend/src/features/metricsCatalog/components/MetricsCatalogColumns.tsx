@@ -28,6 +28,7 @@ import {
     TableFilled,
     Tag,
 } from '../../../svgs/metricsCatalog';
+import { toBrowserPath } from '../../../utils/url';
 import { useAppDispatch, useAppSelector } from '../../sqlRunner/store/hooks';
 import { setCategoryPopoverIsClosing } from '../store/metricsCatalogSlice';
 import { CatalogCategory } from './CatalogCategory';
@@ -111,7 +112,12 @@ export const MetricsCatalogColumns: ContentTableColumnDef<CatalogField>[] = [
                 savedChartVersion,
             );
 
-            const url = new URL(exploreUrl.pathname, window.location.origin);
+            // KONTALA: `exploreUrl` is a router path and this is a real
+            // anchor, so the base path goes back on. See utils/url.ts.
+            const url = new URL(
+                toBrowserPath(exploreUrl.pathname),
+                window.location.origin,
+            );
             url.search = exploreUrl.search;
 
             return (

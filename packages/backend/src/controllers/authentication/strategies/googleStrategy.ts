@@ -15,6 +15,7 @@ import {
 } from 'passport-google-oauth20';
 import { URL } from 'url';
 import { lightdashConfig } from '../../../config/lightdashConfig';
+import { siteUrlFor } from '../../../config/siteUrl';
 import Logger from '../../../logging/logger';
 
 // The typings declare the claim as 'true' | 'false' but Google's userinfo sends a boolean
@@ -159,10 +160,12 @@ export const googlePassportStrategy: GoogleStrategy | undefined = !(
           {
               clientID: lightdashConfig.auth.google.oauth2ClientId,
               clientSecret: lightdashConfig.auth.google.oauth2ClientSecret,
-              callbackURL: new URL(
+              // KONTALA: the IdP sends the browser back here, to a route this
+              // app serves under its base path. See config/siteUrl.ts.
+              callbackURL: siteUrlFor(
+                  lightdashConfig,
                   `/api/v1${lightdashConfig.auth.google.callbackPath}`,
-                  lightdashConfig.siteUrl,
-              ).href,
+              ),
               passReqToCallback: true,
               pkce: true,
               state: true,

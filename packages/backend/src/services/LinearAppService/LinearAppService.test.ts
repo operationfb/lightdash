@@ -85,6 +85,7 @@ const makeService = () => {
         linearAppInstallationsModel,
         lightdashConfig: {
             siteUrl: 'https://app.example.com',
+            basePath: '',
         },
         analytics,
         onWorkspaceChanged,

@@ -1,8 +1,8 @@
 import { NotFoundError, PasswordResetLink } from '@lightdash/common';
 import * as crypto from 'crypto';
 import { Knex } from 'knex';
-import { URL } from 'url';
 import { LightdashConfig } from '../config/parseConfig';
+import { siteUrlFor } from '../config/siteUrl';
 import { EmailTableName } from '../database/entities/emails';
 import { PasswordResetTableName } from '../database/entities/passwordResetLinks';
 
@@ -25,8 +25,9 @@ export class PasswordResetLinkModel {
     }
 
     transformCodeToUrl(code: string): string {
-        return new URL(`/reset-password/${code}`, this.lightdashConfig.siteUrl)
-            .href;
+        // KONTALA: emailed to the user, so it has to name this instance rather
+        // than the origin's root. See config/siteUrl.ts.
+        return siteUrlFor(this.lightdashConfig, `/reset-password/${code}`);
     }
 
     static _hash(s: string): string {

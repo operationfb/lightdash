@@ -3,6 +3,7 @@ import {
     IconBrandGitlab,
     type Icon as TablerIcon,
 } from '@tabler/icons-react';
+import { toBrowserPath } from '../../../../../../utils/url';
 
 // Shared helpers/constants for the writeback PR cards (dbt + general coding
 // agent). Kept in a non-component module so both card files can import them
@@ -43,12 +44,12 @@ export const INSTALL_ACTIONS: Record<
 > = {
     github_not_installed: {
         icon: IconBrandGithub,
-        installUrl: '/api/v1/github/install',
+        installUrl: toBrowserPath('/api/v1/github/install'),
         cta: 'Install GitHub App',
     },
     gitlab_not_installed: {
         icon: IconBrandGitlab,
-        installUrl: '/api/v1/gitlab/install',
+        installUrl: toBrowserPath('/api/v1/gitlab/install'),
         cta: 'Connect GitLab',
     },
 };

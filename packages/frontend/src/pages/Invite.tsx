@@ -35,6 +35,7 @@ import {
 import { useServerFeatureFlag } from '../hooks/useServerOrClientFeatureFlag';
 import useApp from '../providers/App/useApp';
 import useTracking from '../providers/Tracking/useTracking';
+import { toBrowserPath } from '../utils/url';
 import classes from './Invite.module.css';
 
 interface WelcomeCardProps {
@@ -258,7 +259,9 @@ const Invite: FC = () => {
         mutationKey: ['create_user'],
         onSuccess: (data) => {
             identify({ id: data.userUuid });
-            window.location.href = redirectUrl;
+            // KONTALA: `redirectUrl` is a router path; this leaves the router,
+            // so the base path goes back on. See utils/url.ts.
+            window.location.href = toBrowserPath(redirectUrl);
         },
         onError: ({ error }) => {
             showToastApiError({

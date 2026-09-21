@@ -41,6 +41,7 @@ import MantineModal, {
 } from '../../../components/common/MantineModal';
 import useToaster from '../../../hooks/toaster/useToaster';
 import { useValidationWithResults } from '../../../hooks/validation/useValidation';
+import { toBrowserPath } from '../../../utils/url';
 import { useSqlQueryRun } from '../../sqlRunner/hooks/useSqlQueryRun';
 import { useAppSelector } from '../../sqlRunner/store/hooks';
 import { compareSqlQueries } from '../../sqlRunner/store/sqlRunnerSlice';
@@ -113,7 +114,9 @@ const ChartErrorListItem: FC<{
                 maw={300}
             >
                 <Anchor
-                    href={`/projects/${projectUuid}/saved/${firstError.chartUuid}`}
+                    href={toBrowserPath(
+                        `/projects/${projectUuid}/saved/${firstError.chartUuid}`,
+                    )}
                     target="_blank"
                     fz="sm"
                     fw={500}

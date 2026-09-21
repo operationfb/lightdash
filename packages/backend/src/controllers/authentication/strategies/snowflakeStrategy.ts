@@ -9,6 +9,7 @@ import {
 import { Strategy as OAuth2Strategy, VerifyCallback } from 'passport-oauth2';
 import { URL } from 'url';
 import { lightdashConfig } from '../../../config/lightdashConfig';
+import { siteUrlFor } from '../../../config/siteUrl';
 import Logger from '../../../logging/logger';
 
 export const snowflakePassportStrategy = !(
@@ -26,10 +27,12 @@ export const snowflakePassportStrategy = !(
               tokenURL: lightdashConfig.auth.snowflake.tokenEndpoint,
               clientID: lightdashConfig.auth.snowflake.clientId,
               clientSecret: lightdashConfig.auth.snowflake.clientSecret,
-              callbackURL: new URL(
+              // KONTALA: the IdP sends the browser back here, to a route this
+              // app serves under its base path. See config/siteUrl.ts.
+              callbackURL: siteUrlFor(
+                  lightdashConfig,
                   `/api/v1${lightdashConfig.auth.snowflake.callbackPath}`,
-                  lightdashConfig.siteUrl,
-              ).href,
+              ),
               passReqToCallback: true,
           },
           async (

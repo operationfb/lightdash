@@ -23,6 +23,7 @@ import ReactQueryProvider from './providers/ReactQuery/ReactQueryProvider';
 import SchedulerJobsProvider from './providers/SchedulerJobs/SchedulerJobsProvider';
 import ThirdPartyProvider from './providers/ThirdPartyServicesProvider';
 import TrackingProvider from './providers/Tracking/TrackingProvider';
+import { toBrowserPath } from './utils/url';
 
 installChunkLoadErrorHandler();
 
@@ -35,13 +36,20 @@ const AgentOnboardingCompletionWatcher = lazy(() =>
     ),
 );
 
-const isMinimalPage = window.location.pathname.startsWith('/minimal');
+// KONTALA: `window.location.pathname` carries the base path this build is
+// served under; the router's paths do not. Both sides of the test have to be
+// in the same space. See utils/url.ts.
+const isMinimalPage = window.location.pathname.startsWith(
+    toBrowserPath('/minimal'),
+);
 
 // On embed routes, force the color scheme from the ?theme= URL param without
 // persisting it to localStorage. This keeps the embed in its configured theme
 // while never overriding the viewer's own (shared, cross-tab) theme preference.
 // `undefined` everywhere else, so non-embed routes are unaffected.
-const embedForcedColorScheme = window.location.pathname.startsWith('/embed')
+const embedForcedColorScheme = window.location.pathname.startsWith(
+    toBrowserPath('/embed'),
+)
     ? parseEmbedThemeParams().theme
     : undefined;
 

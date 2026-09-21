@@ -8,6 +8,7 @@ import {
 import { Strategy as OpenIDConnectStrategy } from 'passport-openidconnect';
 import { URL } from 'url';
 import { lightdashConfig } from '../../../config/lightdashConfig';
+import { siteUrlFor } from '../../../config/siteUrl';
 import { genericOidcHandler } from './oidcStrategy';
 
 /**
@@ -24,10 +25,12 @@ export const createOneLoginStrategyForConfig = (
             clientID: config.oauth2ClientId,
             clientSecret: config.oauth2ClientSecret,
             issuer: new URL(`/oidc/2`, config.oauth2Issuer).href,
-            callbackURL: new URL(
+            // KONTALA: the IdP sends the browser back here, to a route this
+            // app serves under its base path. See config/siteUrl.ts.
+            callbackURL: siteUrlFor(
+                lightdashConfig,
                 `/api/v1${lightdashConfig.auth.oneLogin.callbackPath}`,
-                lightdashConfig.siteUrl,
-            ).href,
+            ),
             authorizationURL: new URL(`/oidc/2/auth`, config.oauth2Issuer).href,
             tokenURL: new URL(`/oidc/2/token`, config.oauth2Issuer).href,
             userInfoURL: new URL(`/oidc/2/me`, config.oauth2Issuer).href,

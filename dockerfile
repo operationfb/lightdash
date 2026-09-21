@@ -1,5 +1,12 @@
 # syntax=docker/dockerfile:1.7
 
+# Which runtime variant `prod` is built on. `runtime-dbt` (the default) carries
+# the dbt virtualenvs and the python runtime they need. `runtime-nodbt` omits
+# both, for deployments whose projects use the Lightdash YAML semantic layer
+# (`semanticLayer: 'lightdash'`) and so never invoke the dbt CLI.
+# Declared before the first FROM because a FROM consumes it.
+ARG RUNTIME_VARIANT=runtime-dbt
+
 # Extensions are ABI-versioned. Keep this pinned image and the destination path
 # below aligned with @duckdb/node-api; the production stage fails if they drift.
 FROM duckdb/duckdb:1.5.2@sha256:5658472bf45cce867048a17201b9d38d4632507e7df4a69994f8236599f69d45 AS duckdb-extensions
@@ -368,14 +375,31 @@ RUN if [ -n "${SENTRY_AUTH_TOKEN}" ] && [ -n "${SENTRY_ORG}" ] && [ -n "${SENTRY
     sentry-cli releases deploys "${SENTRY_RELEASE_VERSION}" new -e "${SENTRY_ENVIRONMENT}" --project "${SENTRY_BACKEND_PROJECT}"; \
     fi
 
+# Frontend sourcemaps are ~97 MiB and are served publicly by the static handler
+# in App.ts, which has no .map exclusion. This runs after the Sentry upload
+# above, so symbolication is unaffected by dropping them from the image.
+ARG KEEP_FRONTEND_SOURCEMAPS=true
+RUN if [ "${KEEP_FRONTEND_SOURCEMAPS}" != "true" ]; then \
+    find ./packages/frontend/build/assets -name '*.map' -delete; \
+    fi
+
+# @lightdash/common routes require, import and default to dist/cjs; only the
+# build-time `types` and `module` fields point at dist/esm. Neither dist/esm nor
+# the orphaned dist/types is reachable from `node dist/index.js` (~40 MiB).
+RUN rm -rf ./packages/common/dist/esm ./packages/common/dist/types
+
 # Cleanup development dependencies
 RUN rm -rf node_modules \
     && rm -rf packages/*/node_modules
 
-# Install production dependencies
+# Install production dependencies.
+# The frontend is excluded: it ships as the prebuilt static bundle copied above,
+# and Node never requires any of its 119 runtime dependencies. Installing them
+# added ~950 MiB to the image (@tabler/icons, monaco-editor, mermaid, ...).
 ENV NODE_ENV production
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --prod --frozen-lockfile --prefer-offline
+    pnpm install --prod --frozen-lockfile --prefer-offline \
+    --filter '!@lightdash/frontend'
 
 # Keep the versioned playground bundle in a late layer so bundle-only updates
 # do not invalidate production dependency installation or sourcemap processing.
@@ -414,11 +438,8 @@ ENV PLAYGROUND_DATA_DIR=/usr/app/packages/backend/assets/playground
 WORKDIR /usr/app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 \
-    python3-psycopg2 \
-    python3-venv \
+    # Required by simple-git, which clones project repositories at runtime
     git \
-    build-essential \
     # Required by node-canvas prebuilt binaries for font rendering in chart images
     fontconfig \
     # Required so headless chart screenshots can render CJK glyphs
@@ -429,6 +450,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Optional: jemalloc allocator reduces native memory fragmentation vs glibc malloc.
     # Dormant unless activated via LD_PRELOAD env var per customer.
     libjemalloc2 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# -----------------------------
+# Stage 5a: runtime variants
+# -----------------------------
+
+# The dbt CLI is reached only by DbtProjectType.DBT and by the git project types
+# configured with `semanticLayer: 'dbt'`. Projects on the Lightdash YAML
+# semantic layer are served by NativeGitProjectAdapter, which compiles models
+# in-process via loadLightdashModels() and never shells out to dbt, so for those
+# deployments this entire layer is inert.
+FROM runtime-base AS runtime-dbt
+
+# python3 and psycopg2 exist solely to run the virtualenvs below.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-psycopg2 \
+    python3-venv \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -455,6 +495,14 @@ RUN ln -s /usr/local/dbt1.4/bin/dbt /usr/local/bin/dbt \
     && ln -s /usr/local/dbt1.11/bin/dbt /usr/local/bin/dbt1.11 \
     && ln -s /usr/local/dbt1.12/bin/dbt /usr/local/bin/dbt1.12
 
+# dbt-free variant. Selecting it drops the nine virtualenvs and the python
+# runtime (~1.7 GiB). An instance built this way can serve only projects that
+# never invoke the dbt CLI.
+FROM runtime-base AS runtime-nodbt
+
+# Resolves to runtime-dbt or runtime-nodbt via the global RUNTIME_VARIANT arg.
+FROM ${RUNTIME_VARIANT} AS runtime-selected
+
 # The runtime working directory is set here, not after the application layers.
 # WORKDIR compiles to a mkdir even when the path already exists, and any
 # filesystem mutation after a COPY --link forces BuildKit to materialise the
@@ -465,7 +513,7 @@ WORKDIR /usr/app/packages/backend
 # Stage 6: execution environment for backend
 # -----------------------------
 
-FROM runtime-base AS prod
+FROM runtime-selected AS prod
 
 # INVARIANT: this stage may contain only COPY --link and image metadata.
 # A RUN, a WORKDIR or a classic COPY placed after the application content has

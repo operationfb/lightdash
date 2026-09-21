@@ -102,6 +102,7 @@ import { useProjectUuid } from '../../../hooks/useProjectUuid';
 import { useChartVersion, useSavedQuery } from '../../../hooks/useSavedQuery';
 import { useSpaceSummaries } from '../../../hooks/useSpaces';
 import useApp from '../../../providers/App/useApp';
+import { toBrowserPath } from '../../../utils/url';
 import {
     useManagedAgentActions,
     type ManagedAgentActionQueryFilters,
@@ -1558,7 +1559,9 @@ const SettingsSidebar: FC<{
                                     </Text>
                                     <Button
                                         component="a"
-                                        href="/generalSettings/integrations"
+                                        href={toBrowserPath(
+                                            '/generalSettings/integrations',
+                                        )}
                                         variant="default"
                                         size="xs"
                                         leftSection={

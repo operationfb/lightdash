@@ -20,6 +20,7 @@ import { useAbilityContext } from '../../providers/Ability/useAbilityContext';
 import useApp from '../../providers/App/useApp';
 import useTracking from '../../providers/Tracking/useTracking';
 import { EventName } from '../../types/Events';
+import { toBrowserPath } from '../../utils/url';
 import MantineIcon from '../common/MantineIcon';
 import ConnectionTestResults from './ConnectionTestResults';
 import { dbtDefaults } from './DbtForms/defaultValues';
@@ -202,7 +203,9 @@ const UpdateProjectConnection: FC<{
                                     }
                                     component="a"
                                     target="_blank"
-                                    href={`/generalSettings/projectManagement/${projectUuid}/compilationHistory`}
+                                    href={toBrowserPath(
+                                        `/generalSettings/projectManagement/${projectUuid}/compilationHistory`,
+                                    )}
                                 >
                                     Last compiled at{' '}
                                     {new Date(

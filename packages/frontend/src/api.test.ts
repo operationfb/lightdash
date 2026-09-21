@@ -529,3 +529,76 @@ describe('fetch binding', () => {
         expect(results).toEqual('recovered');
     });
 });
+
+// KONTALA: the deactivated-account bounce leaves react-router, so both the
+// guard and the redirect are browser paths. Under a base path a bare '/login'
+// names the login page of whatever else shares the origin, and the guard never
+// recognises the page it is already on. See utils/url.ts.
+describe('deactivated account redirect', () => {
+    const originalLocation = window.location;
+
+    const setLocation = (pathname: string) => {
+        Object.defineProperty(window, 'location', {
+            value: { pathname, href: pathname },
+            writable: true,
+            configurable: true,
+        });
+    };
+
+    const deactivate = () =>
+        nock(BASE_API_URL)
+            .get('/api/v1/test')
+            .reply(403, {
+                status: 'error',
+                error: {
+                    name: 'DeactivatedAccountError',
+                    statusCode: 403,
+                    message: 'Account deactivated',
+                    data: {},
+                },
+            });
+
+    const request = () =>
+        lightdashApi({ method: 'GET', url: '/test', body: null }).catch(
+            () => undefined,
+        );
+
+    afterEach(() => {
+        vi.unstubAllEnvs();
+        Object.defineProperty(window, 'location', {
+            value: originalLocation,
+            writable: true,
+            configurable: true,
+        });
+        nock.cleanAll();
+    });
+
+    it('sends the browser to this instance, not the origin root', async () => {
+        vi.stubEnv('BASE_URL', '/analytics/');
+        setLocation('/analytics/projects/abc/home');
+        deactivate();
+
+        await request();
+
+        expect(window.location.href).toBe('/analytics/login');
+    });
+
+    it('does not bounce when already on this instance login page', async () => {
+        vi.stubEnv('BASE_URL', '/analytics/');
+        setLocation('/analytics/login');
+        deactivate();
+
+        await request();
+
+        expect(window.location.href).toBe('/analytics/login');
+    });
+
+    it('changes nothing for an instance at the origin root', async () => {
+        setLocation('/projects/abc/home');
+        deactivate();
+
+        await request();
+
+        expect(window.location.href).toBe('/login');
+    });
+});

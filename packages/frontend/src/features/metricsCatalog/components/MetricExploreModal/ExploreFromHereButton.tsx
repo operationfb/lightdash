@@ -7,6 +7,7 @@ import useEmbed from '../../../../ee/providers/Embed/useEmbed';
 import { useContentAuthoringEnabled } from '../../../../hooks/useContentAuthoringEnabled';
 import { getExplorerUrlFromCreateSavedChartVersion } from '../../../../hooks/useExplorerRoute';
 import { useCreateShareMutation } from '../../../../hooks/useShare';
+import { toBrowserPath } from '../../../../utils/url';
 
 type Props = {
     projectUuid: string | undefined;
@@ -44,7 +45,7 @@ export const ExploreFromHereButton: FC<Props> = ({
             path: openInExploreUrl.pathname,
             params: `?${openInExploreUrl.search}`,
         });
-        window.open(`/share/${shareUrl.nanoid}`, '_blank');
+        window.open(toBrowserPath(`/share/${shareUrl.nanoid}`), '_blank');
     }, [
         createShareUrl,
         embedToken,

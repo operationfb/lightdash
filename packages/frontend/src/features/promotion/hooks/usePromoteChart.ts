@@ -7,6 +7,7 @@ import { IconArrowRight } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
 import { lightdashApi } from '../../../api';
 import useToaster from '../../../hooks/toaster/useToaster';
+import { toBrowserPath } from '../../../utils/url';
 
 const promoteChart = async (chartUuid: string): Promise<SavedChart> => {
     return lightdashApi<SavedChart>({
@@ -30,7 +31,9 @@ export const usePromoteMutation = () => {
                         icon: IconArrowRight,
                         onClick: () => {
                             window.open(
-                                `/projects/${data.projectUuid}/saved/${data.slug}`,
+                                toBrowserPath(
+                                    `/projects/${data.projectUuid}/saved/${data.slug}`,
+                                ),
                                 '_blank',
                             );
                         },

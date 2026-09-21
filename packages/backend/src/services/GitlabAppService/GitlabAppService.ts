@@ -22,6 +22,7 @@ import {
     refreshGitlabToken,
 } from '../../clients/gitlab/Gitlab';
 import { LightdashConfig } from '../../config/parseConfig';
+import { siteUrlFor } from '../../config/siteUrl';
 import { GitlabAppInstallationsModel } from '../../models/GitlabAppInstallations/GitlabAppInstallationsModel';
 import { UserModel } from '../../models/UserModel';
 import { BaseService } from '../BaseService';
@@ -63,18 +64,17 @@ export class GitlabAppService extends BaseService {
         });
 
         const returnToUrl = new URL(
-            '/generalSettings/integrations',
-            this.lightdashConfig.siteUrl,
+            siteUrlFor(this.lightdashConfig, '/generalSettings/integrations'),
         );
         const randomID = nanoid().replace('_', ''); // we use _ as separator, don't allow this character on the nanoid
         const subdomain =
             this.lightdashConfig.gitlab.redirectDomain || 'default';
         const state = `${subdomain}_${randomID}`;
 
-        const redirectUri = new URL(
+        const redirectUri = siteUrlFor(
+            this.lightdashConfig,
             '/api/v1/gitlab/oauth/callback',
-            this.lightdashConfig.siteUrl,
-        ).href;
+        );
 
         const { clientId } = this.lightdashConfig.gitlab;
         if (!clientId) {
@@ -127,10 +127,10 @@ export class GitlabAppService extends BaseService {
                 );
             }
 
-            const redirectUri = new URL(
+            const redirectUri = siteUrlFor(
+                this.lightdashConfig,
                 '/api/v1/gitlab/oauth/callback',
-                this.lightdashConfig.siteUrl,
-            ).href;
+            );
 
             const { token, refreshToken } = await exchangeCodeForToken(
                 code,

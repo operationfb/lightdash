@@ -45,6 +45,7 @@ import { LightdashAnalytics } from '../../analytics/LightdashAnalytics';
 import { toSessionUser } from '../../auth/account';
 import EmailClient from '../../clients/EmailClient/EmailClient';
 import { LightdashConfig } from '../../config/parseConfig';
+import { siteUrlFor } from '../../config/siteUrl';
 import { createAuditLogEvent } from '../../logging/auditLog';
 import {
     CaslAuditWrapper,
@@ -1534,10 +1535,10 @@ export class RolesService extends BaseService {
             this.logger.debug(
                 `Sending email to ${userEmail} for project ${project.name} with role ${role.name}`,
             );
-            const projectUrl = new URL(
+            const projectUrl = siteUrlFor(
+                this.lightdashConfig,
                 `/projects/${projectUuid}/home`,
-                this.lightdashConfig.siteUrl,
-            ).href;
+            );
             const data = isSystemRole(roleId)
                 ? {
                       email: userEmail,

@@ -105,6 +105,7 @@ import {
 import * as AccountFactory from '../auth/account';
 import EmailClient from '../clients/EmailClient/EmailClient';
 import { LightdashConfig } from '../config/parseConfig';
+import { siteUrlFor } from '../config/siteUrl';
 import { UserOAuthGrantProvider } from '../database/entities/userOAuthGrants';
 import {
     createAuditLogEvent,
@@ -4211,12 +4212,12 @@ export class UserService extends BaseService {
                 return {
                     showOptions,
                     forceRedirect: true,
-                    redirectUri: new URL(
+                    redirectUri: siteUrlFor(
+                        this.lightdashConfig,
                         `/api/v1${this.getRedirectUri(
                             showOptions[0],
                         )}?login_hint=${encodeURIComponent(email)}`,
-                        this.lightdashConfig.siteUrl,
-                    ).href,
+                    ),
                 };
             }
 
@@ -4235,8 +4236,34 @@ export class UserService extends BaseService {
     ): Promise<UserLoginOptions> {
         const instancesOptions = this.getInstanceLoginOptions();
         if (!email) {
+            const options = Array.from(instancesOptions);
+            // KONTALA: when the instance offers exactly one way in and it is
+            // SSO, there is nothing for anybody to choose. Showing a login page
+            // whose only control is "continue with the one provider" asks for a
+            // click that carries no decision, and on an instance reached by
+            // crossing over from another product it is worse than that: the
+            // reader arrived already signed in, and the page reads as a dead
+            // end rather than as a step.
+            //
+            // The same rule already applies one branch down, once an email has
+            // narrowed the options to a single provider. This is that rule at
+            // the point where no email is needed to know the answer.
+            //
+            // No `login_hint` here, because there is no email to hint with; the
+            // provider is the one that knows who this is.
+            const ssoOptions = options.filter(isOpenIdIdentityIssuerType);
+            if (options.length === 1 && ssoOptions.length === 1) {
+                return {
+                    showOptions: options,
+                    forceRedirect: true,
+                    redirectUri: siteUrlFor(
+                        this.lightdashConfig,
+                        `/api/v1${this.getRedirectUri(ssoOptions[0])}`,
+                    ),
+                };
+            }
             return {
-                showOptions: Array.from(instancesOptions),
+                showOptions: options,
                 forceRedirect: false,
                 redirectUri: undefined,
             };
@@ -4389,12 +4416,12 @@ export class UserService extends BaseService {
             return {
                 showOptions: loginOptions,
                 forceRedirect: true,
-                redirectUri: new URL(
+                redirectUri: siteUrlFor(
+                    this.lightdashConfig,
                     `/api/v1${this.getRedirectUri(
                         oidcOptions[0],
                     )}?login_hint=${encodeURIComponent(email)}`,
-                    this.lightdashConfig.siteUrl,
-                ).href,
+                ),
             };
         }
         return {

@@ -18,6 +18,7 @@ import { type FC } from 'react';
 import MantineIcon from '../../../../../components/common/MantineIcon';
 import MantineModal from '../../../../../components/common/MantineModal';
 import { getExplorerUrlFromCreateSavedChartVersion } from '../../../../../hooks/useExplorerRoute';
+import { toBrowserPath } from '../../../../../utils/url';
 import styles from './ReviewFieldsModal.module.css';
 
 type Props = {
@@ -109,7 +110,11 @@ export const ReviewFieldsModal: FC<Props> = ({
             projectUuid,
             buildChartVersion(field),
         );
-        window.open(`${pathname}?${search}`, '_blank', 'noopener,noreferrer');
+        window.open(
+            toBrowserPath(`${pathname}?${search}`),
+            '_blank',
+            'noopener,noreferrer',
+        );
     };
 
     const renderField = (field: UpstreamFieldDiff) => (

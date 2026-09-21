@@ -302,6 +302,7 @@ import { type FileStorageClient } from '../../clients/FileStorage/FileStorageCli
 import type { INatsClient } from '../../clients/NatsClient';
 import { resolveDbtSourceFetchConcurrency } from '../../config/dbtSourceFetchConcurrency';
 import { LightdashConfig } from '../../config/parseConfig';
+import { siteUrlFor } from '../../config/siteUrl';
 import { normalizeDatabricksHostLenient } from '../../controllers/authentication/strategies/databricksStrategy';
 import type { DbProjectParameter } from '../../database/entities/projectParameters';
 import type { DbTagUpdate } from '../../database/entities/tags';
@@ -10908,10 +10909,10 @@ export class ProjectService extends BaseService {
             data.role,
         );
         const project = await this.projectModel.getSummary(projectUuid);
-        const projectUrl = new URL(
+        const projectUrl = siteUrlFor(
+            this.lightdashConfig,
             `/projects/${projectUuid}/home`,
-            this.lightdashConfig.siteUrl,
-        ).href;
+        );
 
         if (data.sendEmail)
             await this.emailClient.sendProjectAccessEmail(

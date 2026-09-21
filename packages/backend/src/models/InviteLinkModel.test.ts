@@ -82,6 +82,24 @@ describe('InviteLinkModel', () => {
             expect(deleteBuilder.delete).toHaveBeenCalledOnce();
         });
 
+        // KONTALA: the invite is emailed, so a leading slash resolved against
+        // the origin would send the invitee to whatever else lives there.
+        it('keeps the invite inside the base path this instance is under', async () => {
+            const { database } = createDatabase([dbRow]);
+            const model = new InviteLinkModel({
+                database,
+                lightdashConfig: {
+                    ...lightdashConfigMock,
+                    siteUrl: 'https://konta.la/analytics',
+                    basePath: '/analytics',
+                },
+            });
+
+            await expect(model.getByCode(inviteCode)).resolves.toMatchObject({
+                inviteUrl: `https://konta.la/analytics/invite/${inviteCode}`,
+            });
+        });
+
         it('throws not found for an unknown invite code', async () => {
             const { database, deleteBuilder } = createDatabase([]);
             const model = new InviteLinkModel({

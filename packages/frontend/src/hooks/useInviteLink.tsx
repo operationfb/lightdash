@@ -7,6 +7,7 @@ import {
 } from '@lightdash/common';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { lightdashApi } from '../api';
+import { toBrowserPath } from '../utils/url';
 import useToaster from './toaster/useToaster';
 
 const createInviteQuery = async (
@@ -54,7 +55,9 @@ export const useActivateInviteLinkMutation = (
         {
             mutationKey: ['activate_invite_link', inviteCode],
             onSuccess: () => {
-                window.location.href = redirectUrl;
+                // KONTALA: `redirectUrl` is a router path; this leaves the
+                // router, so the base path goes back on. See utils/url.ts.
+                window.location.href = toBrowserPath(redirectUrl);
             },
             onError: ({ error }) => {
                 showToastApiError({

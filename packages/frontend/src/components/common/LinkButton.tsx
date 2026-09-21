@@ -4,6 +4,7 @@ import React, { type FC } from 'react';
 import { useNavigate } from 'react-router';
 import { type EventData } from '../../providers/Tracking/types';
 import useTracking from '../../providers/Tracking/useTracking';
+import { toBrowserHref } from '../../utils/url';
 import MantineIcon from './MantineIcon';
 
 export interface LinkButtonProps extends Omit<ButtonProps, 'leftSection'> {
@@ -27,13 +28,16 @@ const LinkButton: FC<LinkButtonProps> = ({
     const navigate = useNavigate();
     const tracking = useTracking({ failSilently: true });
 
+    // KONTALA: `href` is a router path - `navigate` below wants it that way.
+    // The anchor is a real document link, so it gets the base path this build
+    // is served under, and an external URL passes through. See utils/url.ts.
     return (
         <Button
             variant="subtle"
             {...rest}
             component="a"
             size="compact-sm"
-            href={href}
+            href={toBrowserHref(href)}
             leftSection={leftIcon && <MantineIcon icon={leftIcon} />}
             target={target}
             onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {

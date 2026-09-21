@@ -8,6 +8,7 @@ import {
 import { LightdashAnalytics } from '../../analytics/LightdashAnalytics';
 import EmailClient from '../../clients/EmailClient/EmailClient';
 import { LightdashConfig } from '../../config/parseConfig';
+import { siteUrlFor } from '../../config/siteUrl';
 import { OrganizationMemberProfileModel } from '../../models/OrganizationMemberProfileModel';
 import { OrganizationModel } from '../../models/OrganizationModel';
 import { ProjectModel } from '../../models/ProjectModel/ProjectModel';
@@ -188,10 +189,12 @@ export class AdminNotificationService extends BaseService {
                     lastName: targetUser.lastName,
                 },
                 timestamp: new Date(),
-                settingsUrl: new URL(
+                // KONTALA: emailed to admins, so it has to name this
+                // instance rather than the origin's root. See config/siteUrl.ts.
+                settingsUrl: siteUrlFor(
+                    this.lightdashConfig,
                     '/generalSettings/userManagement',
-                    this.lightdashConfig.siteUrl,
-                ).href,
+                ),
             };
 
             await this.emailClient.sendAdminChangeNotificationEmail(
@@ -286,10 +289,10 @@ export class AdminNotificationService extends BaseService {
                     lastName: targetUser.lastName,
                 },
                 timestamp: new Date(),
-                settingsUrl: new URL(
+                settingsUrl: siteUrlFor(
+                    this.lightdashConfig,
                     `/projects/${projectUuid}/settings/projectManagement/projectAccess`,
-                    this.lightdashConfig.siteUrl,
-                ).href,
+                ),
             };
 
             await this.emailClient.sendAdminChangeNotificationEmail(
@@ -359,10 +362,10 @@ export class AdminNotificationService extends BaseService {
                 projectName: params.projectName,
                 changedBy: changedByInfo,
                 timestamp: new Date(),
-                settingsUrl: new URL(
+                settingsUrl: siteUrlFor(
+                    this.lightdashConfig,
                     `/generalSettings/projectManagement/${params.projectUuid}/settings`,
-                    this.lightdashConfig.siteUrl,
-                ).href,
+                ),
             };
 
             this.logger.info(

@@ -47,6 +47,7 @@ import useApp from '../../../../../providers/App/useApp';
 import useTracking from '../../../../../providers/Tracking/useTracking';
 import { EventName } from '../../../../../types/Events';
 import { getOpenInExploreUrl } from '../../../../../utils/getOpenInExploreUrl';
+import { toBrowserPath } from '../../../../../utils/url';
 import { isEmbedAiAgentRoute } from '../../hooks/aiAgentRouting';
 import { useAddChartToDashboard } from '../../hooks/useAddChartToDashboard';
 import { useSetArtifactVersionVerified } from '../../hooks/useAiAgentArtifacts';
@@ -432,7 +433,7 @@ export const AiChartQuickOptions = ({
                 path: openInExploreUrl.pathname,
                 params: `?${openInExploreUrl.search}`,
             });
-            window.open(`/share/${shareUrl.nanoid}`, '_blank');
+            window.open(toBrowserPath(`/share/${shareUrl.nanoid}`), '_blank');
         }
         if (
             user?.data?.userUuid &&
