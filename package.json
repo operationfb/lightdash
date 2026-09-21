@@ -161,6 +161,9 @@
         "scope-tours:smoke": "tsx scripts/scope-tours/smoke.ts"
     },
     "lint-staged": {
+        "turbo.json": [
+            "bash scripts/check-turbo-json.sh"
+        ],
         "packages/frontend/src/**/*.(ts|tsx|json|css)": [
             "pnpm -F frontend run linter --fix",
             "pnpm -F frontend run formatter"
