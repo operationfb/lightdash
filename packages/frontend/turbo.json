@@ -4,7 +4,13 @@
   "tasks": {
     "build": {
       "outputs": ["build/**"],
-      "//": "KONTALA: the base path is compiled into every asset URL in the bundle, so it is part of what identifies a build. Without it here, a cached artefact built for another prefix would be served for this one.",
+      // KONTALA: the base path is compiled into every asset URL in the bundle, so it is
+      // part of what identifies a build. Without it here, a cached artefact built for
+      // another prefix would be served for this one.
+      //
+      // A "//" KEY DOES NOT WORK HERE. turbo.json is JSONC, so line comments are the way
+      // to write one; the package.json convention of a "//" key is rejected outright as an
+      // unknown key, and it fails at parse time for every task in the file, not just this one.
       "env": ["LIGHTDASH_BASE_PATH"]
     }
   }
