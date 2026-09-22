@@ -2,8 +2,8 @@ import express from 'express';
 import { request as httpRequest, type Server } from 'http';
 import type { AddressInfo } from 'net';
 import { lightdashConfigMock } from '../config/lightdashConfig.mock';
+import { errorHandler } from '../errors';
 import {
-    DEPLOY_TOKEN_DESCRIPTION,
     deployUserEmail,
     KONTALA_ADMIN_HEADER,
     kontalaRouter,
@@ -14,22 +14,63 @@ vi.mock('../logging/logger', () => ({
 }));
 
 const ORG = '371c115d-9530-484b-a617-f19dae37ecb9';
+const PROJECT = '364da357-5ce7-489c-b924-ea134a23d823';
 const SECRET = 'a-shared-secret';
+
+/**
+ * The path the CLI produced, and therefore the one Kontala must keep sending:
+ * it reaches the compiled explore as original_file_path.
+ */
+const MODEL_PATH = 'lightdash/models/events_clean.yml';
+const TABLE = '`stocks-ag.analytics.events_clean_chrometests`';
+
+const modelYaml = ({
+    name = 'events_clean',
+    table = TABLE,
+}: { name?: string; table?: string } = {}) => `
+type: model
+name: ${name}
+label: "Page views"
+sql_from: '${table}'
+primary_key: ingest_id
+dimensions:
+  - name: ingest_id
+    label: "Ingest id"
+    sql: \${TABLE}.ingest_id
+    type: string
+  - name: path
+    label: "Path"
+    sql: \${TABLE}.path
+    type: string
+metrics:
+  page_views:
+    label: "Page views"
+    type: count
+    sql: \${TABLE}.ingest_id
+`;
 
 type Models = {
     userModel: Record<string, ReturnType<typeof vi.fn>>;
     emailModel: Record<string, ReturnType<typeof vi.fn>>;
     organizationMemberProfileModel: Record<string, ReturnType<typeof vi.fn>>;
-    personalAccessTokenModel: Record<string, ReturnType<typeof vi.fn>>;
+    projectModel: Record<string, ReturnType<typeof vi.fn>>;
+    projectService: Record<string, ReturnType<typeof vi.fn>>;
+};
+
+const bigqueryProject = {
+    projectUuid: PROJECT,
+    organizationUuid: ORG,
+    name: 'chrometests-project',
+    warehouseConnection: { type: 'bigquery', startOfWeek: undefined },
 };
 
 const buildModels = (overrides: Partial<Models> = {}): Models => ({
     userModel: {
         findUserByEmail: vi.fn().mockResolvedValue(undefined),
+        createUser: vi.fn().mockResolvedValue({ userUuid: 'user-uuid-1' }),
         createPendingUser: vi
             .fn()
             .mockResolvedValue({ userUuid: 'user-uuid-1' }),
-        findSessionUserByUUID: vi.fn().mockResolvedValue({ userId: 42 }),
     },
     emailModel: {
         verifyUserEmailIfExists: vi.fn().mockResolvedValue(undefined),
@@ -41,11 +82,13 @@ const buildModels = (overrides: Partial<Models> = {}): Models => ({
             .mockResolvedValue(undefined),
         updateOrganizationMember: vi.fn().mockResolvedValue(undefined),
     },
-    personalAccessTokenModel: {
-        deleteAllTokensForUser: vi.fn().mockResolvedValue(undefined),
-        create: vi
+    projectModel: {
+        get: vi.fn().mockResolvedValue(bigqueryProject),
+    },
+    projectService: {
+        saveExploresToCacheAndIndexCatalog: vi
             .fn()
-            .mockResolvedValue({ token: 'ldpat_minted', uuid: 'pat-uuid-1' }),
+            .mockResolvedValue('catalog-job-uuid-1'),
     },
     ...overrides,
 });
@@ -75,15 +118,37 @@ const start = (models: Models, config: Record<string, unknown>) => {
             emailModel: models.emailModel as never,
             organizationMemberProfileModel:
                 models.organizationMemberProfileModel as never,
-            personalAccessTokenModel: models.personalAccessTokenModel as never,
+            projectModel: models.projectModel as never,
+            projectService: models.projectService as never,
         }),
+    );
+    // ⚠ WITHOUT THIS EVERY ASSERTION BELOW COLLAPSES TO ">= 400". App.ts maps a
+    // thrown LightdashError to its status code through errorHandler; express's
+    // own default renders 500 and HTML for every one of them. This endpoint's
+    // whole contract is which status code comes back, so the test app has to
+    // map them the way production does. The Sentry and analytics wrapping
+    // around it there is not part of that contract.
+    app.use(
+        (
+            error: Error,
+            _req: express.Request,
+            res: express.Response,
+            _next: express.NextFunction,
+        ) => {
+            const mapped = errorHandler(error);
+            res.status(mapped.statusCode).json({
+                status: 'error',
+                error: mapped,
+            });
+        },
     );
     const server = app.listen(0);
     servers.push(server);
     return (server.address() as AddressInfo).port;
 };
 
-const post = (
+const send = (
+    method: 'POST' | 'PUT',
     port: number,
     path: string,
     body: unknown,
@@ -96,7 +161,7 @@ const post = (
                 host: '127.0.0.1',
                 port,
                 path,
-                method: 'POST',
+                method,
                 headers: {
                     'content-type': 'application/json',
                     'content-length': Buffer.byteLength(payload),
@@ -117,179 +182,229 @@ const post = (
         req.end(payload);
     });
 
-const configWith = (
-    overrides: { adminSecret?: string; patEnabled?: boolean } = {},
-) => ({
+const configWith = (overrides: { adminSecret?: string } = {}) => ({
     ...lightdashConfigMock,
     kontala: { adminSecret: overrides.adminSecret ?? SECRET },
-    auth: {
-        ...lightdashConfigMock.auth,
-        pat: {
-            ...lightdashConfigMock.auth.pat,
-            enabled: overrides.patEnabled ?? true,
-        },
-    },
 });
 
-describe('kontala deploy tokens', () => {
-    it('mints a token for a brand new organization and returns it once', async () => {
+const deploy = (
+    port: number,
+    body: unknown,
+    headers: Record<string, string> = { [KONTALA_ADMIN_HEADER]: SECRET },
+) =>
+    send(
+        'PUT',
+        port,
+        `/api/v1/kontala/projects/${PROJECT}/semantic-layer`,
+        body,
+        headers,
+    );
+
+const oneModel = (yaml = modelYaml()) => ({
+    models: [{ path: MODEL_PATH, content: yaml }],
+});
+
+const savedArgs = (models: Models) =>
+    models.projectService.saveExploresToCacheAndIndexCatalog.mock
+        .calls[0][0] as Record<string, unknown>;
+
+const savedNothing = (models: Models) =>
+    expect(
+        models.projectService.saveExploresToCacheAndIndexCatalog,
+    ).not.toHaveBeenCalled();
+
+describe('kontala semantic layer', () => {
+    it('compiles the posted model and replaces the project explores', async () => {
         const models = buildModels();
         const port = start(models, configWith());
 
-        const res = await post(
-            port,
-            '/api/v1/kontala/deploy-tokens',
-            { organizationUuid: ORG },
-            { [KONTALA_ADMIN_HEADER]: SECRET },
-        );
+        const res = await deploy(port, oneModel());
 
-        expect(res.status).toBe(201);
-        expect(JSON.parse(res.body).results.token).toBe('ldpat_minted');
-        // The service user is unroutable and scoped to this organization.
-        expect(models.userModel.createPendingUser).toHaveBeenCalledWith(
-            ORG,
+        expect(res.status).toBe(200);
+        const { results } = JSON.parse(res.body);
+        expect(results.exploreCount).toBe(1);
+        expect(results.exploreNames).toEqual(['events_clean']);
+        expect(results.catalogIndexJobUuid).toBe('catalog-job-uuid-1');
+
+        const saved = savedArgs(models);
+        expect(saved.projectUuid).toBe(PROJECT);
+        expect(saved.requestMethod).toBe('kontala');
+        // A replace, not a merge: a renamed model must not leave its old
+        // explore cached for ever.
+        expect(saved.complete).toBe(true);
+        expect(saved.explores).toHaveLength(1);
+    });
+
+    it('keeps the posted path as the explore source, so redeploys do not churn', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        await deploy(port, oneModel());
+
+        expect(JSON.stringify(savedArgs(models).explores)).toContain(
+            MODEL_PATH,
+        );
+    });
+
+    it('compiles against the project warehouse, not a default', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        await deploy(port, oneModel());
+
+        // The project's own table reference surviving into the compiled
+        // explore is what proves the dialect came from the project row rather
+        // than from anything the caller posted.
+        expect(JSON.stringify(savedArgs(models).explores)).toContain(
+            'stocks-ag.analytics.events_clean_chrometests',
+        );
+    });
+
+    it('attributes the deploy to an org-scoped account with no membership', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        await deploy(port, oneModel());
+
+        expect(models.userModel.createUser).toHaveBeenCalledWith(
             expect.objectContaining({ email: deployUserEmail(ORG) }),
             true,
             true,
         );
-        expect(models.emailModel.verifyUserEmailIfExists).toHaveBeenCalled();
-        // Rotation, not accumulation.
-        expect(
-            models.personalAccessTokenModel.deleteAllTokensForUser,
-        ).toHaveBeenCalledWith(42);
-        expect(models.personalAccessTokenModel.create).toHaveBeenCalledWith(
-            { userId: 42 },
-            expect.objectContaining({
-                expiresAt: null,
-                description: DEPLOY_TOKEN_DESCRIPTION,
-            }),
-        );
-    });
-
-    it('is admin, because no lesser role can deploy a non-preview project', async () => {
-        const models = buildModels();
-        const port = start(models, configWith());
-
-        await post(
-            port,
-            '/api/v1/kontala/deploy-tokens',
-            { organizationUuid: ORG },
-            { [KONTALA_ADMIN_HEADER]: SECRET },
-        );
-
-        expect(models.userModel.createPendingUser).toHaveBeenCalledWith(
-            ORG,
-            expect.objectContaining({ role: 'admin' }),
-            true,
-            true,
-        );
-    });
-
-    it('reuses the service user and repairs a membership that drifted', async () => {
-        const models = buildModels();
-        models.userModel.findUserByEmail.mockResolvedValue({
-            userUuid: 'user-uuid-1',
-        });
-        models.organizationMemberProfileModel.getOrganizationMemberByUuid.mockResolvedValue(
-            { role: 'viewer' },
-        );
-        const port = start(models, configWith());
-
-        const res = await post(
-            port,
-            '/api/v1/kontala/deploy-tokens',
-            { organizationUuid: ORG },
-            { [KONTALA_ADMIN_HEADER]: SECRET },
-        );
-
-        expect(res.status).toBe(201);
+        // The account exists to be a foreign key, so it is given no role
+        // anywhere: createPendingUser would have placed it in the customer's
+        // organization.
         expect(models.userModel.createPendingUser).not.toHaveBeenCalled();
-        expect(
-            models.organizationMemberProfileModel.updateOrganizationMember,
-        ).toHaveBeenCalledWith(ORG, 'user-uuid-1', { role: 'admin' });
-    });
-
-    it('re-attaches a service user whose membership was removed', async () => {
-        const models = buildModels();
-        models.userModel.findUserByEmail.mockResolvedValue({
-            userUuid: 'user-uuid-1',
-        });
-        const port = start(models, configWith());
-
-        await post(
-            port,
-            '/api/v1/kontala/deploy-tokens',
-            { organizationUuid: ORG },
-            { [KONTALA_ADMIN_HEADER]: SECRET },
-        );
-
         expect(
             models.organizationMemberProfileModel
                 .createOrganizationMembershipByUuid,
-        ).toHaveBeenCalledWith({
-            organizationUuid: ORG,
-            userUuid: 'user-uuid-1',
-            role: 'admin',
-        });
+        ).not.toHaveBeenCalled();
+        expect(savedArgs(models).userUuid).toBe('user-uuid-1');
     });
 
-    it('refuses a bad secret, and mints nothing', async () => {
+    it('reuses an attribution account that already exists', async () => {
+        const models = buildModels();
+        models.userModel.findUserByEmail.mockResolvedValue({
+            userUuid: 'existing-user',
+        });
+        const port = start(models, configWith());
+
+        const res = await deploy(port, oneModel());
+
+        expect(res.status).toBe(200);
+        expect(models.userModel.createUser).not.toHaveBeenCalled();
+        expect(savedArgs(models).userUuid).toBe('existing-user');
+    });
+
+    it('is 404 for a project that does not exist, and saves nothing', async () => {
+        const models = buildModels();
+        const { NotFoundError } = await import('@lightdash/common');
+        models.projectModel.get.mockRejectedValue(
+            new NotFoundError('Cannot find project'),
+        );
+        const port = start(models, configWith());
+
+        const res = await deploy(port, oneModel());
+
+        expect(res.status).toBe(404);
+        savedNothing(models);
+    });
+
+    it('refuses a model that does not satisfy the schema', async () => {
         const models = buildModels();
         const port = start(models, configWith());
 
-        const res = await post(
+        // No sql_from, so there is nothing to select from.
+        const res = await deploy(
             port,
-            '/api/v1/kontala/deploy-tokens',
-            { organizationUuid: ORG },
-            { [KONTALA_ADMIN_HEADER]: 'wrong' },
+            oneModel('type: model\nname: events_clean\n'),
         );
 
+        expect(res.status).toBe(400);
+        savedNothing(models);
+    });
+
+    it('refuses something that is not YAML at all', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        const res = await deploy(port, oneModel('type: "model\n  name: ['));
+
+        expect(res.status).toBe(400);
+        savedNothing(models);
+    });
+
+    it('refuses an empty models array before reading the project', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        const res = await deploy(port, { models: [] });
+
+        expect(res.status).toBe(400);
+        expect(models.projectModel.get).not.toHaveBeenCalled();
+    });
+
+    it('refuses two models sharing a name', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        const res = await deploy(port, {
+            models: [
+                { path: 'lightdash/models/a.yml', content: modelYaml() },
+                { path: 'lightdash/models/b.yml', content: modelYaml() },
+            ],
+        });
+
+        expect(res.status).toBe(400);
+        savedNothing(models);
+    });
+
+    it('refuses a config that names a different warehouse than the project', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        const res = await deploy(port, {
+            ...oneModel(),
+            config: 'warehouse:\n  type: postgres\n',
+        });
+
+        expect(res.status).toBe(400);
+        savedNothing(models);
+    });
+
+    it('refuses a project with no warehouse connection', async () => {
+        const models = buildModels();
+        models.projectModel.get.mockResolvedValue({
+            ...bigqueryProject,
+            warehouseConnection: undefined,
+        });
+        const port = start(models, configWith());
+
+        const res = await deploy(port, oneModel());
+
+        expect(res.status).toBe(400);
+        savedNothing(models);
+    });
+
+    it('refuses a bad secret before reading anything', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        const res = await deploy(port, oneModel(), {
+            [KONTALA_ADMIN_HEADER]: 'wrong',
+        });
+
         expect(res.status).toBe(401);
-        expect(models.personalAccessTokenModel.create).not.toHaveBeenCalled();
+        expect(models.projectModel.get).not.toHaveBeenCalled();
     });
 
     it('is invisible when the integration is not configured', async () => {
         const models = buildModels();
         const port = start(models, configWith({ adminSecret: '' }));
 
-        const res = await post(
-            port,
-            '/api/v1/kontala/deploy-tokens',
-            { organizationUuid: ORG },
-            { [KONTALA_ADMIN_HEADER]: SECRET },
-        );
+        const res = await deploy(port, oneModel());
 
         expect(res.status).toBe(404);
-        expect(models.personalAccessTokenModel.create).not.toHaveBeenCalled();
-    });
-
-    it('says so when personal access tokens are disabled instance-wide', async () => {
-        const models = buildModels();
-        const port = start(models, configWith({ patEnabled: false }));
-
-        const res = await post(
-            port,
-            '/api/v1/kontala/deploy-tokens',
-            { organizationUuid: ORG },
-            { [KONTALA_ADMIN_HEADER]: SECRET },
-        );
-
-        expect(res.status).toBe(409);
-        expect(models.personalAccessTokenModel.create).not.toHaveBeenCalled();
-    });
-
-    it('requires an organizationUuid', async () => {
-        const models = buildModels();
-        const port = start(models, configWith());
-
-        const res = await post(
-            port,
-            '/api/v1/kontala/deploy-tokens',
-            {},
-            { [KONTALA_ADMIN_HEADER]: SECRET },
-        );
-
-        expect(res.status).toBeGreaterThanOrEqual(400);
-        expect(models.personalAccessTokenModel.create).not.toHaveBeenCalled();
+        expect(models.projectModel.get).not.toHaveBeenCalled();
     });
 });

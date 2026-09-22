@@ -1,11 +1,17 @@
 /**
- * KONTALA: the one endpoint this instance exposes to Kontala Marketing.
+ * KONTALA: what this instance exposes to Kontala Marketing, and nothing else.
  *
- * Kontala owns who its customers are; this instance owns what they can see. A
- * crossing between the two has to reconcile the first into the second, and
- * this is where that happens: make sure the person exists, make sure they are
+ * Two endpoints, both authorised by one instance-wide secret.
+ *
+ * POST /members reconciles people. Kontala owns who its customers are; this
+ * instance owns what they can see, and a crossing between the two has to turn
+ * the first into the second: make sure the person exists, make sure they are
  * in the right organization, and make sure their role there matches the one
  * their Kontala membership grants.
+ *
+ * PUT /projects/:projectUuid/semantic-layer deploys a tenant's model. It
+ * exists so that provisioning a customer needs no Lightdash CLI, and therefore
+ * no Node, no version pin against this instance and no personal access token.
  *
  * ⚠ IT IS CALLED DURING THE TOKEN EXCHANGE, before this instance has ever seen
  * the person. That ordering is the whole design. By the time the single
@@ -21,32 +27,49 @@
  * to leak.
  */
 import {
+    calculateExploreWarningReport,
     OrganizationMemberRole,
     ParameterError,
     type CreateUserWithRole,
+    type Explore,
+    type ExploreError,
+    type ProjectDefaults,
 } from '@lightdash/common';
 import { timingSafeEqual } from 'crypto';
 import express from 'express';
 import type { LightdashConfig } from '../config/parseConfig';
 import Logger from '../logging/logger';
-import type { PersonalAccessTokenModel } from '../models/DashboardModel/PersonalAccessTokenModel';
 import type { EmailModel } from '../models/EmailModel';
 import type { OrganizationMemberProfileModel } from '../models/OrganizationMemberProfileModel';
+import type { ProjectModel } from '../models/ProjectModel/ProjectModel';
 import type { UserModel } from '../models/UserModel';
+import {
+    compilePostedSemanticLayer,
+    parsePostedModels,
+} from './kontala/semanticLayer';
 
 export const KONTALA_ADMIN_HEADER = 'x-kontala-admin-secret';
 
-/** The description every minted deploy token carries, so one is recognisable. */
-export const DEPLOY_TOKEN_DESCRIPTION = 'Kontala semantic-layer deploy';
-
 /**
- * KONTALA: the identity a tenant's semantic-layer deploy runs as.
+ * KONTALA: the identity a tenant's semantic-layer deploy is ATTRIBUTED to.
+ *
+ * It is no longer a credential. The deploy used to run as this user through a
+ * personal access token, because only the CLI could produce explores and the
+ * CLI authenticates with nothing else. The semantic-layer endpoint below
+ * compiles them here instead, authorised by the instance-wide admin secret.
+ * What survives is attribution: saveExploresToCacheAndIndexCatalog writes a
+ * project_compile_log row and indexes the catalog, and both want a user uuid.
+ *
+ * So this account deliberately holds NO membership and NO token. It is a
+ * foreign key target and nothing more, which is why nothing below grants it a
+ * role: the admin membership existed only to satisfy a CASL check that no
+ * longer runs, and an unused admin of a customer's organization is exactly the
+ * kind of standing privilege worth not having.
  *
  * `.invalid` is reserved by RFC 2606 and resolves nowhere, which is exactly
  * why it is used: this address can never receive mail, so it can never become
- * a password reset or an invitation, and the account is reachable only through
- * the token minted below. Kontala's single sign-on cannot reach it either,
- * because no Kontala identity ever carries this address.
+ * a password reset or an invitation. Kontala's single sign-on cannot reach it
+ * either, because no Kontala identity ever carries this address.
  *
  * The organization uuid sits in the local part because `emails.email` is
  * citext UNIQUE instance-wide: one fixed address could serve only one customer.
@@ -54,12 +77,32 @@ export const DEPLOY_TOKEN_DESCRIPTION = 'Kontala semantic-layer deploy';
 export const deployUserEmail = (organizationUuid: string): string =>
     `analytics-deploy+${organizationUuid}@kontala.invalid`;
 
+/**
+ * Declared structurally, exactly as DeployService declares the same dependency,
+ * so this router needs the one method it calls rather than the whole service.
+ */
+type ProjectServiceInterface = {
+    saveExploresToCacheAndIndexCatalog: (args: {
+        userUuid: string;
+        projectUuid: string;
+        explores: (Explore | ExploreError)[];
+        compilationSource: 'cli_deploy' | 'refresh_dbt' | 'create_project';
+        jobUuid?: string | null;
+        requestMethod?: string | null;
+        projectConfigDefaults?: ProjectDefaults;
+        cliVersion?: string | null;
+        complete?: boolean;
+        dbtModelNames?: string[];
+    }) => Promise<string>;
+};
+
 type KontalaRouterDependencies = {
     lightdashConfig: LightdashConfig;
     userModel: UserModel;
     emailModel: EmailModel;
     organizationMemberProfileModel: OrganizationMemberProfileModel;
-    personalAccessTokenModel: PersonalAccessTokenModel;
+    projectModel: ProjectModel;
+    projectService: ProjectServiceInterface;
 };
 
 type MemberBody = {
@@ -99,7 +142,8 @@ export const kontalaRouter = ({
     userModel,
     emailModel,
     organizationMemberProfileModel,
-    personalAccessTokenModel,
+    projectModel,
+    projectService,
 }: KontalaRouterDependencies) => {
     const router = express.Router();
 
@@ -202,131 +246,142 @@ export const kontalaRouter = ({
     });
 
     /**
-     * Mints the personal access token a tenant's semantic-layer deploy runs
-     * with, and returns it ONCE. Kontala seals it and keeps it.
+     * Finds or creates the attribution account for an organization's deploys.
      *
-     * ⚠ WHY A TOKEN AT ALL, WHEN KONTALA ALREADY WRITES THIS DATABASE. The
-     * deploy is `lightdash deploy`, and the CLI compiles the model client-side
-     * before uploading it. Nothing short of running the CLI produces those
-     * explores, and the CLI authenticates with a personal access token and
-     * nothing else. So the token is the one artefact that cannot be written
-     * directly.
+     * createUser, NOT createPendingUser: the latter needs an organization and
+     * creates a membership in it, and this account must hold none. What is
+     * left is a row in `users` that `project_compile_log.user_uuid` and the
+     * catalog index can point at, with no password, no membership and an
+     * address that resolves nowhere - so there is nothing to sign in as.
      *
-     * ⚠ WHY NOT ONE TOKEN FOR EVERY ORGANIZATION. A personal access token has
-     * nowhere to carry an organization: findSessionUserByPersonalAccessToken
-     * joins organization_memberships and takes the FIRST row with no ORDER BY,
-     * so a user in several organizations resolves to an arbitrary one. A
-     * deploy authorised against an arbitrary organization is a cross-tenant
-     * write that reports success, so the token is per organization and its
-     * user belongs to exactly one.
-     *
-     * ⚠ ADMIN IS THE LEAST ROLE THAT CAN DO THIS, not a convenience.
-     * `manage:DeployProject` is unconditional only in the admin block;
-     * developer holds it just for PREVIEW projects it created itself
-     * (organizationMemberAbility.ts). A tenant's project is neither.
-     *
-     * Idempotent in the way the rest of provisioning is: the service user is
-     * created once and reused, and every previous token of its own is deleted
-     * before the new one is minted, so re-running rotates rather than
-     * accumulates and a copy that leaked stops working.
+     * An account that already exists is returned untouched. Deploy users
+     * created before this endpoint still carry the admin membership the old
+     * token needed; removing those is a one-off cleanup on the instance, not
+     * something to do silently on the next deploy.
      */
-    router.post('/deploy-tokens', express.json(), async (req, res, next) => {
-        try {
-            if (!lightdashConfig.auth.pat.enabled) {
-                // DISABLE_PAT turns off the only credential the CLI accepts,
-                // so this cannot be worked around here and should not look
-                // like a transient failure.
-                res.status(409).json({
-                    status: 'error',
-                    results:
-                        'personal access tokens are disabled on this instance',
-                });
-                return;
-            }
-            const body = req.body as { organizationUuid?: unknown };
-            const organizationUuid = asString(
-                body.organizationUuid,
-                'organizationUuid',
-            );
-            const email = deployUserEmail(organizationUuid);
-
-            const existing = await userModel.findUserByEmail(email);
-            let userUuid: string;
-            if (existing) {
-                userUuid = existing.userUuid;
-                // The membership is re-asserted rather than assumed: an
-                // operator can remove a member in the UI, and a deploy user
-                // without its organization would mint a token that authorises
-                // nothing.
-                const member = await organizationMemberProfileModel
-                    .getOrganizationMemberByUuid(organizationUuid, userUuid)
-                    .catch(() => undefined);
-                if (!member) {
-                    await organizationMemberProfileModel.createOrganizationMembershipByUuid(
-                        {
-                            organizationUuid,
-                            userUuid,
-                            role: OrganizationMemberRole.ADMIN,
-                        },
-                    );
-                } else if (member.role !== OrganizationMemberRole.ADMIN) {
-                    await organizationMemberProfileModel.updateOrganizationMember(
-                        organizationUuid,
-                        userUuid,
-                        { role: OrganizationMemberRole.ADMIN },
-                    );
-                }
-            } else {
-                const created = await userModel.createPendingUser(
-                    organizationUuid,
-                    {
-                        email,
-                        firstName: 'Kontala',
-                        lastName: 'deploy',
-                        role: OrganizationMemberRole.ADMIN,
-                    } as CreateUserWithRole,
-                    true,
-                    true,
-                );
-                userUuid = created.userUuid;
-                // Same reason as /members: an unverified primary email leaves
-                // the account in a half-created state. Nothing is ever sent
-                // to it - the address is unroutable by construction.
-                await emailModel.verifyUserEmailIfExists(userUuid, email);
-            }
-
-            const sessionUser = await userModel.findSessionUserByUUID(userUuid);
-            await personalAccessTokenModel.deleteAllTokensForUser(
-                sessionUser.userId,
-            );
-            const created = await personalAccessTokenModel.create(sessionUser, {
-                // No expiry, because Kontala keeps this one: an expiry would
-                // make a stored credential stop working between provisioning
-                // runs, with the failure landing on a deploy rather than
-                // anywhere it could be noticed. Rotation is re-running create,
-                // which deletes the old one above.
-                expiresAt: null,
-                description: DEPLOY_TOKEN_DESCRIPTION,
-                autoGenerated: true,
-            });
-
-            Logger.info(
-                `kontala: minted a deploy token for organization ${organizationUuid}`,
-            );
-            // 201 and the token exactly once. It is never readable again:
-            // only its hash is stored.
-            res.status(201).json({
-                status: 'ok',
-                results: {
-                    token: created.token,
-                    userUuid,
-                    tokenUuid: created.uuid,
-                },
-            });
-        } catch (error) {
-            next(error);
+    const ensureDeployUser = async (
+        organizationUuid: string,
+    ): Promise<string> => {
+        const email = deployUserEmail(organizationUuid);
+        const existing = await userModel.findUserByEmail(email);
+        if (existing) {
+            return existing.userUuid;
         }
-    });
+        const created = await userModel.createUser(
+            { firstName: 'Kontala', lastName: 'deploy', email },
+            true,
+            true,
+        );
+        // Same reason as /members: an unverified primary email leaves the
+        // account half-created. Nothing is ever sent to it, and nothing signs
+        // in as it - the address is unroutable by construction.
+        await emailModel.verifyUserEmailIfExists(created.userUuid, email);
+        Logger.info(
+            `kontala: created the deploy attribution user for organization ${organizationUuid}`,
+        );
+        return created.userUuid;
+    };
+
+    /**
+     * Replaces a project's semantic layer with the posted Lightdash models.
+     *
+     * PUT, and named after upstream's own PUT /projects/:uuid/explores,
+     * because that is what it is: the same write, authenticated by the
+     * instance-wide admin secret instead of by a personal access token.
+     * Idempotent by construction, which is what lets Kontala re-run
+     * provisioning as its repair for a project whose model has moved on.
+     *
+     * ⚠ THIS IS WHAT REPLACED THE LIGHTDASH CLI. The CLI's one irreplaceable
+     * job was compiling the model client-side; the compiler is MIT and lives
+     * in @lightdash/common, so it runs here instead - see
+     * routers/kontala/semanticLayer.ts. With the CLI went Node on the caller's
+     * machine, the version pin binding CLI to instance, the loopback proxy
+     * that put this deployment's base path back underneath a client that
+     * resolves /api/v1 against the origin, and the personal access token this
+     * router used to mint.
+     *
+     * ⚠ COMPILE FIRST, PERSIST SECOND, NEVER HALF OF EACH. Everything that can
+     * fail - the schema, the YAML, a warehouse disagreement, a metric missing
+     * its own sql - fails before saveExploresToCacheAndIndexCatalog is
+     * reached. So a request either replaces the whole semantic layer or
+     * changes nothing, which `lightdash deploy` could not promise: it uploads
+     * and then reports what went wrong.
+     */
+    router.put(
+        '/projects/:projectUuid/semantic-layer',
+        // The rendered model is ~15KB and express.json defaults to 100KB.
+        // Raised here rather than met as a 413 the day a second model lands.
+        express.json({ limit: '2mb' }),
+        async (req, res, next) => {
+            try {
+                const { projectUuid } = req.params;
+                const body = req.body as { models?: unknown; config?: unknown };
+                if (
+                    body.config !== undefined &&
+                    typeof body.config !== 'string'
+                ) {
+                    throw new ParameterError('config must be a string');
+                }
+                // Parsed before the project is read, so a malformed payload
+                // costs no database round trip.
+                const models = parsePostedModels(body.models);
+
+                // get(), not getWithSensitiveFields(): startOfWeek and
+                // disableTimestampConversion are not sensitive credential
+                // fields, so this returns everything the compiler needs while
+                // keeping decrypted warehouse secrets out of a router that a
+                // shared secret opens. It throws NotFoundError on an unknown
+                // uuid, which is the 404 wanted here.
+                const project = await projectModel.get(projectUuid);
+
+                const explores = await compilePostedSemanticLayer({
+                    models,
+                    project,
+                    config: body.config,
+                });
+
+                const userUuid = await ensureDeployUser(
+                    project.organizationUuid,
+                );
+
+                const catalogIndexJobUuid =
+                    await projectService.saveExploresToCacheAndIndexCatalog({
+                        userUuid,
+                        projectUuid,
+                        explores,
+                        // A closed upstream union, so ours is not added to it
+                        // for the sake of a log label. requestMethod carries
+                        // the distinction instead, and is free text.
+                        compilationSource: 'cli_deploy',
+                        requestMethod: 'kontala',
+                        cliVersion: null,
+                        jobUuid: null,
+                        // ⚠ TRUE, WHERE `lightdash deploy` SENDS FALSE. False
+                        // merges into whatever is cached, so a renamed model
+                        // leaves its old explore behind for good. Kontala
+                        // posts the entire semantic layer every time, so a
+                        // replace is both correct and the only way to converge.
+                        complete: true,
+                    });
+
+                Logger.info(
+                    `kontala: deployed ${explores.length} explores to project ${projectUuid}`,
+                );
+                res.status(200).json({
+                    status: 'ok',
+                    results: {
+                        projectUuid,
+                        exploreCount: explores.length,
+                        exploreNames: explores.map((explore) => explore.name),
+                        warnings: calculateExploreWarningReport({ explores }),
+                        catalogIndexJobUuid,
+                    },
+                });
+            } catch (error) {
+                next(error);
+            }
+        },
+    );
 
     return router;
 };

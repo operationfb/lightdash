@@ -123,3 +123,37 @@ export async function loadLightdashModels(
     }
     return models;
 }
+
+/**
+ * KONTALA: validate a model that arrived as a string rather than as a file.
+ *
+ * Deliberately shares the module-private `ajv` and `validateModel` above
+ * rather than compiling a second validator against the exported
+ * `modelAsCodeSchema`. A private copy would agree today and diverge silently
+ * the first time a normalisation step lands between `yaml.load` and
+ * `validateModel`, and the symptom would be explores that no longer match the
+ * ones the CLI produces from the same bytes.
+ *
+ * `sourceName` is a label and nothing more: it names the model in the error,
+ * exactly as `filePath` does above. The caller supplies the `sourcePath` that
+ * reaches the compiled explore.
+ */
+export function parseLightdashModel(
+    contents: string,
+    sourceName: string,
+): LightdashModel {
+    let parsed: unknown;
+    try {
+        parsed = yaml.load(contents);
+    } catch (error) {
+        throw new ParseError(
+            `Failed to read YAML from ${sourceName}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+    }
+    if (!validateModel(parsed)) {
+        throw new ParseError(
+            `Invalid Lightdash model in ${sourceName}: ${ajv.errorsText(validateModel.errors)}`,
+        );
+    }
+    return parsed;
+}

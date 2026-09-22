@@ -5,7 +5,11 @@ import { compileLightdashModels } from '../compiler/compileLightdashModels';
 import { warehouseClientMock } from '../compiler/exploreCompiler.mock';
 import { isExploreError } from '../types/explore';
 import { DEFAULT_SPOTLIGHT_CONFIG } from '../types/lightdashProjectConfig';
-import { loadLightdashModels } from './loader';
+import {
+    loadLightdashModel,
+    loadLightdashModels,
+    parseLightdashModel,
+} from './loader';
 
 const modelYaml = `type: model
 name: orders
@@ -92,5 +96,39 @@ describe('native model loading and compilation', () => {
         await expect(loadLightdashModels(nestedProject)).rejects.toThrow(
             'within the project directory',
         );
+    });
+});
+
+describe('parseLightdashModel', () => {
+    let projectDir: string;
+    beforeEach(async () => {
+        projectDir = await fs.mkdtemp(path.join(os.tmpdir(), 'parse-model-'));
+    });
+    afterEach(async () => {
+        await fs.rm(projectDir, { recursive: true, force: true });
+    });
+
+    // The guard on the duplication in loader.ts: the string parser and the
+    // file parser share an Ajv instance and a schema, and this is what says so
+    // if one of them ever grows a step the other does not.
+    it('agrees with loadLightdashModel on the same bytes', async () => {
+        const filePath = path.join(projectDir, 'orders.yml');
+        await fs.writeFile(filePath, modelYaml);
+
+        expect(parseLightdashModel(modelYaml, 'orders.yml')).toEqual(
+            await loadLightdashModel(filePath),
+        );
+    });
+
+    it('rejects what the schema rejects, naming the source', () => {
+        expect(() =>
+            parseLightdashModel('type: model\nname: orders\n', 'orders.yml'),
+        ).toThrow('orders.yml');
+    });
+
+    it('rejects bytes that are not YAML', () => {
+        expect(() =>
+            parseLightdashModel('a: "b\n  c: [', 'broken.yml'),
+        ).toThrow('broken.yml');
     });
 });
