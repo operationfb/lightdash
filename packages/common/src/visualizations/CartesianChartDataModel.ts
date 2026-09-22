@@ -975,6 +975,8 @@ export class CartesianChartDataModel {
                 nameGap: 30,
                 nameTextStyle: getAxisTitleStyle(),
                 axisLabel: {
+                    // getAxisLabelStyle carries hideOverlap; see the note there
+                    // for why a dense time axis needs it.
                     ...getAxisLabelStyle(),
                     ...(xAxisType === VizIndexType.TIME && effectiveDateFormat
                         ? {

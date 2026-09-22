@@ -5,11 +5,28 @@ export const DEFAULT_AXIS_TITLE_FONT_SIZE = 12;
 
 /**
  * Get axis label styling (for values like "Jan", "Feb", "Mar")
+ *
+ * hideOverlap is a layout behaviour rather than a style, and it lives here
+ * anyway because this is the one base every axis of every cartesian chart
+ * spreads - the four in useEchartsCartesianConfig and both in
+ * CartesianChartDataModel. Setting it per axis would be six places to keep in
+ * step.
+ *
+ * It only ever changes a TIME or VALUE axis. ECharts picks a category axis's
+ * label interval from the label widths already, so labels there never collide
+ * and this is a no-op; on a time axis it picks the interval from the time span
+ * instead, and a wide format on a dense series then paints every tick on top
+ * of the next. Ninety daily points formatted as 'MMM D, YYYY' is the case that
+ * found this.
+ *
+ * Every caller spreads this FIRST, so an axis that deliberately wants its
+ * labels to overlap still says so and still wins.
  */
 export const getAxisLabelStyle = (fontSize?: number) => ({
     color: GRAY_7,
     fontWeight: '500',
     fontSize: fontSize ?? DEFAULT_AXIS_LABEL_FONT_SIZE,
+    hideOverlap: true,
 });
 
 /**
