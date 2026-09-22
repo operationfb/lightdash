@@ -12,7 +12,9 @@ import {
 import { useProjects } from '../hooks/useProjects';
 import { Can } from '../providers/Ability';
 import useApp from '../providers/App/useApp';
+import { getOtherOrganizationUuid } from '../utils/otherOrganization';
 import { getProjectUrlIdentifier } from '../utils/projectUrl';
+import OtherOrganizationRedirect from './OtherOrganizationRedirect';
 import PageSpinner from './PageSpinner';
 
 const ResolvedProjectRoute: FC<
@@ -45,6 +47,15 @@ const ResolvedProjectRoute: FC<
     }
 
     if (isError && error) {
+        const otherOrganizationUuid = getOtherOrganizationUuid(error.error);
+        if (otherOrganizationUuid) {
+            return (
+                <OtherOrganizationRedirect
+                    error={error.error}
+                    organizationUuid={otherOrganizationUuid}
+                />
+            );
+        }
         return <ErrorState error={error.error} />;
     }
 

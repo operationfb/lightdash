@@ -78,6 +78,12 @@ const ErrorState: FC<{
                         title: 'You need access',
                         description,
                     };
+                case 'OtherOrganizationError':
+                    return {
+                        icon: IconLock,
+                        title: 'This project is in another organization',
+                        description,
+                    };
                 case 'AuthorizationError':
                     return {
                         icon: IconLock,

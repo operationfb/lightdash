@@ -174,6 +174,7 @@ import {
     normalizeWarehouseCredentials,
     NotFoundError,
     OpenIdIdentityIssuerType,
+    OtherOrganizationError,
     ParameterError,
     parseTableCalculationFunctions,
     PivotChartData,
@@ -2841,6 +2842,7 @@ export class ProjectService extends BaseService {
 
     async getProject(projectUuid: string, account: Account): Promise<Project> {
         const project = await this.projectModel.get(projectUuid);
+        await this.assertProjectInActiveOrganization(account, project);
         await this.assertAnalyticsProjectAccess(account, project);
         const auditedAbility = this.createAuditedAbility(account);
         const projectSubject = subject('Project', {
@@ -2867,6 +2869,34 @@ export class ProjectService extends BaseService {
         }
 
         return project;
+    }
+
+    /**
+     * KONTALA: a session is active in one organization. A project in another
+     * organization the user is also a member of is refused distinctly, so the
+     * frontend can sign in again for that organization instead of showing a
+     * dead end. Non-members get the ordinary refusal and learn nothing.
+     */
+    private async assertProjectInActiveOrganization(
+        account: Account,
+        project: Pick<Project, 'organizationUuid'>,
+    ): Promise<void> {
+        if (
+            !account.isSessionUser() ||
+            account.organization.organizationUuid === project.organizationUuid
+        ) {
+            return;
+        }
+        const organizations = await this.userModel.getOrganizationsForUser(
+            account.user.id,
+        );
+        if (
+            organizations.some(
+                (org) => org.organizationUuid === project.organizationUuid,
+            )
+        ) {
+            throw new OtherOrganizationError(project.organizationUuid);
+        }
     }
 
     async assertAnalyticsProjectAccess(

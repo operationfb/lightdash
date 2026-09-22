@@ -3,10 +3,14 @@ import {
     OrganizationSsoProvider,
 } from '@lightdash/common';
 import { Request } from 'express';
-import { Issuer } from 'openid-client';
 import { Profile as PassportProfile } from 'passport';
+import { Strategy } from 'passport-strategy';
 import Logger from '../../../logging/logger';
-import { discoverIssuerWithRetry, genericOidcHandler } from './oidcStrategy';
+import {
+    DeferredPassportStrategy,
+    genericOidcHandler,
+    getOrganizationHint,
+} from './oidcStrategy';
 
 const makeRequest = ({
     loginWithOpenId = vi.fn(),
@@ -160,63 +164,73 @@ describe('genericOidcHandler', () => {
     });
 });
 
-describe('discoverIssuerWithRetry', () => {
-    // A discovery that times out here does not degrade single sign-on, it stops
-    // the process from ever listening: App.initExpress awaits it. So what these
-    // assert is that one slow moment on the provider cannot cost us the boot.
-    const endpoint = 'https://idp.example.com/.well-known/openid-configuration';
-    const issuer = {} as Awaited<ReturnType<typeof Issuer.discover>>;
+describe('DeferredPassportStrategy', () => {
+    // Passport runs authenticate on a per-request Object.create(strategy) with
+    // these action methods attached; this mirrors that.
+    const authenticateOnce = (strategy: DeferredPassportStrategy) =>
+        new Promise<string>((resolve) => {
+            const perRequest = Object.assign(Object.create(strategy), {
+                success: () => resolve('success'),
+                fail: () => resolve('fail'),
+                redirect: (url: string) => resolve(`redirect:${url}`),
+                pass: () => resolve('pass'),
+                error: (e: Error) => resolve(`error:${e.message}`),
+            }) as DeferredPassportStrategy;
+            perRequest.authenticate({} as Request);
+        });
+
+    const innerRedirectingTo = (url: string) => {
+        const inner = new Strategy();
+        inner.authenticate = function authenticate(this: Strategy) {
+            this.redirect(url);
+        };
+        return inner;
+    };
 
     beforeEach(() => {
-        vi.useFakeTimers();
         vi.spyOn(Logger, 'warn').mockImplementation((() => undefined) as never);
     });
 
     afterEach(() => {
-        vi.useRealTimers();
         vi.restoreAllMocks();
     });
 
-    test('calls discovery once and does not wait when it succeeds', async () => {
-        const discover = vi.spyOn(Issuer, 'discover').mockResolvedValue(issuer);
-
-        await expect(discoverIssuerWithRetry(endpoint)).resolves.toBe(issuer);
-        expect(discover).toHaveBeenCalledTimes(1);
+    test('does not build the strategy until the first request', () => {
+        const build = vi.fn();
+        // eslint-disable-next-line no-new
+        new DeferredPassportStrategy(build);
+        expect(build).not.toHaveBeenCalled();
     });
 
-    test('retries a failing discovery and succeeds on a later attempt', async () => {
-        const discover = vi
-            .spyOn(Issuer, 'discover')
-            .mockRejectedValueOnce(new Error('outgoing request timed out'))
-            .mockRejectedValueOnce(new Error('outgoing request timed out'))
-            .mockResolvedValue(issuer);
+    test('delegates to the built strategy and builds it once', async () => {
+        const build = vi
+            .fn()
+            .mockResolvedValue(innerRedirectingTo('https://idp/auth'));
+        const strategy = new DeferredPassportStrategy(build);
 
-        const result = discoverIssuerWithRetry(endpoint);
-        await vi.runAllTimersAsync();
-
-        await expect(result).resolves.toBe(issuer);
-        expect(discover).toHaveBeenCalledTimes(3);
-        // A dependency slow enough to need retrying is worth seeing in the log,
-        // otherwise the only symptom is a boot that is occasionally slower.
-        expect(Logger.warn).toHaveBeenCalledTimes(2);
-    });
-
-    test('gives up after a bounded number of attempts rather than hanging', async () => {
-        const discover = vi
-            .spyOn(Issuer, 'discover')
-            .mockRejectedValue(new Error('outgoing request timed out'));
-
-        // Settle into a value rather than asserting on the rejection directly:
-        // the handler has to be attached before the timers run, or the interval
-        // between the final failure and the assertion is an unhandled rejection.
-        const settled = discoverIssuerWithRetry(endpoint).then(
-            () => 'resolved',
-            (e: Error) => e.message,
+        await expect(authenticateOnce(strategy)).resolves.toBe(
+            'redirect:https://idp/auth',
         );
-        await vi.runAllTimersAsync();
+        await expect(authenticateOnce(strategy)).resolves.toBe(
+            'redirect:https://idp/auth',
+        );
+        expect(build).toHaveBeenCalledTimes(1);
+    });
 
-        await expect(settled).resolves.toBe('outgoing request timed out');
-        expect(discover).toHaveBeenCalledTimes(3);
+    test('reports a failed build as an error and tries again next time', async () => {
+        const build = vi
+            .fn()
+            .mockRejectedValueOnce(new Error('outgoing request timed out'))
+            .mockResolvedValue(innerRedirectingTo('https://idp/auth'));
+        const strategy = new DeferredPassportStrategy(build);
+
+        await expect(authenticateOnce(strategy)).resolves.toBe(
+            'error:outgoing request timed out',
+        );
+        await expect(authenticateOnce(strategy)).resolves.toBe(
+            'redirect:https://idp/auth',
+        );
+        expect(build).toHaveBeenCalledTimes(2);
     });
 });
 
@@ -303,5 +317,25 @@ describe('genericOidcHandler organization claim', () => {
         } as unknown as string;
         const openIdUser = await loginArgs(throwing);
         expect(openIdUser.openId.organizationUuid).toBeUndefined();
+    });
+});
+
+describe('getOrganizationHint', () => {
+    const withQuery = (query: Record<string, unknown>) =>
+        ({ query }) as unknown as Request;
+
+    it('forwards a uuid under the name of the claim it asks for', () => {
+        const uuid = '371c115d-9530-484b-a617-f19dae37ecb9';
+        expect(getOrganizationHint(withQuery({ organization: uuid }))).toEqual({
+            lightdash_organization_uuid: uuid,
+        });
+    });
+
+    it.each([
+        ['absent', {}],
+        ['not a uuid', { organization: 'chrometests' }],
+        ['repeated', { organization: ['a', 'b'] }],
+    ])('forwards nothing when the parameter is %s', (_, query) => {
+        expect(getOrganizationHint(withQuery(query))).toBeNull();
     });
 });

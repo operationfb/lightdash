@@ -27,6 +27,7 @@ import {
 } from '../controllers/authentication/strategies/databricksStrategy';
 import {
     createGenericOidcStrategyForConfig,
+    getOrganizationHint,
     isGenericOidcPassportStrategyAvailableToUse,
 } from '../controllers/authentication/strategies/oidcStrategy';
 import {
@@ -537,9 +538,16 @@ apiV1Router.get(
             req.session.oauth.oidcStrategyName = strategyName;
             // Per-org strategies bake the scope into the client params; the
             // env-based 'oidc' strategy still takes its scope here.
+            // KONTALA: and the organization hint, which only that provider
+            // understands. openid-client forwards these to the authorize URL.
             const authenticateOptions: passport.AuthenticateOptions =
-                strategyName === 'oidc' && lightdashConfig.auth.oidc.scopes
-                    ? { scope: lightdashConfig.auth.oidc.scopes }
+                strategyName === 'oidc'
+                    ? {
+                          ...(lightdashConfig.auth.oidc.scopes
+                              ? { scope: lightdashConfig.auth.oidc.scopes }
+                              : {}),
+                          ...getOrganizationHint(req),
+                      }
                     : {};
             passport.authenticate(strategyName, authenticateOptions)(
                 req,

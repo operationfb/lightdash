@@ -52,6 +52,7 @@ import {
     apiKeyPassportStrategy,
     createAzureAdPassportStrategy,
     createGenericOidcPassportStrategy,
+    DeferredPassportStrategy,
     googlePassportStrategy,
     invalidUserErrorHandler,
     isAzureAdPassportStrategyAvailableToUse,
@@ -1080,7 +1081,10 @@ export default class App {
             passport.use('azuread', await createAzureAdPassportStrategy());
         }
         if (isGenericOidcPassportStrategyAvailableToUse) {
-            passport.use('oidc', await createGenericOidcPassportStrategy());
+            passport.use(
+                'oidc',
+                new DeferredPassportStrategy(createGenericOidcPassportStrategy),
+            );
         }
         if (snowflakePassportStrategy) {
             passport.use('snowflake', snowflakePassportStrategy);

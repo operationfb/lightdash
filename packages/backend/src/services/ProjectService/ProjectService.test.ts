@@ -214,6 +214,11 @@ vi.mock('@lightdash/warehouses', async (importOriginal) => ({
     warehouseClientFromCredentials: vi.fn(() => warehouseClientMock),
 }));
 
+const userModel = {
+    invalidateSessionUserCache: vi.fn(),
+    getOrganizationsForUser: vi.fn(async () => []),
+};
+
 const projectModel = {
     runInAnalyticsProvisioningLock: vi.fn(
         async (_org: string, callback: () => Promise<unknown>) => callback(),
@@ -504,9 +509,7 @@ const getMockedProjectService = (
         encryptionUtil: {
             encrypt: vi.fn(() => Buffer.from('encrypted-project-data')),
         } as unknown as EncryptionUtil,
-        userModel: {
-            invalidateSessionUserCache: vi.fn(),
-        } as unknown as UserModel,
+        userModel: userModel as unknown as UserModel,
         userOAuthGrantsModel: {} as UserOAuthGrantsModel,
         featureFlagModel:
             overrides.featureFlagModel ??
@@ -1227,6 +1230,58 @@ describe('ProjectService', () => {
                 ],
             },
         };
+
+        describe('a project in another organization', () => {
+            const otherOrganizationUuid = 'otherOrganizationUuid';
+            const projectElsewhere: Project = {
+                ...projectWithSensitiveFields,
+                organizationUuid: otherOrganizationUuid,
+            };
+            // Abilities are scoped to the active organization, as in production.
+            const memberAccount = {
+                ...account,
+                user: {
+                    ...account.user,
+                    ability: new Ability<PossibleAbilities>([
+                        {
+                            subject: 'Project',
+                            action: 'view',
+                            conditions: {
+                                organizationUuid:
+                                    account.organization.organizationUuid,
+                            },
+                        },
+                    ]),
+                },
+            } as typeof account;
+
+            test('is refused distinctly when the user is a member there', async () => {
+                projectModel.get.mockResolvedValueOnce(projectElsewhere);
+                userModel.getOrganizationsForUser.mockResolvedValueOnce([
+                    {
+                        organizationUuid: otherOrganizationUuid,
+                        organizationName: 'Other',
+                        organizationCreatedAt: new Date(),
+                    },
+                ] as never);
+
+                await expect(
+                    service.getProject(projectUuid, memberAccount),
+                ).rejects.toMatchObject({
+                    name: 'OtherOrganizationError',
+                    statusCode: 403,
+                    data: { organizationUuid: otherOrganizationUuid },
+                });
+            });
+
+            test('is an ordinary refusal when the user is not a member there', async () => {
+                projectModel.get.mockResolvedValueOnce(projectElsewhere);
+
+                await expect(
+                    service.getProject(projectUuid, memberAccount),
+                ).rejects.toMatchObject({ name: 'ForbiddenError' });
+            });
+        });
 
         test('does not expose dbt environment variables to project viewers', async () => {
             projectModel.get.mockResolvedValueOnce(projectWithEnvironment);

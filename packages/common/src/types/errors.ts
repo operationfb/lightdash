@@ -57,6 +57,21 @@ export class ForbiddenError extends LightdashError {
     }
 }
 
+/**
+ * KONTALA: the resource belongs to another organization the user is a member
+ * of, so signing in again for that organization would open it.
+ */
+export class OtherOrganizationError extends LightdashError {
+    constructor(organizationUuid: string) {
+        super({
+            message: 'This project belongs to another of your organizations',
+            name: 'OtherOrganizationError',
+            statusCode: 403,
+            data: { organizationUuid },
+        });
+    }
+}
+
 export class GoogleNotConnectedError extends LightdashError {
     constructor(message = 'Google account not connected') {
         super({
