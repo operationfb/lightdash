@@ -797,6 +797,8 @@ export default class App {
                 emailModel: this.models.getEmailModel(),
                 organizationMemberProfileModel:
                     this.models.getOrganizationMemberProfileModel(),
+                personalAccessTokenModel:
+                    this.models.getPersonalAccessTokenModel(),
             }),
         );
 

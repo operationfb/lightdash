@@ -350,6 +350,26 @@ RUN --mount=type=secret,id=TURBO_TOKEN \
 # -----------------------------
 
 FROM prod-builder AS build-final
+
+# ⚠ THE PRODUCTION INSTALL COMES FIRST, ABOVE THE ARTIFACT COPYs. Its only
+# inputs are the package.json set and the lockfile, both already present in
+# prod-builder, so this layer is identical on every build where dependencies
+# did not change and a registry cache restores it across a source-only bump.
+# Below the COPYs it was invalidated by any source change and re-ran in full
+# every time. Nothing here needs the built output: pnpm symlinks the workspace
+# packages, and their dist directories are filled in by the COPYs afterwards.
+#
+# The frontend is excluded: it ships as the prebuilt static bundle copied
+# below, and Node never requires any of its 119 runtime dependencies.
+# Installing them added ~950 MiB to the image (@tabler/icons, monaco, mermaid).
+ENV NODE_ENV production
+RUN rm -rf node_modules \
+    && rm -rf packages/*/node_modules
+
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --prod --frozen-lockfile --prefer-offline \
+    --filter '!@lightdash/frontend'
+
 COPY release-safety.json ./release-safety.json
 COPY --from=build-common /usr/app/packages/common/dist/ ./packages/common/dist/
 COPY --from=build-formula /usr/app/packages/formula/dist/ ./packages/formula/dist/
@@ -407,19 +427,6 @@ RUN if [ "${KEEP_FRONTEND_SOURCEMAPS}" != "true" ]; then \
 # build-time `types` and `module` fields point at dist/esm. Neither dist/esm nor
 # the orphaned dist/types is reachable from `node dist/index.js` (~40 MiB).
 RUN rm -rf ./packages/common/dist/esm ./packages/common/dist/types
-
-# Cleanup development dependencies
-RUN rm -rf node_modules \
-    && rm -rf packages/*/node_modules
-
-# Install production dependencies.
-# The frontend is excluded: it ships as the prebuilt static bundle copied above,
-# and Node never requires any of its 119 runtime dependencies. Installing them
-# added ~950 MiB to the image (@tabler/icons, monaco-editor, mermaid, ...).
-ENV NODE_ENV production
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --prod --frozen-lockfile --prefer-offline \
-    --filter '!@lightdash/frontend'
 
 # Keep the versioned playground bundle in a late layer so bundle-only updates
 # do not invalidate production dependency installation or sourcemap processing.
