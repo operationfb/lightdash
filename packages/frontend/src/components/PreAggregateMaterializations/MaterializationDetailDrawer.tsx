@@ -300,7 +300,7 @@ const MaterializationDetailDrawer: FC<Props> = ({
                 {summary.externalTable && (
                     <Callout variant="info" title="Customer managed">
                         <Text fz="xs">
-                            Lightdash serves matching queries from this
+                            Kontala Analytics serves matching queries from this
                             warehouse table, but does not build or refresh it.
                         </Text>
                     </Callout>

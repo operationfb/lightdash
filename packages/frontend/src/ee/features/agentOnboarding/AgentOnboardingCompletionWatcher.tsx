@@ -63,7 +63,7 @@ export const AgentOnboardingCompletionWatcher: FC = () => {
         showToastSuccess({
             key: `agent-onboarding-complete-${agentOnboardingRunUuid}`,
             autoClose: false,
-            title: 'Your Lightdash project is ready',
+            title: 'Your Kontala Analytics project is ready',
             subtitle:
                 'The semantic layer and starter dashboard have been generated.',
             action: {

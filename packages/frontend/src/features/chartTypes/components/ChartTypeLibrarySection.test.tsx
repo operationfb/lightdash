@@ -236,7 +236,7 @@ describe('ChartTypeLibrarySection', () => {
         expect(screen.queryByText('Update chart')).not.toBeInTheDocument();
         expect(screen.getByText('Incompatible chart')).toBeInTheDocument();
         expect(
-            screen.getByText('Requires newer Lightdash'),
+            screen.getByText('Requires newer Kontala Analytics'),
         ).toBeInTheDocument();
     });
 

@@ -157,6 +157,22 @@ const lightdashBrandViolet = createColorTuple([
     '#2e2585',
 ]);
 
+/**
+ * Kontala brand green. Index 6 is the brand value (#16a34a) used by the mark.
+ */
+const kontalaBrandGreen = createColorTuple([
+    '#f0fdf4',
+    '#dcfce7',
+    '#bbf7d0',
+    '#86efac',
+    '#4ade80',
+    '#22c55e',
+    '#16a34a',
+    '#15803d',
+    '#166534',
+    '#14532d',
+]);
+
 const lightModeColors = {
     primary: primaryLight,
     gray: neutral,
@@ -170,6 +186,7 @@ const lightModeColors = {
 
     ldBrandGray: lightdashBrandGray,
     ldBrandViolet: lightdashBrandViolet,
+    ldBrandGreen: kontalaBrandGreen,
 };
 
 const darkModeColors = {
@@ -184,6 +201,7 @@ const darkModeColors = {
 
     ldBrandGray: lightdashBrandGray,
     ldBrandViolet: lightdashBrandViolet,
+    ldBrandGreen: kontalaBrandGreen,
 };
 
 export const getThemeColors = (colorScheme: ColorScheme) =>

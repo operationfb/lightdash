@@ -22,8 +22,8 @@ export const ContentAuthoringRoute = ({ children }: PropsWithChildren) => {
                 <Stack align="flex-start">
                     <Text fw={600}>Editing isn’t available on phones</Text>
                     <Text c="dimmed">
-                        Open Lightdash on a desktop or tablet to create or edit
-                        charts and dashboards.
+                        Open Kontala Analytics on a desktop or tablet to create
+                        or edit charts and dashboards.
                     </Text>
                     <Button component={Link} to="/" variant="default">
                         Back to home

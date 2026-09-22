@@ -190,7 +190,7 @@ describe('LinearReviewSettings', () => {
 
         expect(screen.getByLabelText('All projects')).toBeChecked();
         expect(
-            screen.queryByLabelText('Lightdash projects'), // pragma: allowlist secret
+            screen.queryByLabelText('Kontala Analytics projects'), // pragma: allowlist secret
         ).not.toBeInTheDocument();
 
         await user.click(screen.getByLabelText('All projects'));

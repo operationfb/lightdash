@@ -20,7 +20,7 @@ const ImpersonationPanel: FC = () => {
                     </Text>
                     <Text fz="xs" c="dimmed">
                         Allow organization admins to impersonate other users to
-                        see Lightdash from their perspective.
+                        see Kontala Analytics from their perspective.
                     </Text>
                 </Stack>
                 <Switch

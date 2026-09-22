@@ -131,7 +131,7 @@ describe('networkFailureMessage', () => {
             error: new TypeError('Failed to fetch'),
         });
         expect(networkFailureMessage(blocked)).toContain(
-            'Lightdash is reachable, but this request was blocked',
+            'Kontala Analytics is reachable, but this request was blocked',
         );
         expect(networkFailureMessage(blocked)).not.toContain('/projects/abc');
 
@@ -159,7 +159,9 @@ describe('formatNetworkDiagnostics', () => {
         expect(text).toContain(
             'Outcome: request never reached the server, server is reachable',
         );
-        expect(text).toContain('Lightdash reachable: yes (GET /health 200');
+        expect(text).toContain(
+            'Kontala Analytics reachable: yes (GET /health 200',
+        );
         expect(text).toContain('Error: Failed to fetch');
         expect(text).toContain('Trace ID: trace-1');
         expect(isNetworkDiagnostics(d)).toBe(true);

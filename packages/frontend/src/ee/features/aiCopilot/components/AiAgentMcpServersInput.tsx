@@ -1446,7 +1446,7 @@ export const AiAgentMcpServersInput = ({
                                     )}
                                     <Tooltip
                                         w={320}
-                                        label="Tokens measure how much of the model's working space these tools can take up. A larger tool set can leave less room for your question and the agent's answer, and may make requests slower or more expensive. Lightdash loads tools only when needed, so actual usage is often lower."
+                                        label="Tokens measure how much of the model's working space these tools can take up. A larger tool set can leave less room for your question and the agent's answer, and may make requests slower or more expensive. Kontala Analytics loads tools only when needed, so actual usage is often lower."
                                     >
                                         <ActionIcon
                                             type="button"

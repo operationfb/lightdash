@@ -523,8 +523,8 @@ const EmbedPreviewDashboardForm: FC<{
                                 </Badge>
                             </Group>
                             <Text c="dimmed" fz="sm">
-                                Choose which Lightdash actor should power
-                                embedded actions like creating scheduled
+                                Choose which Kontala Analytics actor should
+                                power embedded actions like creating scheduled
                                 deliveries or saving charts.
                             </Text>
                         </Stack>

@@ -10,9 +10,9 @@ import LightdashMark from './LightdashMark';
 import { useAuthLayoutVariant } from './useAuthLayoutVariant';
 
 const BRAND_HIGHLIGHTS = [
-    'Agents build and refactor your dashboards',
-    'Governed by your semantic layer — no hallucinations',
-    'Open source · unlimited seats · no lock-in',
+    'Every figure traces back to a ledger entry',
+    'VAT, P&L and cash position, always current',
+    'Built for UK limited companies, sole traders and landlords',
 ];
 
 type Props = {
@@ -89,7 +89,7 @@ const AuthLayout: FC<PropsWithChildren<Props>> = ({
                             <LightdashMark />
                         </Box>
                         <Text fz="xl" fw={600} className={classes.brandName}>
-                            Lightdash
+                            Kontala Analytics
                         </Text>
                     </Group>
 
@@ -100,12 +100,15 @@ const AuthLayout: FC<PropsWithChildren<Props>> = ({
                                 fz="display"
                                 className={classes.headline}
                             >
-                                Analytics at the speed of code.
+                                Real-time books.
+                                <br />
+                                Real-time answers.
                             </Title>
                             <Text fz="lg" className={classes.subcopy}>
-                                The only open-source, AI-native BI platform that
-                                lets AI build, refactor, and ship analytics in
-                                minutes. Loved by developers.
+                                Kontala Analytics reads straight from your
+                                double-entry ledger, so every chart reconciles
+                                to the books you file from. No exports, no
+                                spreadsheet copies drifting out of date.
                             </Text>
                         </Stack>
 
@@ -114,7 +117,7 @@ const AuthLayout: FC<PropsWithChildren<Props>> = ({
                                 <Group key={highlight} gap="sm" wrap="nowrap">
                                     <MantineIcon
                                         icon={IconCheck}
-                                        color="ldBrandViolet.3"
+                                        color="ldBrandGreen.3"
                                     />
                                     <Text className={classes.highlight}>
                                         {highlight}
@@ -136,7 +139,7 @@ const AuthLayout: FC<PropsWithChildren<Props>> = ({
                                 <LightdashMark />
                             </Box>
                             <Text fz="xl" fw={600}>
-                                Lightdash
+                                Kontala Analytics
                             </Text>
                         </Group>
                         {title && (

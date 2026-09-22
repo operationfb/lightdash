@@ -120,7 +120,7 @@ export const CreateVirtualViewModal: FC<Props> = ({ opened, onClose }) => {
             headerActions={
                 <Tooltip
                     maw={300}
-                    label={`Create a virtual view so others can reuse this query in Lightdash. The query won't be saved to or managed in your dbt project. ${
+                    label={`Create a virtual view so others can reuse this query in Kontala Analytics. The query won't be saved to or managed in your dbt project. ${
                         canWriteToDbtProject
                             ? "If you're expecting to reuse this query regularly, we suggest writing it back to dbt."
                             : ''

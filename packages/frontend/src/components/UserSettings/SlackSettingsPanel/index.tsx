@@ -236,9 +236,9 @@ const SlackSettingsPanel: FC = () => {
                     )}
 
                     <Text c="dimmed" fz="xs">
-                        Sharing in Slack allows you to unfurl Lightdash URLs and
-                        schedule deliveries to specific people or channels
-                        within your Slack workspace.{' '}
+                        Sharing in Slack allows you to unfurl Kontala Analytics
+                        URLs and schedule deliveries to specific people or
+                        channels within your Slack workspace.{' '}
                         <Anchor href="https://docs.lightdash.com/references/slack-integration">
                             View docs
                         </Anchor>
@@ -304,7 +304,7 @@ const SlackSettingsPanel: FC = () => {
                                 <Stack gap={0}>
                                     <SlackSettingRow
                                         title="Link previews"
-                                        description="Post chart and dashboard previews when Lightdash links are shared. Previews run as the user who installed the app."
+                                        description="Post chart and dashboard previews when Kontala Analytics links are shared. Previews run as the user who installed the app."
                                         checked={
                                             form.values.unfurlsEnabled ?? true
                                         }
@@ -364,7 +364,7 @@ const SlackSettingsPanel: FC = () => {
                                             />
                                             <SlackSettingRow
                                                 title="Links only, no data in Slack"
-                                                description="Never post query results into Slack. People open results in Lightdash."
+                                                description="Never post query results into Slack. People open results in Kontala Analytics."
                                                 disabled={aiAgentsDisabled}
                                                 checked={
                                                     form.values.aiLinksOnly ??
@@ -417,8 +417,8 @@ const SlackSettingsPanel: FC = () => {
                                         </Group>
 
                                         <Text c="dimmed" fz="xs">
-                                            Lightdash picks the best agent
-                                            automatically.
+                                            Kontala Analytics picks the best
+                                            agent automatically.
                                         </Text>
 
                                         <SlackChannelSelect

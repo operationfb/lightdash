@@ -442,7 +442,8 @@ const OrganizationSetupContent: FC<OrganizationSetupContentProps> = ({
                                         Tell us about you
                                     </Title>
                                     <Text c="dimmed" size="lg">
-                                        This helps us tailor Lightdash for you.
+                                        This helps us tailor Kontala Analytics
+                                        for you.
                                     </Text>
                                 </Stack>
 
@@ -479,7 +480,7 @@ const OrganizationSetupContent: FC<OrganizationSetupContentProps> = ({
                                     )}
 
                                     <Checkbox
-                                        label="Keep me updated on new Lightdash features"
+                                        label="Keep me updated on new Kontala Analytics features"
                                         {...form.getInputProps(
                                             'isMarketingOptedIn',
                                             { type: 'checkbox' },

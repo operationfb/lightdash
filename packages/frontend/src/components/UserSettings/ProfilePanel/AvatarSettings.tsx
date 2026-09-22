@@ -226,7 +226,7 @@ const AvatarSettings: FC = () => {
                     )}
                     <Stack gap={6}>
                         <Text size="xs" c="dimmed" fw={500}>
-                            Lightdash presets
+                            Kontala Analytics presets
                         </Text>
                         <Group gap="xs" wrap="nowrap">
                             <Tooltip label="No color (default)">

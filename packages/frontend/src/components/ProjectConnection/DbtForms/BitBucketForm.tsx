@@ -124,7 +124,7 @@ const BitBucketForm: FC<{ disabled: boolean }> = ({ disabled }) => {
                     <>
                         <p>
                             This is the branch in your Bitbucket repo that
-                            Lightdash should sync to. e.g. <b>main</b>,{' '}
+                            Kontala Analytics should sync to. e.g. <b>main</b>,{' '}
                             <b>master</b> or <b>dev</b>
                         </p>
                         <p>

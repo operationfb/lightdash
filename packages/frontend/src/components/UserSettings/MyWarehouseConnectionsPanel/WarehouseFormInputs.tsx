@@ -435,7 +435,7 @@ const RedshiftIamFormInputs: FC<{
                     </Text>
                     <Text fz="xs">
                         Or use the advanced options to provide an IAM role that
-                        Lightdash can assume.
+                        Kontala Analytics can assume.
                     </Text>
                 </Stack>
             </Alert>

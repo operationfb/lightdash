@@ -242,7 +242,7 @@ const AgentOnboardingRunPage: FC = () => {
 
     return (
         <Page
-            title="Building your Lightdash project"
+            title="Building your Kontala Analytics project"
             withPaddedContent
             fullPageScroll
         >
@@ -257,7 +257,7 @@ const AgentOnboardingRunPage: FC = () => {
                         <Stack gap={4}>
                             <Group gap="sm" align="flex-start">
                                 <Title order={2}>
-                                    Building your Lightdash project
+                                    Building your Kontala Analytics project
                                 </Title>
                                 <RunStatus status={run.status} />
                             </Group>

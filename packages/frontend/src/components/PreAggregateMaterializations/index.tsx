@@ -526,7 +526,7 @@ const PreAggregateMaterializations: FC<Props> = ({ projectUuid }) => {
                     const { externalTable, refreshCron } = row.original;
                     if (externalTable) {
                         return (
-                            <Tooltip label="Refreshes are managed outside Lightdash">
+                            <Tooltip label="Refreshes are managed outside Kontala Analytics">
                                 <Text size="xs" c="ldGray.7" fw={500}>
                                     Customer managed
                                 </Text>
@@ -769,7 +769,7 @@ const PreAggregateMaterializations: FC<Props> = ({ projectUuid }) => {
                 onConfirm={handleRefreshAllConfirm}
                 confirmLabel="Rebuild managed"
                 confirmLoading={isRefreshingAll}
-                description={`This rebuilds ${managedMaterializations.length} Lightdash-managed pre-aggregate${managedMaterializations.length === 1 ? '' : 's'}. External definitions stay untouched.`}
+                description={`This rebuilds ${managedMaterializations.length} Kontala Analytics-managed pre-aggregate${managedMaterializations.length === 1 ? '' : 's'}. External definitions stay untouched.`}
             >
                 <Stack gap="sm">
                     <Text fz="xs" c="dimmed">

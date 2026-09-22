@@ -253,7 +253,7 @@ describe('OrganizationSetup', () => {
             expect(
                 screen.getByText((content) =>
                     content.includes(
-                        'Please let us know how you heard about Lightdash',
+                        'Please let us know how you heard about Kontala Analytics',
                     ),
                 ),
             ).toBeInTheDocument(),

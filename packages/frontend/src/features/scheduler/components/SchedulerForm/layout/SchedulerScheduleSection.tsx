@@ -36,7 +36,7 @@ export const SchedulerScheduleSection: FC<Props> = ({ isThresholdAlert }) => {
                 label={isThresholdAlert ? 'Check frequency' : 'Frequency'}
                 description={
                     isThresholdAlert
-                        ? 'How often Lightdash checks your data for changes. You are only notified when the conditions are met.'
+                        ? 'How often Kontala Analytics checks your data for changes. You are only notified when the conditions are met.'
                         : undefined
                 }
             >

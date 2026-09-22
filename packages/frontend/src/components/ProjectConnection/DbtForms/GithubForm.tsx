@@ -371,8 +371,8 @@ const GithubForm: FC<{ disabled: boolean }> = ({ disabled }) => {
                         <>
                             <p>
                                 This is the branch in your GitHub repo that
-                                Lightdash should sync to. e.g. <b>main</b>,{' '}
-                                <b>master</b> or <b>dev</b>
+                                Kontala Analytics should sync to. e.g.{' '}
+                                <b>main</b>, <b>master</b> or <b>dev</b>
                             </p>
                             <p>
                                 By default, we've set this to <b>main</b> but

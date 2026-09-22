@@ -67,7 +67,7 @@ export const CreateHomepageModal: FC<Props> = ({
             <Stack gap="sm">
                 <Text c="dimmed" size="sm">
                     Curate a landing page for this project. Publishing makes it
-                    what everyone sees when they land in Lightdash.
+                    what everyone sees when they land in Kontala Analytics.
                 </Text>
                 <TextInput
                     label="Name"

@@ -15,7 +15,7 @@ const AccessTokensPanel: FC = () => {
     return (
         <SettingsPage
             title="Personal access tokens"
-            description="Create and revoke tokens used to access the Lightdash API."
+            description="Create and revoke tokens used to access the Kontala Analytics API."
             actions={
                 <Button size="xs" onClick={() => setIsCreatingToken(true)}>
                     Generate new token
@@ -28,7 +28,7 @@ const AccessTokensPanel: FC = () => {
                 <SettingsEmptyState
                     icon={IconKey}
                     title="No personal access tokens"
-                    description="Generate your first token to authenticate with the Lightdash API."
+                    description="Generate your first token to authenticate with the Kontala Analytics API."
                 />
             )}
 

@@ -21,7 +21,7 @@ export const SchedulerFormSlackError: FC<Props> = ({ slackState }) => {
                         {' '}
                         setup Slack{' '}
                     </Anchor>
-                    for your Lightdash instance
+                    for your Kontala Analytics instance
                 </Text>
             </>
         );

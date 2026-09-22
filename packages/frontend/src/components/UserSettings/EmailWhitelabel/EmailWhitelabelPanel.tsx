@@ -264,13 +264,13 @@ const EmailWhitelabelPanel: FC = () => {
     return (
         <SettingsPage
             title="Email sending domain"
-            description="Send report emails from your own domain instead of a Lightdash address."
+            description="Send report emails from your own domain instead of a Kontala Analytics address."
         >
             <SettingsCard>
                 <Stack gap="md">
                     <Text c="dimmed" size="sm">
                         Until your domain is verified and enabled, emails send
-                        from Lightdash with your address as reply-to.
+                        from Kontala Analytics with your address as reply-to.
                     </Text>
                     {isInitialLoading ? (
                         <EmptyStateLoader mih={60} />

@@ -785,11 +785,11 @@ export default class App {
         });
 
         // api router
-        // KONTALA: the member-reconciliation and semantic-layer endpoints,
-        // mounted beside the stock API rather than inside it. Their own router
-        // because they are authenticated by a shared secret rather than by a
-        // session, and keeping them apart is what makes that impossible to
-        // confuse.
+        // KONTALA: the member-reconciliation, semantic-layer and content
+        // endpoints, mounted beside the stock API rather than inside it. Their
+        // own router because they are authenticated by a shared secret rather
+        // than by a session, and keeping them apart is what makes that
+        // impossible to confuse.
         expressApp.use(
             '/api/v1/kontala',
             kontalaRouter({
@@ -800,6 +800,7 @@ export default class App {
                     this.models.getOrganizationMemberProfileModel(),
                 projectModel: this.models.getProjectModel(),
                 projectService: this.serviceRepository.getProjectService(),
+                coderService: this.serviceRepository.getCoderService(),
             }),
         );
 

@@ -360,7 +360,7 @@ export const JiraReviewSettings = () => {
                 <Stack gap="sm">
                     <Checkbox
                         label="All projects"
-                        description="Findings from every Lightdash project, including ones created later."
+                        description="Findings from every Kontala Analytics project, including ones created later."
                         checked={routing.applyToAllProjects}
                         disabled={!canEdit || isUpdating || projectsLoading}
                         onChange={(event) => {
@@ -379,7 +379,7 @@ export const JiraReviewSettings = () => {
                     />
                     {!routing.applyToAllProjects && (
                         <MultiSelect
-                            label="Lightdash projects"
+                            label="Kontala Analytics projects"
                             placeholder={
                                 projectsLoading
                                     ? 'Loading projects'

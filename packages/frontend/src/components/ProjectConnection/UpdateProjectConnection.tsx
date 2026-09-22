@@ -147,7 +147,7 @@ const UpdateProjectConnection: FC<{
                     icon={
                         <MantineIcon icon={IconExclamationCircle} size="lg" />
                     }
-                    title="Developer previews are temporary Lightdash projects where settings cannot be changed."
+                    title="Developer previews are temporary Kontala Analytics projects where settings cannot be changed."
                 >
                     Read docs{' '}
                     <Anchor

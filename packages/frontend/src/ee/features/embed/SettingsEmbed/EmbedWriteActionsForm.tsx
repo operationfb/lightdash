@@ -334,7 +334,7 @@ const EmbedWriteActionsForm: FC<Props> = ({
                         setIsEnabled(event.currentTarget.checked)
                     }
                     label="Enable write actions"
-                    description="Allow embedded users to perform actions that create or update Lightdash resources."
+                    description="Allow embedded users to perform actions that create or update Kontala Analytics resources."
                 />
             )}
 
@@ -345,8 +345,9 @@ const EmbedWriteActionsForm: FC<Props> = ({
                     <Stack gap="xs">
                         <Title order={6}>Run actions as</Title>
                         <Text c="dimmed" fz="sm">
-                            Select the service account Lightdash should use when
-                            an embed action needs read or write permissions.
+                            Select the service account Kontala Analytics should
+                            use when an embed action needs read or write
+                            permissions.
                         </Text>
                     </Stack>
 
@@ -525,7 +526,7 @@ const EmbedWriteActionsForm: FC<Props> = ({
                         <Text fz="sm">
                             By default, write actions run as the selected
                             service account user. To run them as a specific
-                            Lightdash user instead, include a proposed{' '}
+                            Kontala Analytics user instead, include a proposed{' '}
                             <Code>userUuid</Code> claim in the embed JWT. You
                             can find user UUIDs from{' '}
                             <Anchor
@@ -588,7 +589,7 @@ const EmbedWriteActionsForm: FC<Props> = ({
                         label={roleType === 'system' ? 'System role' : 'Role'}
                         description={
                             roleType === 'system'
-                                ? 'Use an existing Lightdash system role for this service account.'
+                                ? 'Use an existing Kontala Analytics system role for this service account.'
                                 : 'Use one of the existing custom roles for this service account.'
                         }
                         data={

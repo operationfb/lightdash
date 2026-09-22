@@ -75,7 +75,7 @@ const CompactionDivider = () => (
             </Text>
             <Tooltip
                 maw={320}
-                label="Lightdash automatically summarizes earlier messages when a conversation gets long, so responses stay fast and relevant."
+                label="Kontala Analytics automatically summarizes earlier messages when a conversation gets long, so responses stay fast and relevant."
             >
                 <Box
                     component="span"

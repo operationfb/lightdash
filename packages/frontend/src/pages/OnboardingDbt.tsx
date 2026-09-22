@@ -227,7 +227,7 @@ const DbtCliWaiting: FC = () => {
 
     const steps = [
         {
-            title: 'Install the Lightdash CLI',
+            title: 'Install the Kontala Analytics CLI',
             content:
                 os === 'macos' ? (
                     <Tabs defaultValue="npm">
@@ -259,7 +259,7 @@ const DbtCliWaiting: FC = () => {
                 ),
         },
         {
-            title: 'Log in to Lightdash',
+            title: 'Log in to Kontala Analytics',
             content: (
                 <CodeBlock
                     code={`lightdash login ${siteUrl}`}

@@ -403,9 +403,9 @@ export const AiGeneralSettingsPage = () => {
                                             semantic layer gaps, project context
                                             improvements, and admin
                                             recommendations. For connected
-                                            projects, Lightdash can suggest pull
-                                            requests that improve context and
-                                            semantic definitions.
+                                            projects, Kontala Analytics can
+                                            suggest pull requests that improve
+                                            context and semantic definitions.
                                             {reviewsEffectivelyOn && (
                                                 <>
                                                     {' '}

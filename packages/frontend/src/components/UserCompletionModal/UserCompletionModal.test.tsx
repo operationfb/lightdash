@@ -286,7 +286,7 @@ describe('UserCompletionModal', () => {
 
         // uncheck subscription checkbox (unchecked by default)
         const subscriptionCheckbox = await screen.findByRole('checkbox', {
-            name: `Keep me updated on new Lightdash features`,
+            name: `Keep me updated on new Kontala Analytics features`,
         });
         expect(subscriptionCheckbox).toBeInTheDocument();
         expect(subscriptionCheckbox).toBeChecked();
@@ -509,7 +509,7 @@ describe('UserCompletionModal', () => {
             expect(
                 screen.getByText((content) =>
                     content.includes(
-                        'Please let us know how you heard about Lightdash',
+                        'Please let us know how you heard about Kontala Analytics',
                     ),
                 ),
             ).toBeInTheDocument(),

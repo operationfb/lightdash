@@ -172,16 +172,16 @@ describe('AppPreviewTest', () => {
 
         mocks.isLoading = false;
         rerender(<AppPreviewTest />);
-        expect(document.title).toBe('(DEV) Sales app - Lightdash');
+        expect(document.title).toBe('(DEV) Sales app - Kontala Analytics');
 
         mocks.appName = 'Revenue app';
         rerender(<AppPreviewTest />);
-        expect(document.title).toBe('(DEV) Revenue app - Lightdash');
+        expect(document.title).toBe('(DEV) Revenue app - Kontala Analytics');
 
         mocks.appUuid = 'another-app-uuid';
         mocks.appName = 'Inventory app';
         rerender(<AppPreviewTest />);
-        expect(document.title).toBe('(DEV) Inventory app - Lightdash');
+        expect(document.title).toBe('(DEV) Inventory app - Kontala Analytics');
     });
 
     it('resets the captured query count when the previewed version changes', () => {

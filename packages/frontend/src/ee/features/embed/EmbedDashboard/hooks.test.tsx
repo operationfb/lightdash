@@ -21,7 +21,7 @@ const transientNetworkError = {
         name: 'NetworkError',
         statusCode: 500,
         message:
-            'We are currently unable to reach the Lightdash server. Please try again in a few moments.',
+            'We are currently unable to reach the Kontala Analytics server. Please try again in a few moments.',
         data: {},
     },
 };
@@ -56,7 +56,7 @@ describe('useEmbedDashboard', () => {
         });
 
         // A single transient blip must not strand the embed on
-        // "unable to reach the Lightdash server" — the global retry
+        // "unable to reach the Kontala Analytics server" — the global retry
         // policy should re-attempt and succeed.
         await waitFor(() => expect(result.current.isSuccess).toBe(true), {
             timeout: 3000,

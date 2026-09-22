@@ -98,14 +98,14 @@ export const writebackBlockedReasonDescriptions: Partial<
     Record<AiAgentReviewItemWritebackBlockedReason, string>
 > = {
     unsupported_source_control:
-        'Connect this project to GitHub, GitLab or Bitbucket Cloud so Lightdash can open a pull request that fixes issues like this for you.',
+        'Connect this project to GitHub, GitLab or Bitbucket Cloud so Kontala Analytics can open a pull request that fixes issues like this for you.',
     reviews_disabled:
         'Turn on Issues for your organization to let agents file and fix issues automatically.',
     bitbucket_token_missing: 'Configure the project Bitbucket API token',
     git_app_not_installed:
         'Install the Lightdash app on your repository so it can open pull requests.',
     project_context_disabled:
-        'Enable project context so Lightdash can propose updates to your project knowledge.',
+        'Enable project context so Kontala Analytics can propose updates to your project knowledge.',
     insufficient_source_code_access:
         'Ask a project admin for permission to manage source code before creating a pull request.',
     missing_writeback_config:

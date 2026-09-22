@@ -315,7 +315,7 @@ export const LoginForm: FC<{
                 {!mobileLoginIntent ? (
                     <Text mx="auto" mt="md" fz="sm">
                         {isNewLayout
-                            ? 'New to Lightdash?'
+                            ? 'New to Kontala Analytics?'
                             : "Don't have an account?"}{' '}
                         {signupPath ? (
                             <Anchor component={Link} to={signupPath} fz="sm">

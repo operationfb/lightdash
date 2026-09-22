@@ -135,8 +135,8 @@ const ConnectUsingAgent: FC<ConnectUsingAgentProps> = ({
                     warehouse
                 </OnboardingTitle>
                 <Text c="dimmed" mt="xs">
-                    Lightdash stores these credentials securely. They are never
-                    copied into the coding-agent prompt.
+                    Kontala Analytics stores these credentials securely. They
+                    are never copied into the coding-agent prompt.
                 </Text>
             </div>
 
@@ -154,8 +154,8 @@ const ConnectUsingAgent: FC<ConnectUsingAgentProps> = ({
                                 </Title>
                                 <Text c="dimmed" fz="sm" mt="xs">
                                     The coding agent can query your warehouse
-                                    through Lightdash without receiving its
-                                    credentials.
+                                    through Kontala Analytics without receiving
+                                    its credentials.
                                 </Text>
                             </div>
                             <ProjectFormProvider>

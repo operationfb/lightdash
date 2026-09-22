@@ -452,7 +452,7 @@ export const useSettingsNavigation = (
 
         if (canAccessAnalyticsSettings) {
             organizationItems.push({
-                label: 'Lightdash analytics',
+                label: 'Kontala Analytics analytics',
                 to: '/generalSettings/lightdashAnalytics',
                 icon: IconReportAnalytics,
                 isBeta: true,

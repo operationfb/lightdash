@@ -7,6 +7,7 @@ type ExtendedCustomColors =
     | 'ldDark'
     | 'ldBrandGray'
     | 'ldBrandViolet'
+    | 'ldBrandGreen'
     | 'background'
     | 'foreground'
     | DefaultMantineColor;

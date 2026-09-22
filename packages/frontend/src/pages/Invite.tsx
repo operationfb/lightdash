@@ -84,7 +84,7 @@ const WelcomeCard: FC<WelcomeCardProps> = ({
             <Text c="dimmed" ta={textAlign}>
                 {`Your teammates ${
                     org?.name ? `at ${org.name}` : ''
-                } are using Lightdash to discover
+                } are using Kontala Analytics to discover
                     and share data insights. Join your team to start exploring
                     your data!`}
             </Text>
@@ -183,7 +183,7 @@ const OneClickCard: FC<OneClickCardProps> = ({
             <Title order={3} ta={textAlign}>
                 {isSetupInvite
                     ? 'You’ve been asked to help with setup'
-                    : 'You’ve been invited to Lightdash'}
+                    : 'You’ve been invited to Kontala Analytics'}
             </Title>
             <Text c="dimmed" ta={textAlign}>
                 {isSetupInvite

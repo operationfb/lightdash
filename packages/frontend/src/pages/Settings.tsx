@@ -372,7 +372,7 @@ const Settings: FC = () => {
                 element: (
                     <SettingsPage
                         title="Exporting"
-                        description="Control how exported files are shared outside Lightdash."
+                        description="Control how exported files are shared outside Kontala Analytics."
                     >
                         <SettingsGridCard>
                             <div>
@@ -556,7 +556,7 @@ const Settings: FC = () => {
                 element: (
                     <SettingsPage
                         title="Integrations"
-                        description="Connect Lightdash to the tools your organization uses."
+                        description="Connect Kontala Analytics to the tools your organization uses."
                     >
                         {!health?.hasSlack &&
                             !health?.hasGithub &&

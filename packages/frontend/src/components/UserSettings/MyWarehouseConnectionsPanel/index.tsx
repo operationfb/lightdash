@@ -41,7 +41,7 @@ export const MyWarehouseConnectionsPanel = () => {
     return (
         <SettingsPage
             title="My warehouse connections"
-            description="Manage the personal credentials used to connect Lightdash to warehouses."
+            description="Manage the personal credentials used to connect Kontala Analytics to warehouses."
             actions={
                 <Button
                     size="xs"

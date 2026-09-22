@@ -698,7 +698,7 @@ export const CompleteUserSchema = z.object({
     howDidYouHearAboutUs: z
         .string()
         .trim()
-        .min(1, 'Please let us know how you heard about Lightdash')
+        .min(1, 'Please let us know how you heard about Kontala Analytics')
         .max(1000)
         .optional(),
     enableEmailDomainAccess: z.boolean().default(false),

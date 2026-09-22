@@ -14,10 +14,10 @@ export const SchedulerMessageSection: FC = () => {
             <Group justify="space-between" wrap="nowrap" align="flex-start">
                 <Stack gap={2}>
                     <Text fw={500} fz="sm">
-                        Include link to Lightdash
+                        Include link to Kontala Analytics
                     </Text>
                     <Text fz="xs" c="dimmed">
-                        Recipients can open this in Lightdash.
+                        Recipients can open this in Kontala Analytics.
                     </Text>
                 </Stack>
                 <Switch
@@ -38,9 +38,9 @@ export const SchedulerMessageSection: FC = () => {
                     </Text>
                     <Text fz="xs" c="dimmed">
                         Emails arrive as plain text with the file attached — no
-                        Lightdash branding, buttons or footer. Your message
-                        below is the whole body. Slack and webhook deliveries
-                        are unaffected.
+                        Kontala Analytics branding, buttons or footer. Your
+                        message below is the whole body. Slack and webhook
+                        deliveries are unaffected.
                     </Text>
                 </Stack>
                 <Tooltip

@@ -1,3 +1,4 @@
+import { OrganizationMemberRole } from '@lightdash/common';
 import express from 'express';
 import { request as httpRequest, type Server } from 'http';
 import type { AddressInfo } from 'net';
@@ -55,6 +56,7 @@ type Models = {
     organizationMemberProfileModel: Record<string, ReturnType<typeof vi.fn>>;
     projectModel: Record<string, ReturnType<typeof vi.fn>>;
     projectService: Record<string, ReturnType<typeof vi.fn>>;
+    coderService: Record<string, ReturnType<typeof vi.fn>>;
 };
 
 const bigqueryProject = {
@@ -71,6 +73,25 @@ const buildModels = (overrides: Partial<Models> = {}): Models => ({
         createPendingUser: vi
             .fn()
             .mockResolvedValue({ userUuid: 'user-uuid-1' }),
+        getUserDetailsByUuid: vi.fn().mockResolvedValue({
+            userUuid: 'user-uuid-1',
+            userId: 1,
+            firstName: 'Kontala',
+            lastName: 'deploy',
+            email: deployUserEmail(ORG),
+            // No organizationUuid: this account holds no membership, which is
+            // exactly the state deployActor has to work from.
+            organizationUuid: undefined,
+            isTrackingAnonymized: false,
+            isMarketingOptedIn: false,
+            isSetupComplete: true,
+            isActive: true,
+            createdAt: new Date(0),
+            updatedAt: new Date(0),
+            timezone: null,
+            avatarUrl: null,
+            avatarGradient: null,
+        }),
     },
     emailModel: {
         verifyUserEmailIfExists: vi.fn().mockResolvedValue(undefined),
@@ -89,6 +110,11 @@ const buildModels = (overrides: Partial<Models> = {}): Models => ({
         saveExploresToCacheAndIndexCatalog: vi
             .fn()
             .mockResolvedValue('catalog-job-uuid-1'),
+    },
+    coderService: {
+        upsertChart: vi.fn().mockResolvedValue({}),
+        upsertSqlChart: vi.fn().mockResolvedValue({}),
+        upsertDashboard: vi.fn().mockResolvedValue({}),
     },
     ...overrides,
 });
@@ -120,6 +146,7 @@ const start = (models: Models, config: Record<string, unknown>) => {
                 models.organizationMemberProfileModel as never,
             projectModel: models.projectModel as never,
             projectService: models.projectService as never,
+            coderService: models.coderService as never,
         }),
     );
     // ⚠ WITHOUT THIS EVERY ASSERTION BELOW COLLAPSES TO ">= 400". App.ts maps a
@@ -406,5 +433,278 @@ describe('kontala semantic layer', () => {
 
         expect(res.status).toBe(404);
         expect(models.projectModel.get).not.toHaveBeenCalled();
+    });
+});
+
+const publish = (
+    port: number,
+    body: unknown,
+    headers: Record<string, string> = { [KONTALA_ADMIN_HEADER]: SECRET },
+) =>
+    send(
+        'PUT',
+        port,
+        `/api/v1/kontala/projects/${PROJECT}/content`,
+        body,
+        headers,
+    );
+
+const chartYaml = (slug: string, space = 'kontala') => `
+contentType: chart
+version: 1
+slug: ${slug}
+spaceSlug: ${space}
+name: "${slug}"
+tableName: events_clean
+metricQuery:
+  exploreName: events_clean
+  dimensions: []
+  metrics: [events_clean_page_views]
+  filters: {}
+  sorts: []
+  limit: 1
+  tableCalculations: []
+chartConfig:
+  type: big_number
+`;
+
+const sqlChartYaml = (slug: string) => `
+contentType: sql_chart
+version: 1
+slug: ${slug}
+spaceSlug: kontala
+name: "${slug}"
+description: null
+sql: "SELECT 1 AS n"
+limit: 500
+chartKind: table
+config:
+  type: table
+  metadata: { version: 1 }
+  columns: {}
+`;
+
+const dashboardYaml = (tileChartSlug: string) => `
+contentType: dashboard
+version: 1
+slug: overview
+spaceSlug: kontala
+name: "Overview"
+tabs: []
+tiles:
+  - type: saved_chart
+    x: 0
+    y: 0
+    w: 18
+    h: 6
+    properties:
+      title: "A tile"
+      chartSlug: ${tileChartSlug}
+`;
+
+const upserts = (models: Models) => ({
+    charts: models.coderService.upsertChart.mock.calls,
+    sqlCharts: models.coderService.upsertSqlChart.mock.calls,
+    dashboards: models.coderService.upsertDashboard.mock.calls,
+});
+
+const wroteNothing = (models: Models) => {
+    expect(models.coderService.upsertChart).not.toHaveBeenCalled();
+    expect(models.coderService.upsertSqlChart).not.toHaveBeenCalled();
+    expect(models.coderService.upsertDashboard).not.toHaveBeenCalled();
+};
+
+describe('kontala content', () => {
+    it('publishes SQL charts, then charts, then dashboards', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+        const order: string[] = [];
+        models.coderService.upsertSqlChart.mockImplementation(async () => {
+            order.push('sql');
+            return {};
+        });
+        models.coderService.upsertChart.mockImplementation(async () => {
+            order.push('chart');
+            return {};
+        });
+        models.coderService.upsertDashboard.mockImplementation(async () => {
+            order.push('dashboard');
+            return {};
+        });
+
+        // Posted worst-case: the dashboard first, the SQL chart last.
+        const res = await publish(port, {
+            files: [
+                {
+                    path: 'lightdash/dashboards/overview.yml',
+                    content: dashboardYaml('kpi-sessions'),
+                },
+                {
+                    path: 'lightdash/charts/kpi-sessions.yml',
+                    content: chartYaml('kpi-sessions'),
+                },
+                {
+                    path: 'lightdash/sql_charts/dau.yml',
+                    content: sqlChartYaml('dau'),
+                },
+            ],
+        });
+
+        expect(res.status).toBe(200);
+        // ⚠ THE WHOLE POINT. A dashboard written before its charts is saved
+        // with empty tiles and a warning, never an error, so nothing downstream
+        // would report this going wrong.
+        expect(order).toEqual(['sql', 'chart', 'dashboard']);
+        const { results } = JSON.parse(res.body);
+        expect(results.written.map((w: { slug: string }) => w.slug)).toEqual([
+            'dau',
+            'kpi-sessions',
+            'overview',
+        ]);
+    });
+
+    it('runs the upserts as an admin that holds no membership', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        await publish(port, {
+            files: [{ path: 'c.yml', content: chartYaml('kpi-sessions') }],
+        });
+
+        const [actor] = upserts(models).charts[0];
+        expect(actor.role).toBe(OrganizationMemberRole.ADMIN);
+        expect(actor.organizationUuid).toBe(ORG);
+        expect(actor.ability.can('manage', 'ContentAsCode')).toBe(true);
+        // The ability is built in memory. Nothing may have written it down.
+        expect(
+            models.organizationMemberProfileModel
+                .createOrganizationMembershipByUuid,
+        ).not.toHaveBeenCalled();
+        expect(
+            models.organizationMemberProfileModel.updateOrganizationMember,
+        ).not.toHaveBeenCalled();
+    });
+
+    it('creates the space so every project member can see it', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        await publish(port, {
+            files: [{ path: 'c.yml', content: chartYaml('kpi-sessions') }],
+            spaceNames: { kontala: 'Kontala' },
+        });
+
+        const [, , , , options] = upserts(models).charts[0];
+        // Without publicSpaceCreate a new space is private to its creator, and
+        // its creator is an account nobody can sign in as.
+        expect(options.publicSpaceCreate).toBe(true);
+        expect(options.spaceNames).toEqual({ kontala: 'Kontala' });
+        expect(options.filePath).toBe('c.yml');
+    });
+
+    it('reports a tile whose chart is not in the payload', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        const res = await publish(port, {
+            files: [
+                {
+                    path: 'd.yml',
+                    content: dashboardYaml('a-chart-nobody-sent'),
+                },
+            ],
+        });
+
+        expect(res.status).toBe(200);
+        const { results } = JSON.parse(res.body);
+        expect(results.warnings.join(' ')).toContain('a-chart-nobody-sent');
+    });
+
+    it('refuses a malformed document before writing anything', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        const res = await publish(port, {
+            files: [
+                { path: 'good.yml', content: chartYaml('kpi-sessions') },
+                {
+                    path: 'bad.yml',
+                    content: 'contentType: chart\nversion: 1\n',
+                },
+            ],
+        });
+
+        expect(res.status).toBe(400);
+        // The good document came first in the payload and must still not have
+        // been written: parse-all-then-write is the only atomicity this
+        // endpoint can offer, and it is worthless if it is partial.
+        wroteNothing(models);
+    });
+
+    it.each([
+        [
+            'an unsupported content type',
+            'contentType: homepage\nversion: 1\nslug: x\nspaceSlug: kontala\n',
+        ],
+        [
+            'a slug with a capital letter',
+            'contentType: chart\nversion: 1\nslug: Overview\nspaceSlug: kontala\n',
+        ],
+        [
+            'a missing spaceSlug',
+            'contentType: chart\nversion: 1\nslug: overview\n',
+        ],
+        [
+            'a future version',
+            'contentType: chart\nversion: 2\nslug: overview\nspaceSlug: kontala\n',
+        ],
+        ['invalid YAML', 'contentType: chart\n  : ]['],
+    ])('refuses %s', async (_name, content) => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        const res = await publish(port, {
+            files: [{ path: 'x.yml', content }],
+        });
+
+        expect(res.status).toBe(400);
+        wroteNothing(models);
+    });
+
+    it('refuses two documents of one kind sharing a slug', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        const res = await publish(port, {
+            files: [
+                { path: 'a.yml', content: chartYaml('kpi-sessions') },
+                { path: 'b.yml', content: chartYaml('kpi-sessions', 'shared') },
+            ],
+        });
+
+        expect(res.status).toBe(400);
+        wroteNothing(models);
+    });
+
+    it('is closed to a bad secret and absent when unconfigured', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+        const bad = await publish(
+            port,
+            { files: [] },
+            {
+                [KONTALA_ADMIN_HEADER]: 'not-the-secret',
+            },
+        );
+        expect(bad.status).toBe(401);
+        wroteNothing(models);
+
+        const unconfigured = buildModels();
+        const closedPort = start(unconfigured, configWith({ adminSecret: '' }));
+        const off = await publish(closedPort, {
+            files: [{ path: 'c.yml', content: chartYaml('kpi-sessions') }],
+        });
+        expect(off.status).toBe(404);
+        wroteNothing(unconfigured);
     });
 });

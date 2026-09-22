@@ -28,7 +28,7 @@ const OAuthClientsPanel: FC = () => {
                 <SettingsEmptyState
                     icon={IconPlug}
                     title="No OAuth applications"
-                    description="Register an OAuth application to let external apps authenticate users via Lightdash."
+                    description="Register an OAuth application to let external apps authenticate users via Kontala Analytics."
                 />
             )}
 

@@ -42,7 +42,7 @@ const SlackAuthSuccess = () => {
                 />
             }
             title="Slack connected successfully!"
-            description="Your Slack account is now connected to Lightdash. You can now use AI Agent by mentioning the bot in your Slack channels."
+            description="Your Slack account is now connected to Kontala Analytics. You can now use AI Agent by mentioning the bot in your Slack channels."
         >
             <Button onClick={() => window.open(slackUrl)}>Open Slack</Button>
         </EmptyState>

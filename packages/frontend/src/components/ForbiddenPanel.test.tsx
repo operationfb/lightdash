@@ -47,7 +47,9 @@ describe('ForbiddenPanel', () => {
 
         expect(screen.getByText(NO_PROJECT_TITLE)).toBeInTheDocument();
         expect(
-            screen.getByText(/A project connects Lightdash to your data/),
+            screen.getByText(
+                /A project connects Kontala Analytics to your data/,
+            ),
         ).toBeInTheDocument();
         expect(screen.queryByText(GENERIC_TITLE)).not.toBeInTheDocument();
     });

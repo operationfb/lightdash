@@ -157,7 +157,7 @@ const handleError = async (
     }
     // Surface the real transport error (abort, CORS, DNS, connection reset)
     // instead of silently masking it as the generic message below.
-    console.error('Failed to reach the Lightdash server:', err);
+    console.error('Failed to reach the Kontala Analytics server:', err);
     // A body we could not parse still arrived with a status a server chose, so
     // that status is kept: callers that branch on 401/403 (session expiry,
     // permission checks) must still see one. Only a request that was never

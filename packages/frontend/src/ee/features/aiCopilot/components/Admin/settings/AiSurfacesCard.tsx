@@ -112,7 +112,7 @@ export const AiSurfacesCard: FC<AiSurfacesCardProps> = ({
                 </Box>
                 <SurfaceRow
                     icon={IconLayoutDashboard}
-                    name="Lightdash UI"
+                    name="Kontala Analytics UI"
                     description="Homepage card, navbar action, and agent chat."
                     checked={aiAgentsVisible}
                     disabled={disabled}

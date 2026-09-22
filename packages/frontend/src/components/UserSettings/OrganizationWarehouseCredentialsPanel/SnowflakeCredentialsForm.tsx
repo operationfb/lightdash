@@ -191,7 +191,7 @@ export const SnowflakeCredentialsForm: FC<Props> = ({
                     <TextInput
                         size="xs"
                         label="Snowflake URL override"
-                        description="Usually Lightdash would connect to a default url: account.snowflakecomputing.com. If you'd like to override this (e.g. for the dbt server) you can specify a full custom URL here."
+                        description="Usually Kontala Analytics would connect to a default url: account.snowflakecomputing.com. If you'd like to override this (e.g. for the dbt server) you can specify a full custom URL here."
                         disabled={disabled}
                         {...form.getInputProps('credentials.accessUrl')}
                     />

@@ -125,7 +125,7 @@ export const AgentOnboardingLaunchPanel: FC<
             : undefined;
 
         return [
-            '# Complete Lightdash project setup',
+            '# Complete Kontala Analytics project setup',
             '',
             '## Prepared setup',
             '',
@@ -171,7 +171,7 @@ export const AgentOnboardingLaunchPanel: FC<
                 <Title order={3}>Complete your project setup</Title>
                 <Text c="dimmed" mt="xs">
                     Copy the prompt below and run it with your coding agent to
-                    finish setting up your Lightdash project.
+                    finish setting up your Kontala Analytics project.
                 </Text>
             </div>
 
@@ -222,7 +222,7 @@ export const AgentOnboardingLaunchPanel: FC<
                             </ThemeIcon>
                             <Stack gap={6} flex={1}>
                                 <Title order={3}>
-                                    Let Lightdash build it for you
+                                    Let Kontala Analytics build it for you
                                 </Title>
                                 <Text c="dimmed">
                                     We’ll explore your warehouse, create a

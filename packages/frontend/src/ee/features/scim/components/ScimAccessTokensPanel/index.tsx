@@ -88,7 +88,7 @@ const ScimAccessTokensPanel: FC = () => {
                                 <Title order={5}>SCIM URL</Title>
                                 <Text c="dimmed">
                                     Use the URL to connect your identity
-                                    provider to Lightdash via SCIM.
+                                    provider to Kontala Analytics via SCIM.
                                 </Text>
                                 <Anchor
                                     inherit

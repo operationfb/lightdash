@@ -4,7 +4,7 @@ type Props = {
     title?: string;
 };
 
-const APP_NAME = 'Lightdash';
+const APP_NAME = 'Kontala Analytics';
 const PREFIX = import.meta.env.DEV ? '(DEV) ' : '';
 
 export const DocumentTitle: FC<Props> = ({ title }) => {

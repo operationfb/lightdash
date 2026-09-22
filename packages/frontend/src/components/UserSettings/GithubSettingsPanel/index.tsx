@@ -79,8 +79,8 @@ const GithubSettingsPanel: FC = () => {
 
             <Stack>
                 <Text c="dimmed" fz="xs">
-                    Installing GitHub App allows Lightdash to access your GitHub
-                    repositories and create pull requests.
+                    Installing GitHub App allows Kontala Analytics to access
+                    your GitHub repositories and create pull requests.
                 </Text>
 
                 {isValidGithubInstallation && data.length === 0 && (

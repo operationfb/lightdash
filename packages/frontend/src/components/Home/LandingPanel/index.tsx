@@ -22,8 +22,8 @@ const LandingPanel: FC<Props> = ({
         <Group justify="space-between" my="xl">
             <Stack justify="flex-start" gap="xs">
                 <Title order={3}>
-                    {`Welcome${userName ? ', ' + userName : ' to Lightdash'}!`}{' '}
-                    ⚡️
+                    {`Welcome${userName ? ', ' + userName : ' to Kontala Analytics'}!`}{' '}
+                    📊
                 </Title>
                 <Text c="ldGray.7">
                     Run a query to ask a business question or browse your data

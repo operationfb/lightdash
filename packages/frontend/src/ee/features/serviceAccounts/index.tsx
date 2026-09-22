@@ -37,7 +37,7 @@ export function ServiceAccountsPage() {
     return (
         <SettingsPage
             title="Service accounts"
-            description="Manage non-human accounts used for automated access to Lightdash."
+            description="Manage non-human accounts used for automated access to Kontala Analytics."
             actions={
                 <Button
                     size="xs"
@@ -52,7 +52,7 @@ export function ServiceAccountsPage() {
                 <SettingsEmptyState
                     icon={IconUsersGroup}
                     title="No service accounts"
-                    description="Create a service account for automated access to Lightdash."
+                    description="Create a service account for automated access to Kontala Analytics."
                 />
             ) : (
                 <ServiceAccountsTable

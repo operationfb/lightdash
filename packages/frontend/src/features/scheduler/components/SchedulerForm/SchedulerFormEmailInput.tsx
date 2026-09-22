@@ -77,7 +77,7 @@ export const SchedulerFormEmailInput: FC<Props> = ({
                             {' '}
                             SMTP environment variables{' '}
                         </Anchor>
-                        to your Lightdash instance
+                        to your Kontala Analytics instance
                     </Text>
                 </HoverCard.Dropdown>
             </HoverCard>

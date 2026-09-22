@@ -184,7 +184,7 @@ const UserCompletionModal: FC = () => {
                         )}
 
                         <Checkbox
-                            label="Keep me updated on new Lightdash features"
+                            label="Keep me updated on new Kontala Analytics features"
                             disabled={isLoading}
                             {...form.getInputProps('isMarketingOptedIn', {
                                 type: 'checkbox',

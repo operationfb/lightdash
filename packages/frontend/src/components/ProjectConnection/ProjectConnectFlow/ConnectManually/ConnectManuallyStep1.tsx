@@ -54,7 +54,7 @@ const ConnectManuallyStep1: FC<ConnectManuallyStep1Props> = ({
 
                     <Text c="dimmed">
                         We strongly recommend that you define columns in your
-                        .yml to see a table in Lightdash. eg:
+                        .yml to see a table in Kontala Analytics. eg:
                     </Text>
 
                     <CodeBlock

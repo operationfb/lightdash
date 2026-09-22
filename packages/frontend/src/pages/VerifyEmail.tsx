@@ -96,8 +96,8 @@ const VerifyEmailPage: FC = () => {
             withLegacyCard={false}
             footer={
                 <Text c="dimmed" ta="center" px="xs" fz="sm" fw={500}>
-                    You need to verify your email to get access to Lightdash. If
-                    you need help, you can{' '}
+                    You need to verify your email to get access to Kontala
+                    Analytics. If you need help, you can{' '}
                     <Anchor onClick={() => showIntercom()} fz="sm" fw={500}>
                         chat to support here.
                     </Anchor>

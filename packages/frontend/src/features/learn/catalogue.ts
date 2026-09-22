@@ -67,12 +67,12 @@ export const GROUP_ORDER: LearnGroup[] = [
 
 /** The library's one-line purpose per group, as on learn.lightdash.com. */
 export const GROUP_DESCRIPTIONS: Record<LearnGroup, string> = {
-    [FOUNDATIONS]: 'Become a knowledgeable Lightdash user',
+    [FOUNDATIONS]: 'Become a knowledgeable Kontala Analytics user',
     [ScopeGroup.CONTENT]: 'Create and maintain charts, dashboards, and spaces',
     [ScopeGroup.SHARING]: 'Send, schedule, and discuss trusted answers',
     [ScopeGroup.EMBED]: 'Put charts and dashboards inside other products',
     [ScopeGroup.DATA]:
-        'Shape, inspect, and extend the data available in Lightdash',
+        'Shape, inspect, and extend the data available in Kontala Analytics',
     [ScopeGroup.AI]: 'Ask better questions and manage AI-powered workflows',
     [ScopeGroup.PROJECT_MANAGEMENT]: 'Keep project access and delivery healthy',
     [ScopeGroup.SPOTLIGHT]: 'Learn timely product areas and advanced workflows',

@@ -265,7 +265,7 @@ describe('network error messages', () => {
                 name: 'NetworkError',
                 statusCode: 500,
                 message:
-                    'We are currently unable to reach the Lightdash server. Please try again in a few moments.',
+                    'We are currently unable to reach the Kontala Analytics server. Please try again in a few moments.',
                 data: {},
             },
         });
@@ -287,7 +287,7 @@ describe('network error messages', () => {
                 name: 'NetworkError',
                 statusCode: 401,
                 message:
-                    'We are currently unable to reach the Lightdash server. Please try again in a few moments.',
+                    'We are currently unable to reach the Kontala Analytics server. Please try again in a few moments.',
             },
         });
     });
@@ -316,7 +316,7 @@ describe('network error messages', () => {
                 name: 'NetworkError',
                 statusCode: 500,
                 message: expect.stringContaining(
-                    'Lightdash is reachable, but this request was blocked before it arrived',
+                    'Kontala Analytics is reachable, but this request was blocked before it arrived',
                 ),
                 data: {
                     kind: 'blocked',
@@ -352,7 +352,7 @@ describe('network error messages', () => {
             error: {
                 name: 'NetworkError',
                 message:
-                    'We are currently unable to reach the Lightdash server. Please try again in a few moments.',
+                    'We are currently unable to reach the Kontala Analytics server. Please try again in a few moments.',
                 data: {},
             },
         });
@@ -371,7 +371,7 @@ describe('network error messages', () => {
             error: {
                 name: 'NetworkError',
                 message: expect.stringContaining(
-                    'with HTTP 403 instead of Lightdash',
+                    'with HTTP 403 instead of Kontala Analytics',
                 ),
                 data: { kind: 'intercepted', responseStatus: 403 },
             },
@@ -387,7 +387,7 @@ describe('network error messages', () => {
             error: {
                 name: 'NetworkError',
                 message: expect.stringContaining(
-                    'Lightdash cannot be reached from your network right now',
+                    'Kontala Analytics cannot be reached from your network right now',
                 ),
                 data: { kind: 'unreachable' },
             },
@@ -406,7 +406,7 @@ describe('network error messages', () => {
             error: {
                 name: 'NetworkError',
                 message: expect.stringContaining(
-                    'with HTTP 502 instead of Lightdash',
+                    'with HTTP 502 instead of Kontala Analytics',
                 ),
                 data: { kind: 'intercepted', responseStatus: 502 },
             },
@@ -496,7 +496,7 @@ describe('network error messages', () => {
                 body: JSON.stringify({}),
                 diagnoseTransportFailures: true,
             }),
-        ).rejects.toThrow('with HTTP 403 instead of Lightdash');
+        ).rejects.toThrow('with HTTP 403 instead of Kontala Analytics');
     });
 });
 

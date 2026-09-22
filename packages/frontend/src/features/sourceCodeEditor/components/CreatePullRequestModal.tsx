@@ -35,7 +35,7 @@ const CreatePullRequestModal: FC<CreatePullRequestModalProps> = ({
         initialValues: {
             title: `Update from branch ${branch}`,
             description:
-                'This pull request contains changes made via the Lightdash source code editor.',
+                'This pull request contains changes made via the Kontala Analytics source code editor.',
         },
         validateInputOnChange: true,
         validate: {

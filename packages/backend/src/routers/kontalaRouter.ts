@@ -1,7 +1,7 @@
 /**
  * KONTALA: what this instance exposes to Kontala Marketing, and nothing else.
  *
- * Two endpoints, both authorised by one instance-wide secret.
+ * Three endpoints, all authorised by one instance-wide secret.
  *
  * POST /members reconciles people. Kontala owns who its customers are; this
  * instance owns what they can see, and a crossing between the two has to turn
@@ -12,6 +12,12 @@
  * PUT /projects/:projectUuid/semantic-layer deploys a tenant's model. It
  * exists so that provisioning a customer needs no Lightdash CLI, and therefore
  * no Node, no version pin against this instance and no personal access token.
+ *
+ * PUT /projects/:projectUuid/content deploys the charts and dashboards built on
+ * that model, for the same reason and through the same secret. See
+ * routers/kontala/content.ts, and in particular deployActor: the CASL principal
+ * those upserts run as exists in memory for the length of the request and is
+ * never written down.
  *
  * ⚠ IT IS CALLED DURING THE TOKEN EXCHANGE, before this instance has ever seen
  * the person. That ordering is the whole design. By the time the single
@@ -28,6 +34,7 @@
  */
 import {
     calculateExploreWarningReport,
+    ContentAsCodeType,
     OrganizationMemberRole,
     ParameterError,
     type CreateUserWithRole,
@@ -43,6 +50,13 @@ import type { EmailModel } from '../models/EmailModel';
 import type { OrganizationMemberProfileModel } from '../models/OrganizationMemberProfileModel';
 import type { ProjectModel } from '../models/ProjectModel/ProjectModel';
 import type { UserModel } from '../models/UserModel';
+import type { CoderService } from '../services/CoderService/CoderService';
+import {
+    deployActor,
+    parsePostedContent,
+    unresolvedChartSlugs,
+    type ParsedDocument,
+} from './kontala/content';
 import {
     compilePostedSemanticLayer,
     parsePostedModels,
@@ -96,6 +110,17 @@ type ProjectServiceInterface = {
     }) => Promise<string>;
 };
 
+/**
+ * The three content upserts, declared structurally for the same reason
+ * ProjectServiceInterface above is: this router needs the methods it calls
+ * rather than the whole of CoderService, and saying so keeps the test able to
+ * stub three functions instead of a class.
+ */
+type CoderServiceInterface = Pick<
+    CoderService,
+    'upsertChart' | 'upsertSqlChart' | 'upsertDashboard'
+>;
+
 type KontalaRouterDependencies = {
     lightdashConfig: LightdashConfig;
     userModel: UserModel;
@@ -103,6 +128,7 @@ type KontalaRouterDependencies = {
     organizationMemberProfileModel: OrganizationMemberProfileModel;
     projectModel: ProjectModel;
     projectService: ProjectServiceInterface;
+    coderService: CoderServiceInterface;
 };
 
 type MemberBody = {
@@ -144,6 +170,7 @@ export const kontalaRouter = ({
     organizationMemberProfileModel,
     projectModel,
     projectService,
+    coderService,
 }: KontalaRouterDependencies) => {
     const router = express.Router();
 
@@ -375,6 +402,173 @@ export const kontalaRouter = ({
                         exploreNames: explores.map((explore) => explore.name),
                         warnings: calculateExploreWarningReport({ explores }),
                         catalogIndexJobUuid,
+                    },
+                });
+            } catch (error) {
+                next(error);
+            }
+        },
+    );
+
+    /**
+     * Replaces a project's Kontala-published charts and dashboards.
+     *
+     * PUT and idempotent, exactly as the semantic layer is: Kontala posts the
+     * whole set on every run, and re-running provisioning is its repair for a
+     * project whose dashboards have drifted.
+     *
+     * ⚠ AN UPSERT IS AUTHORITATIVE AND ALWAYS OVERWRITES. There is no drift
+     * guard to reach for - `force` only flips a NO_CHANGES promotion action to
+     * UPDATE so a version row is written - so whatever a customer edited on a
+     * published chart is gone on the next publish. Kontala publishes into a
+     * space of its own for that reason, and the documents say to duplicate
+     * rather than to edit. This endpoint does not enforce that; it is a
+     * property of where the caller points it.
+     */
+    router.put(
+        '/projects/:projectUuid/content',
+        // Thirteen documents with embedded SQL, against express.json's 100KB
+        // default. Raised here for the same reason the semantic layer's is,
+        // and to the same ceiling so there is one number to remember.
+        express.json({ limit: '2mb' }),
+        async (req, res, next) => {
+            try {
+                const { projectUuid } = req.params;
+                const body = req.body as {
+                    files?: unknown;
+                    spaceNames?: unknown;
+                    force?: unknown;
+                };
+                if (
+                    body.spaceNames !== undefined &&
+                    (typeof body.spaceNames !== 'object' ||
+                        body.spaceNames === null ||
+                        Array.isArray(body.spaceNames))
+                ) {
+                    throw new ParameterError(
+                        'spaceNames must be an object mapping space slug to display name',
+                    );
+                }
+                if (
+                    body.force !== undefined &&
+                    typeof body.force !== 'boolean'
+                ) {
+                    throw new ParameterError('force must be a boolean');
+                }
+                const spaceNames = (body.spaceNames ?? {}) as Record<
+                    string,
+                    string
+                >;
+                const force = body.force === true;
+
+                // Parsed before the project is read, so a malformed payload
+                // costs no database round trip. Everything that can fail on the
+                // documents themselves has failed by the end of this line.
+                const documents = parsePostedContent(body.files);
+
+                const project = await projectModel.get(projectUuid);
+
+                const userUuid = await ensureDeployUser(
+                    project.organizationUuid,
+                );
+                const actor = deployActor({
+                    user: await userModel.getUserDetailsByUuid(userUuid),
+                    organizationUuid: project.organizationUuid,
+                    lightdashConfig,
+                });
+
+                // publicSpaceCreate, so the space a document names is created
+                // inheriting project permissions: every member of the project
+                // can see what Kontala published. Without it a new space is
+                // private to its creator, which is an account nobody can sign
+                // in as - the dashboards would exist and be invisible.
+                const options = {
+                    publicSpaceCreate: true,
+                    spaceNames,
+                    force,
+                };
+
+                const written: Array<{
+                    path: string;
+                    type: string;
+                    slug: string;
+                }> = [];
+                const warnings = unresolvedChartSlugs(documents).map(
+                    (slug) =>
+                        `No chart with slug "${slug}" is in this payload; a tile referencing it resolves against the project or stays empty`,
+                );
+
+                // Sequential, in the order parsePostedContent returned: SQL
+                // charts, then charts, then dashboards. Promise.all here would
+                // race a dashboard against the charts its tiles name.
+                /* eslint-disable no-await-in-loop */
+                for (const document of documents) {
+                    switch (document.kind) {
+                        case ContentAsCodeType.SQL_CHART:
+                            await coderService.upsertSqlChart(
+                                actor,
+                                projectUuid,
+                                document.slug,
+                                document.doc,
+                                undefined,
+                                options.publicSpaceCreate,
+                                options.force,
+                                options.spaceNames,
+                            );
+                            break;
+                        case ContentAsCodeType.CHART:
+                            await coderService.upsertChart(
+                                actor,
+                                projectUuid,
+                                document.slug,
+                                document.doc,
+                                { ...options, filePath: document.path },
+                            );
+                            break;
+                        case ContentAsCodeType.DASHBOARD: {
+                            const result = await coderService.upsertDashboard(
+                                actor,
+                                projectUuid,
+                                document.slug,
+                                document.doc,
+                                { ...options, filePath: document.path },
+                            );
+                            warnings.push(...(result.warnings ?? []));
+                            break;
+                        }
+                        default:
+                            // parsePostedContent refuses anything else, so this
+                            // is unreachable rather than defensive. It is here
+                            // so adding a content type to UPSERT_ORDER without
+                            // adding its upsert fails to compile.
+                            throw new ParameterError(
+                                `No upsert for content type ${
+                                    (document as ParsedDocument).kind
+                                }`,
+                            );
+                    }
+                    written.push({
+                        path: document.path,
+                        type: document.kind,
+                        slug: document.slug,
+                    });
+                }
+                /* eslint-enable no-await-in-loop */
+
+                Logger.info(
+                    `kontala: published ${written.length} content documents to project ${projectUuid}`,
+                );
+                res.status(200).json({
+                    status: 'ok',
+                    results: {
+                        projectUuid,
+                        // What was actually written, in the order it was
+                        // written. The writes are N upserts and not one
+                        // transaction, so a failure part-way leaves what came
+                        // before it; saying which is more useful than implying
+                        // an atomicity this endpoint does not have.
+                        written,
+                        warnings,
                     },
                 });
             } catch (error) {

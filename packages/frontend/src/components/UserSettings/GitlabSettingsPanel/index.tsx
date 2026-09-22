@@ -47,7 +47,7 @@ const GitlabSettingsPanel: FC = () => {
                 <Text c="dimmed" fz="xs">
                     Connect your GitLab account to enable write-back
                     functionality and create merge requests directly from
-                    Lightdash.
+                    Kontala Analytics.
                 </Text>
 
                 {isValidGitlabInstallation && data.length === 0 && (

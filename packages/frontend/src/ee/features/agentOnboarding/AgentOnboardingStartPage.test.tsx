@@ -88,7 +88,7 @@ describe('AgentOnboardingStartPage', () => {
         renderPage();
 
         expect(
-            screen.getByText('Let Lightdash build it for you'),
+            screen.getByText('Let Kontala Analytics build it for you'),
         ).toBeInTheDocument();
         expect(screen.getByText('Run it for me')).toBeInTheDocument();
     });

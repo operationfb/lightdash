@@ -156,8 +156,8 @@ const ProjectResultsCache: FC<Props> = ({ projectUuid }) => {
             <Box>
                 <Title order={5}>Cache duration</Title>
                 <Text c="dimmed" fz="xs">
-                    How long cached results are kept before Lightdash queries
-                    the warehouse again.
+                    How long cached results are kept before Kontala Analytics
+                    queries the warehouse again.
                 </Text>
             </Box>
             {isLoading || !settings ? (

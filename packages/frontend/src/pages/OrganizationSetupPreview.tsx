@@ -56,7 +56,7 @@ const OrganizationSetupPreview: FC<OrganizationSetupPreviewProps> = ({
         />
 
         <Text size="xs" c="dimmed" ta="center">
-            A preview of Lightdash, themed to your brand.
+            A preview of Kontala Analytics, themed to your brand.
         </Text>
     </Box>
 );

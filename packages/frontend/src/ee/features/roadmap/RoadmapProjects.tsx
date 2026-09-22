@@ -925,7 +925,7 @@ export function RoadmapProjects({
                 projectBoard
                     ? selectedProject?.project.description.trim() ||
                       'Tickets your organization follows in this project.'
-                    : 'Explore the Lightdash roadmap and track your organization’s feature requests.'
+                    : 'Explore the Kontala Analytics roadmap and track your organization’s feature requests.'
             }
             actions={
                 projectBoard && !failed && selectedProject ? (

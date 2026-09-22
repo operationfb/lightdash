@@ -33,7 +33,7 @@ const StateBadge: FC<{ item: RegistryChartTypeListItem }> = ({ item }) => {
         case 'incompatible':
             return (
                 <Badge size="xs" variant="light" color="gray">
-                    Requires newer Lightdash
+                    Requires newer Kontala Analytics
                 </Badge>
             );
         default:

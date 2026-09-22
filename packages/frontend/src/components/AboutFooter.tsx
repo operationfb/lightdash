@@ -86,7 +86,7 @@ const AboutFooter: FC<{ minimal?: boolean; maxWidth?: number }> = ({
                         loading={healthState.isInitialLoading}
                         onClick={() => setIsOpen(true)}
                     >
-                        {!minimal && 'Lightdash - '}
+                        {!minimal && 'Kontala Analytics - '}
                         {healthState.data && `v${healthState.data.version}`}
                         {showUpdateBadge && (
                             <Badge ml="xs" radius="xs" size="xs">
@@ -133,7 +133,7 @@ const AboutFooter: FC<{ minimal?: boolean; maxWidth?: number }> = ({
             <MantineModal
                 opened={isOpen}
                 onClose={() => setIsOpen(false)}
-                title="About Lightdash"
+                title="About Kontala Analytics"
                 icon={IconInfoCircle}
                 size="md"
                 modalBodyProps={{ py: 'lg' }}
