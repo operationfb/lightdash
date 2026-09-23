@@ -10,6 +10,8 @@ import {
 } from '@lightdash/common';
 import OAuth2Server from '@node-oauth/oauth2-server';
 import express, { type Router } from 'express';
+import { lightdashConfig } from '../config/lightdashConfig';
+import { appPathOf, sitePathFor } from '../config/siteUrl';
 import {
     allowApiKeyAuthentication,
     isAuthenticated,
@@ -130,9 +132,15 @@ const sendMissingOrganizationResponse = async (
 
 // Get authorization - use OAuth2Server
 oauthRouter.get('/authorize', async (req, res, next) => {
-    const loginUrl = `/login?redirect=${encodeURIComponent(
-        req.originalUrl || req.url,
-    )}`;
+    // KONTALA: both halves are written for the base path this instance is
+    // served under: the login page is inside it, and `redirect` is read by the
+    // frontend as a router path. See config/siteUrl.ts.
+    const loginUrl = sitePathFor(
+        lightdashConfig,
+        `/login?redirect=${encodeURIComponent(
+            appPathOf(lightdashConfig, req.originalUrl || req.url),
+        )}`,
+    );
     if (!req.user) {
         return res.redirect(loginUrl);
     }

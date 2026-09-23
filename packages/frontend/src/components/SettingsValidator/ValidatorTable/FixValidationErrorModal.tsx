@@ -31,7 +31,7 @@ import { useSavedQuery } from '../../../hooks/useSavedQuery';
 import Callout from '../../common/Callout';
 import MantineModal from '../../common/MantineModal';
 import { resolveModelNameFromField } from '../utils/resolveModelName';
-import { getLinkToResource } from '../utils/utils';
+import { getBrowserLinkToResource, getLinkToResource } from '../utils/utils';
 import {
     useFieldsForChart,
     usePreviewRename,
@@ -242,7 +242,7 @@ export const FixValidationErrorModal: FC<Props> = ({
                 </Text>{' '}
                 error:{' '}
                 <Anchor
-                    href={getLinkToResource(
+                    href={getBrowserLinkToResource(
                         validationError,
                         validationError.projectUuid,
                     )}

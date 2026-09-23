@@ -16,10 +16,49 @@ export const resolveInternalPath = (url: string): string | null => {
         if (resolved.origin !== window.location.origin) return null;
 
         const path = `${resolved.pathname}${resolved.search}${resolved.hash}`;
+        // KONTALA: an absolute URL spells the BROWSER's path, which carries the
+        // base path the router adds back itself, and on a shared origin it may
+        // name the other app's page altogether. Only a URL inside the base
+        // path is ours; it loses the base, and anything else stays a real
+        // document link. Other inputs are router paths already. See below.
+        if (isAbsoluteUrl(url)) {
+            const internal = toRouterPath(path);
+            return internal !== null && isRootRelativePath(internal)
+                ? internal
+                : null;
+        }
         return isRootRelativePath(path) ? path : null;
     } catch {
         return null;
     }
+};
+
+/** KONTALA: a scheme (`https:`, `mailto:`) or a protocol-relative `//host`. */
+const isAbsoluteUrl = (url: string): boolean =>
+    /^[a-z][a-z\d+.-]*:/i.test(url) || url.startsWith('//');
+
+/**
+ * KONTALA: the base path this build is served under, without a trailing slash:
+ * '' at the origin root, '/analytics' behind Kontala. `import.meta.env.BASE_URL`
+ * is vite's base, the value the router's basename is built from.
+ */
+export const browserBasePath = (): string =>
+    import.meta.env.BASE_URL.replace(/\/+$/, '');
+
+/**
+ * KONTALA: the inverse of `toBrowserPath`, or null for a path outside the base
+ * path - a page of whatever else shares this origin.
+ */
+const toRouterPath = (browserPath: string): string | null => {
+    const base = browserBasePath();
+    if (!base) return browserPath;
+    if (!browserPath.startsWith(base)) return null;
+    const rest = browserPath.slice(base.length);
+    if (rest === '') return '/';
+    if (rest.startsWith('/')) return rest;
+    if (rest.startsWith('?') || rest.startsWith('#')) return `/${rest}`;
+    // `/analyticsfoo`: another path that merely shares the prefix.
+    return null;
 };
 
 /**
@@ -40,7 +79,7 @@ export const resolveInternalPath = (url: string): string | null => {
  * root, where this returns the path unchanged).
  */
 export const toBrowserPath = (routerPath: string): string =>
-    `${import.meta.env.BASE_URL.replace(/\/+$/, '')}${routerPath}`;
+    `${browserBasePath()}${routerPath}`;
 
 /**
  * KONTALA: `toBrowserPath` for an `href` that may instead be an absolute URL.
@@ -51,3 +90,18 @@ export const toBrowserPath = (routerPath: string): string =>
  */
 export const toBrowserHref = (href: string): string =>
     isRootRelativePath(href) ? toBrowserPath(href) : href;
+
+/**
+ * KONTALA: the origin of a URL, or null when it does not parse.
+ *
+ * For comparing with `MessageEvent.origin`, which is only ever an origin.
+ * `siteUrl` carries this instance's base path (`https://konta.la/analytics`),
+ * so comparing the two directly never matches.
+ */
+export const originOf = (url: string): string | null => {
+    try {
+        return new URL(url).origin;
+    } catch {
+        return null;
+    }
+};

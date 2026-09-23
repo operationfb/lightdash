@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { resolveInternalPath, toBrowserHref, toBrowserPath } from './url';
+import {
+    browserBasePath,
+    originOf,
+    resolveInternalPath,
+    toBrowserHref,
+    toBrowserPath,
+} from './url';
 
 // jsdom serves these tests from http://localhost:3000
 const ORIGIN = window.location.origin;
@@ -43,6 +49,68 @@ describe('resolveInternalPath', () => {
     it('returns null rather than throwing on unparseable input', () => {
         expect(resolveInternalPath('')).toBe('/');
         expect(resolveInternalPath('http://')).toBeNull();
+    });
+});
+
+// KONTALA: behind a base path an absolute URL spells the browser's path, and
+// only one inside the base path belongs to this app at all.
+describe('resolveInternalPath served under a base path', () => {
+    afterEach(() => {
+        vi.unstubAllEnvs();
+    });
+
+    it('takes the base path off an absolute URL inside it, for the router', () => {
+        vi.stubEnv('BASE_URL', '/analytics/');
+
+        expect(resolveInternalPath(`${ORIGIN}/analytics/register`)).toBe(
+            '/register',
+        );
+        expect(
+            resolveInternalPath(`${ORIGIN}/analytics/projects?tab=charts#top`),
+        ).toBe('/projects?tab=charts#top');
+        expect(resolveInternalPath(`${ORIGIN}/analytics`)).toBe('/');
+        expect(resolveInternalPath(`${ORIGIN}/analytics?tab=charts`)).toBe(
+            '/?tab=charts',
+        );
+    });
+
+    it('leaves the rest of a shared origin to real document links', () => {
+        vi.stubEnv('BASE_URL', '/analytics/');
+
+        expect(resolveInternalPath(`${ORIGIN}/properties`)).toBeNull();
+        expect(resolveInternalPath(`${ORIGIN}/analyticsfoo`)).toBeNull();
+    });
+
+    it('keeps a root-relative input as the router path it already is', () => {
+        vi.stubEnv('BASE_URL', '/analytics/');
+
+        expect(resolveInternalPath('/register')).toBe('/register');
+    });
+});
+
+describe('browserBasePath', () => {
+    afterEach(() => {
+        vi.unstubAllEnvs();
+    });
+
+    it('is empty at the origin root', () => {
+        expect(browserBasePath()).toBe('');
+    });
+
+    it("is vite's base without its trailing slash", () => {
+        vi.stubEnv('BASE_URL', '/analytics/');
+
+        expect(browserBasePath()).toBe('/analytics');
+    });
+});
+
+describe('originOf', () => {
+    it('drops the path a site URL carries', () => {
+        expect(originOf('https://konta.la/analytics')).toBe('https://konta.la');
+    });
+
+    it('is null rather than throwing for something that does not parse', () => {
+        expect(originOf('')).toBeNull();
     });
 });
 

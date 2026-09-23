@@ -37,6 +37,7 @@ import { ShareLinkButton } from '../../../../components/common/ShareLinkButton';
 import SuboptimalState from '../../../../components/common/SuboptimalState/SuboptimalState';
 import { useUiStrings } from '../../../../ee/providers/Embed/useUiStrings';
 import useApp from '../../../../providers/App/useApp';
+import { toBrowserPath } from '../../../../utils/url';
 import { useAppDispatch, useAppSelector } from '../../../sqlRunner/store/hooks';
 import { useMetricsCatalog } from '../../hooks/useMetricsCatalog';
 import { useAllMetricsTreeEdges } from '../../hooks/useMetricsTree';
@@ -543,7 +544,9 @@ const SavedTreeCanvas: FC<SavedTreeCanvasProps> = ({ mode, treeUuid }) => {
                             Close
                         </Button>
                         <ShareLinkButton
-                            url={`${window.location.origin}/projects/${projectUuid}/metrics/canvas/${treeDetails.slug}`}
+                            // KONTALA: a link for an address bar, so the
+                            // router path needs the base path.
+                            url={`${window.location.origin}${toBrowserPath(`/projects/${projectUuid}/metrics/canvas/${treeDetails.slug}`)}`}
                             label="Copy link to tree"
                         />
                         {canManageMetricsTree && (

@@ -1,3 +1,5 @@
+import { browserBasePath } from './url';
+
 /**
  * Read a cookie value by name. Returns null when not present or when running
  * outside a browser context. The value is returned raw (still URL-encoded) —
@@ -23,5 +25,16 @@ export const setCookie = (
 ): void => {
     if (typeof document === 'undefined') return;
     const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-    document.cookie = `${name}=${value}; Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax${secure}`;
+    // KONTALA: scoped to the path this build is served under, as the session
+    // cookie is (the backend's expressSessionOptions). On a shared origin a
+    // Path=/ cookie goes out with every request to the other app too, and the
+    // one written here holds the user's email.
+    const path = browserBasePath() || '/';
+    document.cookie = `${name}=${value}; Path=${path}; Max-Age=${maxAgeSeconds}; SameSite=Lax${secure}`;
+    // KONTALA: and a copy written before it was scoped still sits at Path=/,
+    // where it would keep going out for the rest of its year. Expiring it
+    // needs the same name, path and (absent) domain it was written with.
+    if (path !== '/') {
+        document.cookie = `${name}=; Path=/; Max-Age=0; SameSite=Lax${secure}`;
+    }
 };

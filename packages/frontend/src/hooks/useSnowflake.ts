@@ -2,6 +2,7 @@ import { type ApiError, type ApiSuccessEmpty } from '@lightdash/common';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { lightdashApi } from '../api';
+import { originOf } from '../utils/url';
 import useHealth from './health/useHealth';
 import useToaster from './toaster/useToaster';
 
@@ -25,7 +26,10 @@ const triggerSnowflakeLogin = async (siteUrl: string) => {
         }
 
         const handleMessage = (event: MessageEvent) => {
-            if (event.origin !== siteUrl) return;
+            // KONTALA: siteUrl carries the base path (https://konta.la/analytics)
+            // and an origin never does, so comparing the two refused every
+            // sign-in and the popup closed with the promise still pending.
+            if (event.origin !== originOf(siteUrl)) return;
 
             if (event.data === 'success') {
                 resolve();

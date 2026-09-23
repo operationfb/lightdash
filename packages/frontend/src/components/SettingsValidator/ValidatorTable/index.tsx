@@ -40,7 +40,7 @@ import {
     getDeletableContentItem,
     type ValidationContentItem,
 } from '../utils/deletableContent';
-import { getLinkToResource } from '../utils/utils';
+import { getBrowserLinkToResource } from '../utils/utils';
 import { ErrorMessage } from './ErrorMessage';
 import classes from './ValidatorTable.module.css';
 import { ValidatorTableTopToolbar } from './ValidatorTableTopToolbar';
@@ -89,7 +89,7 @@ const AnchorToResource: FC<{
 }> = ({ validationError, projectUuid, children }) => {
     return (
         <Anchor
-            href={getLinkToResource(validationError, projectUuid)}
+            href={getBrowserLinkToResource(validationError, projectUuid)}
             target="_blank"
             c="unset"
             className={classes.anchor}

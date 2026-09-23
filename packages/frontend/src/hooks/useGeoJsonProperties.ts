@@ -1,6 +1,7 @@
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import * as topojson from 'topojson-client';
 import type { Topology } from 'topojson-specification';
+import { resolveRequestUrl } from '../utils/request';
 
 export type GeoJsonPropertiesResult = {
     properties: string[];
@@ -88,7 +89,10 @@ const fetchGeoJsonProperties = async (
     geoJsonUrl: string,
 ): Promise<GeoJsonPropertiesResult> => {
     // Include credentials for authenticated proxy requests
-    const response = await fetch(geoJsonUrl, {
+    // KONTALA: resolved the way SimpleMap loads the same URL. Fetched as
+    // given, the proxy's /api/v1/geojson-proxy named the API of the app
+    // sharing the origin rather than ours.
+    const response = await fetch(resolveRequestUrl(geoJsonUrl), {
         credentials: 'include',
     });
 

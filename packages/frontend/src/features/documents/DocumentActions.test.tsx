@@ -150,6 +150,26 @@ describe('Document actions', () => {
         );
     });
 
+    // KONTALA: the link is pasted into an address bar, where a bare
+    // /projects/... names a page of whatever else shares the origin.
+    describe('served under a base path', () => {
+        afterEach(() => {
+            vi.unstubAllEnvs();
+        });
+
+        it('copies the document URL under it', () => {
+            vi.stubEnv('BASE_URL', '/analytics/');
+
+            renderActions();
+
+            expect(mocks.copy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    value: `${window.location.origin}/analytics/projects/project-slug/documents/weekly-report`,
+                }),
+            );
+        });
+    });
+
     it('confirms deletion for the exact Document before returning to its list', async () => {
         mocks.canDelete = true;
         renderActions();

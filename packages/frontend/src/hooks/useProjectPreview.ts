@@ -7,6 +7,7 @@ import { IconArrowRight } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { lightdashApi } from '../api';
 import useActiveJob from '../providers/ActiveJob/useActiveJob';
+import { toBrowserPath } from '../utils/url';
 import useToaster from './toaster/useToaster';
 
 const createPreviewProject = async ({
@@ -63,7 +64,11 @@ export const useCreatePreviewMutation = () => {
                     children: 'Open preview project',
                     icon: IconArrowRight,
                     onClick: () => {
-                        const url = `${window.origin}/projects/${projectUuid}/home`;
+                        // KONTALA: a new tab starts outside the router, so
+                        // the path needs the base path. See utils/url.ts.
+                        const url = toBrowserPath(
+                            `/projects/${projectUuid}/home`,
+                        );
                         window.open(url, '_blank');
                     },
                 },

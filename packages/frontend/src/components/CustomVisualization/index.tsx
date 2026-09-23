@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { dark as vegaDarkTheme } from 'vega-themes';
 import { type CustomVisualizationConfigAndData } from '../../hooks/useCustomVisualizationConfig';
+import { browserBasePath } from '../../utils/url';
 import LoadingChart from '../common/LoadingChart';
 import SuboptimalState from '../common/SuboptimalState/SuboptimalState';
 import { isCustomVisualizationConfig } from '../LightdashVisualization/types';
@@ -197,6 +198,14 @@ const CustomVisualization: FC<Props> = ({
                         // visualizations render under a strict CSP (no
                         // 'unsafe-eval'). See issue #21276.
                         ast: true,
+                        // KONTALA: a spec's data URLs are fetched by Vega, not
+                        // the router, so the Map template's saved
+                        // '/vega-world-map.json' resolved against the origin
+                        // and missed our public/ entirely under a base path.
+                        // vega-loader prefixes any URL without a protocol with
+                        // this, and ignores it when empty (the origin root).
+                        // Saved specs stay base-path agnostic.
+                        loader: { baseURL: browserBasePath() },
                     }}
                     onEmbed={handleVegaEmbed}
                     onError={handleVegaError}

@@ -4,7 +4,7 @@ import { IconAlertTriangle } from '@tabler/icons-react';
 import { type FC } from 'react';
 import Callout from '../../common/Callout';
 import MantineModal from '../../common/MantineModal';
-import { getLinkToResource } from '../utils/utils';
+import { getBrowserLinkToResource } from '../utils/utils';
 
 type Props = {
     validationError: ValidationErrorChartResponse | undefined;
@@ -19,7 +19,7 @@ export const ChartConfigurationErrorModal: FC<Props> = ({
         return null;
     }
 
-    const chartUrl = getLinkToResource(
+    const chartUrl = getBrowserLinkToResource(
         validationError,
         validationError.projectUuid,
     );

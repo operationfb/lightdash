@@ -1,6 +1,7 @@
 import { Anchor, Box, List, Loader, Text } from '@mantine/core';
 import { type FC } from 'react';
 import { useDashboardsContainingChart } from '../../../hooks/dashboard/useDashboards';
+import { toBrowserPath } from '../../../utils/url';
 
 type Props = {
     resourceItemId: string;
@@ -30,7 +31,11 @@ export const DashboardList: FC<Props> = ({ resourceItemId, projectUuid }) => {
                     {relatedDashboards.map(({ uuid, slug, name }) => (
                         <List.Item key={uuid}>
                             <Anchor
-                                href={`${window.location.origin}/projects/${projectUuid}/dashboards/${slug}/view/`}
+                                // KONTALA: a real anchor, so the router path
+                                // needs the base path. See utils/url.ts.
+                                href={toBrowserPath(
+                                    `/projects/${projectUuid}/dashboards/${slug}/view/`,
+                                )}
                                 target="_blank"
                                 onClick={(
                                     e: React.MouseEvent<HTMLAnchorElement>,

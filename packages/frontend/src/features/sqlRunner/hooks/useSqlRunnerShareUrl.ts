@@ -72,6 +72,9 @@ export const useCreateSqlRunnerShareUrl = () => {
             path,
             params: JSON.stringify(shareStateParams),
         });
+        // KONTALA: `path` is window.location.pathname, the browser's own
+        // spelling, which already carries the base path.
+        // eslint-disable-next-line kontala/no-path-outside-base
         return `${window.location.origin}${path}?share=${shareUrl.nanoid}`;
     }, [createShareUrl, sqlRunnerState, config]);
 };

@@ -25,7 +25,7 @@ import { useMemo, useState, type FC, type FormEvent } from 'react';
 import { useExplores } from '../../../hooks/useExplores';
 import Callout from '../../common/Callout';
 import MantineModal from '../../common/MantineModal';
-import { getLinkToResource } from '../utils/utils';
+import { getBrowserLinkToResource, getLinkToResource } from '../utils/utils';
 import {
     useFieldsForDashboard,
     useRenameDashboard,
@@ -179,7 +179,7 @@ export const FixDashboardFilterModal: FC<Props> = ({
                 </Text>{' '}
                 filter error:{' '}
                 <Anchor
-                    href={getLinkToResource(
+                    href={getBrowserLinkToResource(
                         validationError,
                         validationError.projectUuid,
                     )}

@@ -290,10 +290,15 @@ export const LoginForm: FC<{
                     <Button
                         component="a"
                         variant="default"
-                        href={setMobileLoginIntentOnRedirect(
-                            redirectUrl,
-                            window.location.origin,
-                            alternativeLoginIntent,
+                        // KONTALA: `redirect` is a router path, and this is a
+                        // real anchor to the server's authorize endpoint, so
+                        // the base path goes back on. See utils/url.ts.
+                        href={toBrowserPath(
+                            setMobileLoginIntentOnRedirect(
+                                redirectUrl,
+                                window.location.origin,
+                                alternativeLoginIntent,
+                            ),
                         )}
                     >
                         Continue with{' '}

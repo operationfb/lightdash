@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { lightdashApi } from '../../api';
 import { convertDateFilters } from '../../utils/dateFilter';
+import { originOf } from '../../utils/url';
 import useHealth from '../health/useHealth';
 import useToaster from '../toaster/useToaster';
 
@@ -40,7 +41,10 @@ export const triggerGdriveLogin = async (
         }
 
         const handleMessage = (event: MessageEvent) => {
-            if (event.origin !== siteUrl) return;
+            // KONTALA: siteUrl carries the base path (https://konta.la/analytics)
+            // and an origin never does, so comparing the two refused every
+            // sign-in and the popup closed with the promise still pending.
+            if (event.origin !== originOf(siteUrl)) return;
 
             if (event.data === 'success') {
                 resolve();

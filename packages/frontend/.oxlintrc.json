@@ -9,7 +9,8 @@
   "jsPlugins": [
     "eslint-plugin-jest-dom",
     "eslint-plugin-lodash",
-    { "name": "vitest-js", "specifier": "@vitest/eslint-plugin" }
+    { "name": "vitest-js", "specifier": "@vitest/eslint-plugin" },
+    { "name": "kontala", "specifier": "./eslint-rules/eslint-plugin-kontala.cjs" }
   ],
   "rules": {
     /* ── eslint core (from root + frontend + airbnb) ──────────────── */
@@ -163,9 +164,29 @@
     "jest-dom/prefer-to-have-attribute": "error",
 
 /* ── lodash (via jsPlugin) ────────────────────────────────────── */
-    "lodash/import-scope": ["error", "method"]
+    "lodash/import-scope": ["error", "method"],
+
+/* ── kontala (via jsPlugin) ───────────────────────────────────── */
+    /* KONTALA: this build is served under /analytics on an origin shared
+       with another app, so a path that leaves the router has to carry the
+       base path. See eslint-rules/no-path-outside-base.cjs. */
+    "kontala/no-path-outside-base": "error"
   },
   "overrides": [
+    {
+      /* KONTALA: tests spell out the URLs they expect, origin and all. The two
+         sources are enterprise data-app surfaces, left to their own change:
+         take them out of this list when it lands. */
+      "files": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "src/features/apps/hooks/useAppBuildPoller.ts",
+        "src/features/scheduler/components/SchedulerForm/layout/SchedulerDataFormatSection.tsx"
+      ],
+      "rules": {
+        "kontala/no-path-outside-base": "off"
+      }
+    },
     {
       /* Date-native picker seam: features must not touch Mantine date strings.
          Widen the files list as more features migrate to components/common/DatePickers. */

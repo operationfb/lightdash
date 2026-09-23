@@ -16,9 +16,19 @@
         },
         { "name": "jsdoc-js", "specifier": "eslint-plugin-jsdoc" },
         { "name": "perfectionist", "specifier": "eslint-plugin-perfectionist" },
-        { "name": "vitest-js", "specifier": "@vitest/eslint-plugin" }
+        { "name": "vitest-js", "specifier": "@vitest/eslint-plugin" },
+        {
+            "name": "kontala",
+            "specifier": "../frontend/eslint-rules/eslint-plugin-kontala.cjs"
+        }
     ],
     "rules": {
+        /* KONTALA: this instance is served under /analytics on an origin
+           shared with another app, so a redirect or a URL it writes for itself
+           has to carry the base path. The rule lives with the frontend's copy
+           of the same concern: ../frontend/eslint-rules/no-path-outside-base.cjs. */
+        "kontala/no-path-outside-base": "error",
+
         /* ── eslint core (airbnb-base + backend decisions) ────────────── */
         "eqeqeq": ["error", "always", { "null": "ignore" }],
         "no-void": ["error", { "allowAsStatement": true }],
@@ -379,6 +389,14 @@
         ]
     },
     "overrides": [
+        {
+            /* KONTALA: tests spell out the URLs they expect, and src/ee is
+               read-only in this fork (its licence is not MIT). */
+            "files": ["**/*.test.ts", "**/*.spec.ts", "src/ee/**"],
+            "rules": {
+                "kontala/no-path-outside-base": "off"
+            }
+        },
         {
             "files": [
                 "src/*.ts",

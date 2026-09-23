@@ -38,6 +38,7 @@ import { useState } from 'react';
 import { useUiStrings } from '../../../ee/providers/Embed/useUiStrings';
 import { useCopyTileLink } from '../../../hooks/dashboard/useTileLink';
 import { useDelayedHover } from '../../../hooks/useDelayedHover';
+import { toBrowserPath } from '../../../utils/url';
 import { FloatingActionsPill } from '../../common/FloatingActionsPill';
 import MantineIcon from '../../common/MantineIcon';
 import DeleteChartTileThatBelongsToDashboardModal from '../../common/modal/DeleteChartTileThatBelongsToDashboardModal';
@@ -116,6 +117,10 @@ const TileBase = <T extends Dashboard['tiles'][number]>({
     // The title is the only link to the chart page and hidden titles have
     // none, so the pill carries one in view mode.
     const canViewChart = !minimal && !isEditMode && !!titleHref;
+    // KONTALA: titleHref is a router path, and every anchor below is a real
+    // one that the browser resolves against the origin, so the base path goes
+    // back on. See utils/url.ts.
+    const chartPageHref = titleHref ? toBrowserPath(titleHref) : undefined;
 
     const hasMenuContent = isEditMode || !!extraMenuItems || canCopyTileLink;
     const isVerified = verification !== null && verification !== undefined;
@@ -208,7 +213,7 @@ const TileBase = <T extends Dashboard['tiles'][number]>({
                     {canViewChart && (
                         <Menu.Item
                             component="a"
-                            href={titleHref}
+                            href={chartPageHref}
                             target="_blank"
                             rel="noreferrer"
                             leftSection={
@@ -274,7 +279,7 @@ const TileBase = <T extends Dashboard['tiles'][number]>({
                     <ActionIcon
                         component="a"
                         size="sm"
-                        href={titleHref}
+                        href={chartPageHref}
                         target="_blank"
                         rel="noreferrer"
                         aria-label="View chart"
@@ -421,7 +426,7 @@ const TileBase = <T extends Dashboard['tiles'][number]>({
                                         className={styles.tileTitle}
                                         data-hidden={hideTitle}
                                         data-hovered={titleHovered}
-                                        href={titleHref}
+                                        href={chartPageHref}
                                         onMouseEnter={() =>
                                             setTitleHovered(true)
                                         }

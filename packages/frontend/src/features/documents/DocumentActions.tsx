@@ -15,6 +15,7 @@ import DocumentDeleteModal from '../../components/common/modal/DocumentDeleteMod
 import { useFavoriteMutation } from '../../hooks/favorites/useFavoriteMutation';
 import { useFavorites } from '../../hooks/favorites/useFavorites';
 import { useProjectUrlIdentifier } from '../../hooks/useProjectRoute';
+import { toBrowserPath } from '../../utils/url';
 import DirectAccessModal from '../directAccess/components/DirectAccessModal';
 import { useCanManageDirectAccess } from '../directAccess/hooks/useCanManageDirectAccess';
 import { useDirectAccessAvailability } from '../directAccess/hooks/useDirectAccess';
@@ -46,7 +47,9 @@ const DocumentActions = ({ document }: { document: Document }) => {
         access: document.access ?? [],
         grantRoles: document.directAccessRoles ?? [],
     });
-    const url = `${window.location.origin}${getDocumentUrl(projectUrlIdentifier, document.documentUuid, document.slug)}`;
+    // KONTALA: copied for an address bar, so the router path needs the base
+    // path this build is served under. See utils/url.ts.
+    const url = `${window.location.origin}${toBrowserPath(getDocumentUrl(projectUrlIdentifier, document.documentUuid, document.slug))}`;
     return (
         <Group gap="sm">
             <FavoriteActionIcon

@@ -19,6 +19,7 @@ import { useCallback, useMemo, useState, type FC } from 'react';
 import { useExplore } from '../../hooks/useExplore';
 import { getExplorerUrlFromCreateSavedChartVersion } from '../../hooks/useExplorerRoute';
 import { useProjectUuid } from '../../hooks/useProjectUuid';
+import { toBrowserPath } from '../../utils/url';
 import FieldSelect from '../common/FieldSelect';
 import MantineIcon from '../common/MantineIcon';
 import MantineModal from '../common/MantineModal';
@@ -90,7 +91,9 @@ const getDrillDownExplore = ({
     );
     return {
         chart: createSavedChartVersion,
-        url: `${pathname}?${search}`,
+        // KONTALA: the href of a real anchor ("Open in new tab"), so the base
+        // path goes back on. See utils/url.ts.
+        url: toBrowserPath(`${pathname}?${search}`),
     };
 };
 

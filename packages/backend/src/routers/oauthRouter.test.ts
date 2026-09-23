@@ -4,6 +4,7 @@ import express from 'express';
 import { once } from 'node:events';
 import { request as httpRequest, type IncomingHttpHeaders } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { lightdashConfig } from '../config/lightdashConfig';
 import type { OAuthService } from '../services/OAuthService/OAuthService';
 import oauthRouter from './oauthRouter';
 
@@ -292,6 +293,58 @@ describe('OAuth authorize redirects', () => {
             );
         },
     );
+
+    // KONTALA: mounted the way App.ts mounts the whole app under SITE_URL's
+    // path, so req.originalUrl carries the prefix as it does in production.
+    // The login page is inside the base path, and `redirect` is a router path
+    // that the frontend puts the base path back onto itself.
+    it('sends a signed-out request to the login page under the base path', async () => {
+        const previousBasePath = lightdashConfig.basePath;
+        lightdashConfig.basePath = '/analytics';
+        const inner = express();
+        inner.use((request, _response, next) => {
+            request.user = undefined;
+            next();
+        });
+        inner.use('/api/v1/oauth', oauthRouter);
+        const app = express().use('/analytics', inner);
+        const server = app.listen(0, '127.0.0.1');
+        await once(server, 'listening');
+
+        try {
+            const appPath =
+                '/api/v1/oauth/authorize?client_id=mobile-client&mobile_login_intent=sso';
+            const location = await new Promise<string | undefined>(
+                (resolve, reject) => {
+                    const request = httpRequest(
+                        {
+                            hostname: '127.0.0.1',
+                            method: 'GET',
+                            path: `/analytics${appPath}`,
+                            port: (server.address() as AddressInfo).port,
+                        },
+                        (response) => {
+                            response.resume();
+                            response.on('end', () =>
+                                resolve(response.headers.location),
+                            );
+                        },
+                    );
+                    request.on('error', reject);
+                    request.end();
+                },
+            );
+
+            expect(location).toBe(
+                `/analytics/login?redirect=${encodeURIComponent(appPath)}`,
+            );
+        } finally {
+            lightdashConfig.basePath = previousBasePath;
+            await new Promise<void>((resolve, reject) => {
+                server.close((error) => (error ? reject(error) : resolve()));
+            });
+        }
+    });
 
     it.each([
         'https://unregistered.example/callback',

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { scrollToDashboardTile } from '../../components/common/Dashboard/scrollToDashboardTile';
 import useDashboardContext from '../../providers/Dashboard/useDashboardContext';
+import { toBrowserPath } from '../../utils/url';
 import useToaster from '../toaster/useToaster';
 import { useOptionalProjectRoute } from '../useProjectRoute';
 
@@ -36,7 +37,12 @@ export const getTileLinkUrl = ({
     searchParams.set(HIGHLIGHT_TILE_SEARCH_PARAM, tileUuid);
 
     const tabPath = tileTabUuid ? `/tabs/${tileTabUuid}` : '';
-    return `${origin}/projects/${projectUrlIdentifier}/dashboards/${dashboardSlug}/view${tabPath}?${searchParams.toString()}`;
+    // KONTALA: a URL for somebody else's address bar, so the router path gets
+    // the base path this build is served under. See utils/url.ts.
+    const path = toBrowserPath(
+        `/projects/${projectUrlIdentifier}/dashboards/${dashboardSlug}/view${tabPath}`,
+    );
+    return `${origin}${path}?${searchParams.toString()}`;
 };
 
 /**

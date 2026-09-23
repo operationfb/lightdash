@@ -15,6 +15,7 @@ import { z } from 'zod';
 import { lightdashApi } from '../../../api';
 import useToaster from '../../../hooks/toaster/useToaster';
 import { invalidateContent } from '../../../hooks/useContent';
+import { toBrowserPath } from '../../../utils/url';
 import MantineModal from '../MantineModal';
 import classes from './ContentSlugRenameModal.module.css';
 
@@ -100,7 +101,9 @@ const ContentSlugRenameModal: FC<Props> = ({
         resourceType === ContentType.CHART
             ? `saved/${newSlug}/view`
             : `dashboards/${newSlug}`;
-    const newUrl = `${window.location.origin}/projects/${projectUrlIdentifier}/${contentPath}`;
+    // KONTALA: the address the content will have, so the router path needs
+    // the base path this build is served under. See utils/url.ts.
+    const newUrl = `${window.location.origin}${toBrowserPath(`/projects/${projectUrlIdentifier}/${contentPath}`)}`;
 
     const handleSubmit = form.onSubmit(({ slug }) => {
         renameMutation.mutate({

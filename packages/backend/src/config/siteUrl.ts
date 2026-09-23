@@ -20,3 +20,37 @@ export const siteUrlFor = (
     config: Pick<LightdashConfig, 'siteUrl' | 'basePath'>,
     path: string,
 ): string => new URL(`${config.basePath}${path}`, config.siteUrl).href;
+
+/**
+ * KONTALA: `siteUrlFor` as a path on the origin rather than an absolute URL,
+ * for a redirect: the same base path, and at the origin root exactly the path
+ * the call site wrote, so a root-relative `Location` stays what it was.
+ */
+export const sitePathFor = (
+    config: Pick<LightdashConfig, 'basePath'>,
+    path: string,
+): string => `${config.basePath}${path}`;
+
+/**
+ * KONTALA: the path a request names, spelled the way the mounted app spells it.
+ *
+ * `req.originalUrl` still carries the base path the app is mounted under
+ * (`/analytics/api/v1/oauth/authorize?...`). That is the wrong spelling for a
+ * `/login?redirect=` value, which the frontend reads as a router path and puts
+ * the base path back onto itself (utils/url.ts there): passing it as it is
+ * would come back as `/analytics/analytics/...`. A path outside the base path
+ * cannot be one of ours and is returned unchanged.
+ */
+export const appPathOf = (
+    config: Pick<LightdashConfig, 'basePath'>,
+    originalUrl: string,
+): string => {
+    const { basePath } = config;
+    if (!basePath || !originalUrl.startsWith(basePath)) return originalUrl;
+    const rest = originalUrl.slice(basePath.length);
+    if (rest === '') return '/';
+    if (rest.startsWith('/')) return rest;
+    if (rest.startsWith('?') || rest.startsWith('#')) return `/${rest}`;
+    // `/analyticsfoo`: another path that merely shares the prefix.
+    return originalUrl;
+};

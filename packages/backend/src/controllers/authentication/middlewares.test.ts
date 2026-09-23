@@ -1,3 +1,4 @@
+import { InvalidUser } from '@lightdash/common';
 import express, {
     type NextFunction,
     type Request,
@@ -8,9 +9,13 @@ import { request as httpRequest } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import passport from 'passport';
 import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
+import { lightdashConfig } from '../../config/lightdashConfig';
 import { errorHandler } from '../../errors';
 import { sessionUser } from '../../services/UserService.mock';
-import { allowApiKeyAuthentication } from './middlewares';
+import {
+    allowApiKeyAuthentication,
+    invalidUserErrorHandler,
+} from './middlewares';
 
 vi.mock('../../config/lightdashConfig', async () => {
     const { lightdashConfigMock } =
@@ -166,5 +171,69 @@ describe('allowApiKeyAuthentication', () => {
             status: 'ok',
             results: { userUuid: sessionUser.userUuid },
         });
+    });
+});
+
+// KONTALA: mounted the way App.ts mounts the whole app under SITE_URL's path.
+// A Location with a leading slash resolves against the origin, so without the
+// base path both redirects landed on the app sharing it.
+describe('invalidUserErrorHandler', () => {
+    const redirectFor = async (path: string): Promise<string | undefined> => {
+        const inner = express();
+        inner.use((req, _res, next) => {
+            Object.assign(req, {
+                session: { destroy: (done: (err?: Error) => void) => done() },
+            });
+            next();
+        });
+        inner.get('*', () => {
+            throw new InvalidUser('user is no longer valid');
+        });
+        inner.use(invalidUserErrorHandler);
+        const app = express().use('/analytics', inner);
+        const server = app.listen(0, '127.0.0.1');
+        await once(server, 'listening');
+        try {
+            return await new Promise((resolve, reject) => {
+                const request = httpRequest(
+                    {
+                        hostname: '127.0.0.1',
+                        method: 'GET',
+                        path: `/analytics${path}`,
+                        port: (server.address() as AddressInfo).port,
+                    },
+                    (response) => {
+                        response.resume();
+                        response.on('end', () =>
+                            resolve(response.headers.location),
+                        );
+                    },
+                );
+                request.on('error', reject);
+                request.end();
+            });
+        } finally {
+            await new Promise<void>((resolve, reject) => {
+                server.close((error) => (error ? reject(error) : resolve()));
+            });
+        }
+    };
+
+    const previousBasePath = lightdashConfig.basePath;
+    beforeEach(() => {
+        lightdashConfig.basePath = '/analytics';
+    });
+    afterEach(() => {
+        lightdashConfig.basePath = previousBasePath;
+    });
+
+    it('sends the reader to the login page under the base path', async () => {
+        expect(await redirectFor('/projects/p/home')).toBe('/analytics/login');
+    });
+
+    it('keeps an invite link, under the base path', async () => {
+        const invite = `/invite/${'a'.repeat(30)}`;
+
+        expect(await redirectFor(invite)).toBe(`/analytics${invite}`);
     });
 });

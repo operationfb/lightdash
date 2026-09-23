@@ -6,6 +6,7 @@ import {
 import express, { type Router } from 'express';
 import passport from 'passport';
 import { lightdashConfig } from '../config/lightdashConfig';
+import { appPathOf, sitePathFor } from '../config/siteUrl';
 import {
     getLoginHint,
     getOidcRedirectURL,
@@ -733,9 +734,14 @@ apiV1Router.get(
             return next();
         }
         // Preserve query params (team, channel, message, thread_ts) in redirect
-        const redirectPath = req.originalUrl;
+        // KONTALA: the login page is inside the base path, and `redirect` is
+        // read by the frontend as a router path. See config/siteUrl.ts.
+        const redirectPath = appPathOf(lightdashConfig, req.originalUrl);
         return res.redirect(
-            `/login?redirect=${encodeURIComponent(redirectPath)}`,
+            sitePathFor(
+                lightdashConfig,
+                `/login?redirect=${encodeURIComponent(redirectPath)}`,
+            ),
         );
     },
     storeSlackContext,

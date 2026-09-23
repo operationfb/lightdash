@@ -15,7 +15,7 @@ import { fromApiKey, fromOauth } from '../../auth/account/account';
 import { requestContextFromExpress } from '../../auth/account/requestContext';
 import { buildAccountExistsWarning } from '../../auth/account/warnAccountExists';
 import { lightdashConfig } from '../../config/lightdashConfig';
-import { siteUrlFor } from '../../config/siteUrl';
+import { sitePathFor, siteUrlFor } from '../../config/siteUrl';
 import { authenticateServiceAccount } from '../../ee/authentication';
 import Logger from '../../logging/logger';
 
@@ -368,6 +368,10 @@ export const invalidUserErrorHandler: ErrorRequestHandler = (
             return;
         }
 
+        // KONTALA: `req.path` is the mounted app's spelling, and a Location
+        // with a leading slash resolves against the origin, so both redirects
+        // put the base path back on. See config/siteUrl.ts.
+
         // if original url is an invite link, redirect to it
         if (
             req.path.match(
@@ -376,11 +380,11 @@ export const invalidUserErrorHandler: ErrorRequestHandler = (
             )
         ) {
             Logger.info(`Invalid user, redirecting to ${req.path}`);
-            res.redirect(req.path);
+            res.redirect(sitePathFor(lightdashConfig, req.path));
             return;
         }
 
         Logger.info('Invalid user, redirecting to login');
-        res.redirect('/login');
+        res.redirect(sitePathFor(lightdashConfig, '/login'));
     });
 };
