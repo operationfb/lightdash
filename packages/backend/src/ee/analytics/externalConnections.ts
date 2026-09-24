@@ -1,5 +1,7 @@
 import { type ExternalConnectionMethod } from '@lightdash/common';
-import type { BaseTrack } from '../../analytics/LightdashAnalytics';
+import { Track as AnalyticsTrack } from '@rudderstack/rudder-sdk-node';
+
+type BaseTrack = Omit<AnalyticsTrack, 'context'>;
 
 type ExternalConnectionBaseProperties = {
     organizationId: string;

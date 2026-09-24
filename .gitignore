@@ -71,6 +71,9 @@ package-lock.json
 
 # typescript
 *.tsbuildinfo
+# KONTALA: packages/frontend/tsconfig.node.json writes dist/.tsbuildinfo.node,
+# which the pattern above does not match.
+*.tsbuildinfo.*
 
 # examples
 /examples/full-jaffle-shop-demo/dbt/target

@@ -4167,6 +4167,12 @@ type LightdashAnalyticsArguments = {
     lightdashConfig: LightdashConfig;
     eventEmitter?: EventEmitter;
     eventStreamSink?: EventStreamSink;
+    // KONTALA: accepted and ignored. They configured the RudderStack transport
+    // this class no longer has, and upstream's ee/ integration tests still
+    // pass them. ee/ is source-available rather than MIT, so we never edit it.
+    writeKey?: string;
+    dataPlaneUrl?: string;
+    options?: { enable?: boolean };
 };
 
 // KONTALA: no third-party transport. Events only feed the usage event stream

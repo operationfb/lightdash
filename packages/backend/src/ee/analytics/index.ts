@@ -1,6 +1,8 @@
 import { type TokenUsage } from '@langchain/core/language_models/base';
 import { DashboardFilterInteractivityOptions } from '@lightdash/common';
-import type { BaseTrack } from '../../analytics/LightdashAnalytics';
+import { Track as AnalyticsTrack } from '@rudderstack/rudder-sdk-node';
+
+type BaseTrack = Omit<AnalyticsTrack, 'context'>;
 
 export type EmbedDashboardViewed = BaseTrack & {
     event: 'embed_dashboard.viewed';

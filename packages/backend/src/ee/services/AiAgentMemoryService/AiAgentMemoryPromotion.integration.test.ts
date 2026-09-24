@@ -182,6 +182,9 @@ describe('AI agent memory promotion integration', () => {
         const service = new AiAgentMemoryService({
             analytics: new LightdashAnalytics({
                 lightdashConfig,
+                writeKey: 'notrack',
+                dataPlaneUrl: 'notrack',
+                options: { enable: false },
             }),
             aiAgentMemoryModel: memoryModel,
             aiAgentReviewClassifierModel: reviewModel,

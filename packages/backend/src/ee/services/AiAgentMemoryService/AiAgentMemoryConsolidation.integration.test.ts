@@ -102,6 +102,9 @@ describe('AI agent memory consolidation integration', () => {
         });
         analytics = new LightdashAnalytics({
             lightdashConfig,
+            writeKey: 'notrack',
+            dataPlaneUrl: 'notrack',
+            options: { enable: false },
         });
         schedulerClient = new CommercialSchedulerClient({
             lightdashConfig,
