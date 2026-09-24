@@ -1,255 +1,33 @@
-import { LightdashMode } from '@lightdash/common';
 import noop from 'lodash/noop';
-import {
-    memo,
-    useCallback,
-    useEffect,
-    useMemo,
-    useState,
-    type FC,
-} from 'react';
-import * as rudderSDK from 'rudder-sdk-js';
-import { PageType } from '../../types/Events';
-import useApp from '../App/useApp';
-import { LIGHTDASH_APP_NAME } from './constants';
+import { type FC, type PropsWithChildren } from 'react';
 import TrackingContext from './context';
 import {
-    type EventData,
-    type IdentifyData,
     type PageData,
     type SectionData,
-    type TrackingData,
     type TrackingContextType,
 } from './types';
-import useTracking from './useTracking';
 
-type PendingTrack = (analytics: typeof rudderSDK) => void;
-
-const pendingTracks: PendingTrack[] = [];
-
-const TrackingProviderMain: FC<React.PropsWithChildren<TrackingData>> = ({
-    rudder,
-    page: pageContext,
-    section: sectionContext,
-    children,
-}) => {
-    const { health } = useApp();
-    const [rudderAnalytics, setRudderAnalytics] = useState<typeof rudderSDK>();
-
-    const {
-        mode,
-        version,
-        rudder: { writeKey, dataPlaneUrl },
-    } = health.data || { rudder: {} };
-
-    const appContext = useMemo<rudderSDK.apiObject>(
-        () =>
-            ({
-                namespace: 'lightdash',
-                name: LIGHTDASH_APP_NAME,
-                version,
-                build: version,
-            }) as any as rudderSDK.apiObject,
-        [version],
-    );
-
-    const getLightdashPageProperties = useCallback(
-        ({ name, category, type = PageType.PAGE }: Partial<PageData> = {}) => ({
-            name,
-            category,
-            type,
-            hostname: window.location.hostname,
-            url: window.location.href,
-            path: window.location.pathname,
-            referrer: null,
-            initial_referrer: null,
-            search: window.location.search,
-            tab_url: null,
-        }),
-        [],
-    );
-
-    const lightdashContext = useMemo<rudderSDK.apiOptions>(
-        () => ({
-            app: appContext as any as rudderSDK.apiObject,
-            page: getLightdashPageProperties(
-                pageContext,
-            ) as any as rudderSDK.apiObject,
-        }),
-        [appContext, pageContext, getLightdashPageProperties],
-    );
-
-    useEffect(() => {
-        if (rudder) {
-            setRudderAnalytics(rudder);
-        } else if (writeKey && dataPlaneUrl) {
-            rudderSDK.load(writeKey, dataPlaneUrl);
-            rudderSDK.ready(() => {
-                setRudderAnalytics(rudderSDK);
-            });
-        }
-    }, [rudder, writeKey, dataPlaneUrl]);
-
-    useEffect(() => {
-        if (!rudderAnalytics) return;
-        pendingTracks
-            .splice(0)
-            .forEach((pendingTrack) => pendingTrack(rudderAnalytics));
-    }, [rudderAnalytics]);
-
-    const page = useCallback(
-        (rudderPageEvent: PageData): void => {
-            const newPageContext = getLightdashPageProperties(rudderPageEvent);
-            rudderAnalytics?.page(
-                rudderPageEvent.category,
-                rudderPageEvent.name,
-                newPageContext as any as rudderSDK.apiObject,
-                {
-                    ...lightdashContext,
-                    page: newPageContext,
-                } as any as rudderSDK.apiOptions,
-            );
-        },
-        [rudderAnalytics, lightdashContext, getLightdashPageProperties],
-    );
-
-    const track = useCallback(
-        ({ name, properties = {} }: EventData): void => {
-            const sendTrack: PendingTrack = (analytics) =>
-                analytics.track(
-                    `${LIGHTDASH_APP_NAME}.${name}`,
-                    // The SDK's apiObject rejects null, but explicit nulls are
-                    // meaningful in event payloads
-                    properties as rudderSDK.apiObject,
-                    {
-                        ...lightdashContext,
-                        section: sectionContext,
-                    } as rudderSDK.apiOptions,
-                );
-
-            if (rudderAnalytics) {
-                sendTrack(rudderAnalytics);
-            } else if (rudder || (writeKey && dataPlaneUrl)) {
-                pendingTracks.push(sendTrack);
-            }
-        },
-        [
-            rudderAnalytics,
-            rudder,
-            writeKey,
-            dataPlaneUrl,
-            sectionContext,
-            lightdashContext,
-        ],
-    );
-    const identify = useCallback(
-        ({ id, traits }: IdentifyData) => {
-            if (mode && mode !== LightdashMode.DEMO) {
-                rudderAnalytics?.identify(id, traits, lightdashContext);
-            }
-        },
-        [lightdashContext, mode, rudderAnalytics],
-    );
-
-    const context = useMemo(
-        () => ({
-            data: {
-                rudder: rudderAnalytics,
-                page: pageContext,
-                section: sectionContext,
-            },
-            page,
-            track,
-            identify,
-        }),
-        [rudderAnalytics, pageContext, sectionContext, page, track, identify],
-    );
-    return (
-        <TrackingContext.Provider value={context}>
-            {children || null}
-        </TrackingContext.Provider>
-    );
-};
-
-const disabledTrackingContext: TrackingContextType = {
+// KONTALA: no third-party transport. Tracking calls are accepted and dropped;
+// the RudderStack SDK this provider used to drive is removed.
+const trackingContext: TrackingContextType = {
     data: {},
     page: noop,
     track: noop,
     identify: noop,
 };
 
-interface TrackingProviderProps extends TrackingData {
-    enabled?: boolean;
-}
-
-const TrackingProvider: FC<React.PropsWithChildren<TrackingProviderProps>> = ({
-    children,
-    enabled = true,
-    ...rest
-}) => {
-    if (enabled) {
-        return (
-            <TrackingProviderMain {...rest}>{children}</TrackingProviderMain>
-        );
-    } else {
-        return (
-            <TrackingContext.Provider value={disabledTrackingContext}>
-                {children}
-            </TrackingContext.Provider>
-        );
-    }
-};
-
-const NestedTrackingProvider: FC<
-    React.PropsWithChildren<Partial<TrackingData>>
-> = ({ children, ...rest }) => (
-    <TrackingContext.Consumer>
-        {(context) => (
-            <TrackingProvider
-                {...{ ...context.data, ...rest }}
-                enabled={context !== disabledTrackingContext}
-            >
-                {children || null}
-            </TrackingProvider>
-        )}
-    </TrackingContext.Consumer>
+const TrackingProvider: FC<PropsWithChildren> = ({ children }) => (
+    <TrackingContext.Provider value={trackingContext}>
+        {children}
+    </TrackingContext.Provider>
 );
 
-export const TrackPage: FC<React.PropsWithChildren<PageData>> = ({
-    children,
-    ...rest
-}) => {
-    const { page } = useTracking();
-
-    const pageData = useMemo(
-        () => ({
-            name: rest.name,
-            category: rest.category,
-            type: rest.type,
-        }),
-        [rest.name, rest.category, rest.type],
-    );
-
-    useEffect(() => {
-        page(pageData);
-    }, [page, pageData]);
-
-    return (
-        <NestedTrackingProvider page={pageData}>
-            {children || null}
-        </NestedTrackingProvider>
-    );
-};
-
-export const TrackSection: FC<React.PropsWithChildren<SectionData>> = memo(
-    ({ children, name }) => {
-        const section = useMemo(() => ({ name }), [name]);
-        return (
-            <NestedTrackingProvider section={section}>
-                {children || null}
-            </NestedTrackingProvider>
-        );
-    },
+export const TrackPage: FC<PropsWithChildren<PageData>> = ({ children }) => (
+    <>{children}</>
 );
+
+export const TrackSection: FC<PropsWithChildren<SectionData>> = ({
+    children,
+}) => <>{children}</>;
 
 export default TrackingProvider;

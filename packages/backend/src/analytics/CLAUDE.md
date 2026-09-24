@@ -1,9 +1,11 @@
 <summary>
-Analytics tracking system for Lightdash user interactions and system events. Provides a wrapper around RudderStack analytics to track business intelligence events with type safety and conditional tracking based on configuration.
+Analytics events for Lightdash user interactions and system events, with type safety.
+Events stay in-process: they feed the usage event stream and Prometheus event metrics.
+This fork removed the RudderStack transport, so nothing is sent to a third party.
 </summary>
 
 <howToUse>
-The main entry point is the `LightdashAnalytics` class which extends RudderStack's analytics SDK. Initialize it with your configuration and use it to track user events throughout the application.
+The main entry point is the `LightdashAnalytics` class. Initialize it with your configuration and use it to track user events throughout the application.
 
 ```typescript
 import { LightdashAnalytics } from './analytics/LightdashAnalytics';
@@ -11,8 +13,8 @@ import { LightdashAnalytics } from './analytics/LightdashAnalytics';
 // Initialize analytics
 const analytics = new LightdashAnalytics({
     lightdashConfig,
-    writeKey: 'your-rudder-key',
-    dataPlaneUrl: 'your-data-plane-url',
+    eventEmitter, // optional: Prometheus event metrics
+    eventStreamSink, // optional: usage event stream
 });
 
 // Track user events
@@ -72,15 +74,13 @@ analytics.track({
 </codeExample>
 
 <importantToKnow>
-- Analytics tracking is disabled if `lightdashConfig.rudder.writeKey` is not configured
-- All events are prefixed with `lightdash_server.` in the analytics platform
-- The system automatically handles anonymization for users with tracking disabled
+- `track()` hands every event to the usage event stream sink, and emits it for Prometheus when `prometheus.eventMetricsEnabled` is on
+- There is no external transport: do not add one, and do not reintroduce `identify()`/`group()`
 - Use `trackAccount()` method when you have account context - it automatically extracts user/org IDs
 - `userId` is set for registered users (account.user.id), while `anonymousId` is used for embed users
 - For embed users, `anonymousId` is set to 'embed' and `externalId` is stored in properties
-- The `analyticsMock` export is for testing - it has tracking disabled
+- The `analyticsMock` export is for testing - it has no sinks attached
 - Event types are strictly typed - unknown events will cause TypeScript errors
-- Special handling exists for user verification and update events to respect privacy settings
 </importantToKnow>
 
 <links>

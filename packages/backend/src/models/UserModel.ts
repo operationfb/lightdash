@@ -1569,9 +1569,8 @@ export class UserModel {
             throw new ParameterError("Password doesn't meet requirements");
         }
 
-        // Default preserves the legacy analytics-consent skip.
-        const setupComplete =
-            isSetupComplete ?? !this.lightdashConfig.rudder.writeKey;
+        // No product analytics, so there is no consent step left to complete.
+        const setupComplete = isSetupComplete ?? true;
         const user = await this.database.transaction(async (trx) => {
             const newUser = await this.createUserTransaction(trx, {
                 ...createUser,
@@ -1659,8 +1658,7 @@ export class UserModel {
         isActive: boolean = true,
         isSetupComplete?: boolean,
     ): Promise<LightdashUser> {
-        const setupComplete =
-            isSetupComplete ?? !this.lightdashConfig.rudder.writeKey;
+        const setupComplete = isSetupComplete ?? true;
         const user = await this.database.transaction(async (trx) => {
             if (
                 !isOpenIdUser(createUser) &&

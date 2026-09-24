@@ -386,36 +386,6 @@ export class UserService extends BaseService {
         this.rolesModel = rolesModel;
     }
 
-    private identifyUser(
-        user: LightdashUser & { isMarketingOptedIn?: boolean },
-    ): void {
-        if (this.lightdashConfig.mode === LightdashMode.DEMO) {
-            return;
-        }
-        this.analytics.identify({
-            userId: user.userUuid,
-            traits: user.isTrackingAnonymized
-                ? { is_tracking_anonymized: user.isTrackingAnonymized }
-                : {
-                      email: user.email,
-                      first_name: user.firstName,
-                      last_name: user.lastName,
-                      is_tracking_anonymized: user.isTrackingAnonymized,
-                      is_marketing_opted_in: user.isMarketingOptedIn,
-                  },
-        });
-
-        if (user.organizationUuid) {
-            this.analytics.group({
-                userId: user.userUuid,
-                groupId: user.organizationUuid,
-                traits: {
-                    name: user.organizationName,
-                },
-            });
-        }
-    }
-
     private async getOnboardingFlow(
         user?: Pick<LightdashUser, 'userUuid' | 'organizationUuid'>,
     ): Promise<OnboardingFlow> {
@@ -585,7 +555,6 @@ export class UserService extends BaseService {
             );
         }
 
-        this.identifyUser(user);
         let userConnectionType:
             | 'email_only'
             | 'password'
@@ -1208,7 +1177,6 @@ export class UserService extends BaseService {
                     'sso',
                 );
             }
-            this.identifyUser(loginUser);
             this.analytics.track({
                 userId: loginUser.userUuid,
                 event: 'user.logged_in',
@@ -1647,7 +1615,6 @@ export class UserService extends BaseService {
             });
         }
 
-        this.identifyUser(completeUser);
         this.analytics.track({
             event: 'user.updated',
             userId: completeUser.userUuid,
@@ -1770,7 +1737,6 @@ export class UserService extends BaseService {
                 ...user,
                 ...userOrganization,
             };
-            this.identifyUser(userWithOrganization);
             this.analytics.track({
                 userId: user.userUuid,
                 event: 'user.logged_in',
@@ -1887,7 +1853,6 @@ export class UserService extends BaseService {
                 avatarGradient: data.avatarGradient,
             },
         );
-        this.identifyUser(updatedUser);
         this.analytics.track({
             userId: updatedUser.userUuid,
             event: 'user.updated',
@@ -2156,10 +2121,6 @@ export class UserService extends BaseService {
             true,
             onboardingFlow === 'new' ? false : undefined,
         );
-        this.identifyUser({
-            ...user,
-            isMarketingOptedIn: user.isMarketingOptedIn,
-        });
         this.analytics.track({
             event: 'user.created',
             userId: user.userUuid,
@@ -2659,7 +2620,6 @@ export class UserService extends BaseService {
             sessionUser.userUuid,
             emailStatus.email,
         );
-        this.identifyUser(sessionUser);
         this.analytics.track({
             userId: sessionUser.userUuid,
             event: 'user.logged_in',

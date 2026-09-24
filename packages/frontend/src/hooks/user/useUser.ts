@@ -31,7 +31,7 @@ const getUserState = async (): Promise<UserWithAbility> => {
 };
 
 const useUser = (isAuthenticated: boolean) => {
-    const { data: account } = useAccount();
+    const { data: account } = useAccount(isAuthenticated);
 
     return useQuery<UserWithAbility, ApiError>({
         queryKey: ['user'],

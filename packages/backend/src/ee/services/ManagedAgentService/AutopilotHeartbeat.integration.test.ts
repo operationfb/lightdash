@@ -66,7 +66,6 @@ describe.skipIf(process.env.AUTOPILOT_HEARTBEAT_EVAL !== 'true')(
             expect(process.env.PGHOST).toBe(uri.hostname);
             expect(process.env.NATS_ENABLED).toBe('false');
             expect(process.env.SCHEDULER_ENABLED).toBe('false');
-            expect(process.env.RUDDERSTACK_ANALYTICS_DISABLED).toBe('true');
             expect(process.env.USAGE_EVENTS_ENABLED).toBe('false');
             if (provider !== 'openai' && provider !== 'anthropic')
                 throw new Error('Choose OpenAI or Anthropic');

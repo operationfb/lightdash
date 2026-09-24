@@ -120,13 +120,6 @@ export default class NatsWorkerApp {
         );
         this.analytics = new LightdashAnalytics({
             lightdashConfig: this.lightdashConfig,
-            writeKey: this.lightdashConfig.rudder.writeKey || 'notrack',
-            dataPlaneUrl: this.lightdashConfig.rudder.dataPlaneUrl || 'notrack',
-            options: {
-                enable:
-                    !!this.lightdashConfig.rudder.writeKey &&
-                    !!this.lightdashConfig.rudder.dataPlaneUrl,
-            },
             eventStreamSink: this.eventStreamWriter
                 ? new EventStreamSink(
                       eventStreamRegistry,

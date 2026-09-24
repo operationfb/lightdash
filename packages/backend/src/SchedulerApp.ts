@@ -177,15 +177,6 @@ export default class SchedulerApp {
         );
         this.analytics = new LightdashAnalytics({
             lightdashConfig: this.lightdashConfig,
-            writeKey: this.lightdashConfig.rudder.writeKey || 'notrack',
-            dataPlaneUrl: this.lightdashConfig.rudder.dataPlaneUrl
-                ? this.lightdashConfig.rudder.dataPlaneUrl
-                : 'notrack',
-            options: {
-                enable:
-                    this.lightdashConfig.rudder.writeKey &&
-                    this.lightdashConfig.rudder.dataPlaneUrl,
-            },
             eventEmitter: this.analyticsEventEmitter,
             eventStreamSink: this.eventStreamWriter
                 ? new EventStreamSink(
@@ -394,7 +385,6 @@ export default class SchedulerApp {
                         flushFeatureFlagChecks(),
                         'scheduler',
                     );
-                    await this.analytics.flushEvents();
                 } catch {
                     // telemetry must never break shutdown
                 }

@@ -1,3 +1,4 @@
+import { InviteLinkPurpose, type InviteLink } from '@lightdash/common';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -9,6 +10,15 @@ const EXISTING_MEMBER = {
     email: 'member@lightdash.com',
 };
 const INVITED_USER_UUID = 'd2f0f0a1-2222-4222-8222-222222222222';
+const INVITE_LINK: InviteLink = {
+    userUuid: INVITED_USER_UUID,
+    email: 'newcomer@example.com',
+    expiresAt: new Date('2100-01-01T00:00:00.000Z'),
+    inviteCode: 'invite-code',
+    inviteUrl: 'https://lightdash.example.com/invite/invite-code',
+    organizationUuid: 'f4f0f0a1-4444-4444-8444-444444444444',
+    purpose: InviteLinkPurpose.Member,
+};
 
 const { upsertMock, inviteMock } = vi.hoisted(() => ({
     upsertMock: vi.fn(),
@@ -56,9 +66,7 @@ const submit = async (user: ReturnType<typeof userEvent.setup>) => {
 describe('CreateProjectAccessModal', () => {
     beforeEach(() => {
         upsertMock.mockReset().mockResolvedValue(undefined);
-        inviteMock
-            .mockReset()
-            .mockResolvedValue({ userUuid: INVITED_USER_UUID });
+        inviteMock.mockReset().mockResolvedValue(INVITE_LINK);
     });
 
     it('assigns the role directly when an existing member is selected', async () => {
@@ -111,5 +119,8 @@ describe('CreateProjectAccessModal', () => {
             roleId: 'viewer',
             sendEmail: false,
         });
+        expect(
+            await screen.findByDisplayValue(INVITE_LINK.inviteUrl),
+        ).toBeInTheDocument();
     });
 });

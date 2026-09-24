@@ -215,6 +215,7 @@ export const LoginForm: FC<{
                     name="email"
                     type="email"
                     inputMode="email"
+                    autoComplete="username"
                     autoCapitalize="none"
                     autoCorrect="off"
                     spellCheck={false}

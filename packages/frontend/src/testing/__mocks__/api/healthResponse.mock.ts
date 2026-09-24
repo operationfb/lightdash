@@ -24,10 +24,6 @@ export default function mockHealthResponse(
         latest: {
             version: '0.0.0',
         },
-        rudder: {
-            dataPlaneUrl: '',
-            writeKey: '',
-        },
         sentry: {
             frontend: {
                 dsn: '',
@@ -37,15 +33,8 @@ export default function mockHealthResponse(
             release: '',
             environment: '',
         },
-        intercom: {
-            appId: '',
-            apiBase: '',
-        },
         pylon: {
             appId: '',
-        },
-        headway: {
-            enabled: false,
         },
         siteUrl: 'http://localhost:3000',
         staticIp: '',

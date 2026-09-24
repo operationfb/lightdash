@@ -1600,7 +1600,6 @@ export type LightdashConfig = {
     databaseConnectionUri?: string;
     smtp: SmtpConfig | undefined;
     postmark: PostmarkConfig;
-    rudder: RudderConfig;
     mode: LightdashMode;
     mobile: HealthState['mobile'];
     mobilePushNotifications: MobilePushNotificationsConfig;
@@ -1614,9 +1613,7 @@ export type LightdashConfig = {
     };
     sentry: SentryConfig;
     auth: AuthConfig;
-    intercom: IntercomConfig;
     pylon: PylonConfig;
-    headway: HeadwayConfig;
     siteUrl: string;
     /**
      * KONTALA: the path SITE_URL is served under, '' at the origin root.
@@ -2314,23 +2311,9 @@ export type DataAppOtelAuthConfig =
     | { type: 'none' }
     | { type: 'gcp'; quotaProjectId: string | null };
 
-export type IntercomConfig = {
-    appId: string;
-    apiBase: string;
-};
-
 type PylonConfig = {
     appId: string;
     identityVerificationSecret?: string;
-};
-
-type HeadwayConfig = {
-    enabled: boolean;
-};
-
-export type RudderConfig = {
-    writeKey: string | undefined;
-    dataPlaneUrl: string | undefined;
 };
 
 type JwtKeySetConfig = {
@@ -3207,18 +3190,6 @@ export const parseConfig = (): LightdashConfig => {
             returnPathSubdomain:
                 process.env.POSTMARK_RETURN_PATH_SUBDOMAIN || 'pm-bounces',
         },
-        rudder: {
-            writeKey:
-                process.env.RUDDERSTACK_ANALYTICS_DISABLED === 'true'
-                    ? undefined
-                    : process.env.RUDDERSTACK_WRITE_KEY ||
-                      '1vqkSlWMVtYOl70rk3QSE0v1fqY',
-            dataPlaneUrl:
-                process.env.RUDDERSTACK_ANALYTICS_DISABLED === 'true'
-                    ? undefined
-                    : process.env.RUDDERSTACK_DATA_PLANE_URL ||
-                      'https://analytics.lightdash.com',
-        },
         sentry: {
             backend: {
                 dsn: process.env.SENTRY_BE_DSN || process.env.SENTRY_DSN || '',
@@ -3409,18 +3380,10 @@ export const parseConfig = (): LightdashConfig => {
                     ) || 60, // 1 minute
             },
         },
-        intercom: {
-            appId: process.env.INTERCOM_APP_ID || '',
-            apiBase:
-                process.env.INTERCOM_APP_BASE || 'https://api-iam.intercom.io',
-        },
         pylon: {
             appId: process.env.PYLON_APP_ID || '',
             identityVerificationSecret:
                 process.env.PYLON_IDENTITY_VERIFICATION_SECRET,
-        },
-        headway: {
-            enabled: process.env.HEADWAY_ENABLED !== 'false',
         },
         siteUrl,
         // KONTALA: '' at the root, otherwise '/analytics' and the like. The

@@ -154,8 +154,6 @@ services:
 
             # These were set in the render UI but are secret
             # these are set in the okteto admin UI - DO NOT SET THESE LOCALLY WHEN DEPLOYING or they will override the values in the okteto admin UI
-            RUDDERSTACK_WRITE_KEY: ${RUDDERSTACK_WRITE_KEY}
-            RUDDERSTACK_DATA_PLANE_URL: ${RUDDERSTACK_DATA_PLANE_URL}
             LIGHTDASH_LICENSE_KEY: ${LIGHTDASH_LICENSE_KEY}
             LIGHTDASH_LICENSE_CERTIFICATE: ${LIGHTDASH_LICENSE_CERTIFICATE}
             GITHUB_APP_ID: ${GITHUB_APP_ID}

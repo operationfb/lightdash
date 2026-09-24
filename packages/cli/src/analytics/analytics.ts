@@ -1,53 +1,4 @@
-import { LightdashError, LightdashUser } from '@lightdash/common';
-import fetch from 'node-fetch';
-import { Config, getConfig } from '../config';
-import { getInstallMethod } from '../env';
-import GlobalState from '../globalState';
-import { lightdashApi } from '../handlers/dbt/apiClient';
-
-const { version: VERSION } = require('../../package.json');
-
-type CIInfo = {
-    isCI: boolean;
-    ciProvider: string | null;
-};
-
-const detectCI = (): CIInfo => {
-    if (process.env.GITHUB_ACTIONS)
-        return { isCI: true, ciProvider: 'github_actions' };
-    if (process.env.GITLAB_CI) return { isCI: true, ciProvider: 'gitlab' };
-    if (process.env.CIRCLECI) return { isCI: true, ciProvider: 'circleci' };
-    if (process.env.JENKINS_URL) return { isCI: true, ciProvider: 'jenkins' };
-    if (process.env.BITBUCKET_PIPELINE_UUID)
-        return { isCI: true, ciProvider: 'bitbucket' };
-    if (process.env.TF_BUILD) return { isCI: true, ciProvider: 'azure_devops' };
-    if (process.env.CI) return { isCI: true, ciProvider: 'unknown' };
-    return { isCI: false, ciProvider: null };
-};
-
-const identifyUser = async (): Promise<Config['user']> => {
-    const config = await getConfig();
-    if (config.context?.serverUrl && config.context.apiKey) {
-        try {
-            const user = await lightdashApi<LightdashUser>({
-                method: 'GET',
-                url: '/api/v1/user',
-                body: undefined,
-            });
-            return {
-                anonymousUuid: config.user?.anonymousUuid,
-                userUuid: user.userUuid,
-            };
-        } catch {
-            // do nothing
-        }
-    }
-    return {
-        anonymousUuid: config.user?.anonymousUuid,
-        userUuid: config.user?.userUuid,
-        organizationUuid: config.user?.organizationUuid,
-    };
-};
+import { LightdashError } from '@lightdash/common';
 
 export interface AnalyticsTrack {
     event: string;
@@ -57,10 +8,6 @@ export interface AnalyticsTrack {
 
 type BaseTrack = Omit<AnalyticsTrack, 'context'>;
 
-/** Events triggered on `preinstall` and `postinstall` in package.json: track.sh
-- install.started
-- install.completed
-*/
 type CliGenerateExposuresStarted = BaseTrack & {
     event: 'generate_exposures.started';
     properties: {
@@ -587,70 +534,8 @@ export const categorizeError = (error: unknown): string => {
     return 'unknown';
 };
 
+// KONTALA: no third-party transport. CLI events are accepted and dropped; the
+// RudderStack endpoint this class used to post to is removed.
 export class LightdashAnalytics {
-    private static getWriteKey(): string {
-        return process.env.NODE_ENV === 'development'
-            ? 'MXZpa2VHYWR0QjBZMG9SREZOTDJQcmRoa2JwOg=='
-            : 'MXZxa1NsV01WdFlPbDcwcmszUVNFMHYxZnFZOg==';
-    }
-
-    static async track(payload: Track): Promise<void> {
-        try {
-            const user = await identifyUser();
-            const ci = detectCI();
-            const lightdashContext = {
-                app: {
-                    namespace: 'lightdash',
-                    name: 'lightdash_cli',
-                    version: VERSION,
-                    installMethod: getInstallMethod(),
-                    sessionId: GlobalState.getSessionId(),
-                },
-                ci,
-            };
-
-            const body = {
-                anonymousId: user?.anonymousUuid,
-                userId: user?.userUuid,
-                ...payload,
-                event: `${lightdashContext.app.name}.${payload.event}`,
-                context: { ...lightdashContext },
-            };
-
-            await fetch('https://analytics.lightdash.com/v1/track', {
-                method: 'POST',
-                headers: {
-                    Authorization: `Basic ${LightdashAnalytics.getWriteKey()}`,
-                },
-                body: JSON.stringify(body),
-            });
-        } catch (e) {
-            // do nothing
-        }
-    }
-
-    static async identify(traits: Record<string, unknown>): Promise<void> {
-        try {
-            const user = await identifyUser();
-            const body = {
-                anonymousId: user?.anonymousUuid,
-                userId: user?.userUuid,
-                traits: {
-                    cli_version: VERSION,
-                    install_method: getInstallMethod(),
-                    ...traits,
-                },
-            };
-
-            await fetch('https://analytics.lightdash.com/v1/identify', {
-                method: 'POST',
-                headers: {
-                    Authorization: `Basic ${LightdashAnalytics.getWriteKey()}`,
-                },
-                body: JSON.stringify(body),
-            });
-        } catch (e) {
-            // do nothing
-        }
-    }
+    static track: (payload: Track) => Promise<void> = () => Promise.resolve();
 }

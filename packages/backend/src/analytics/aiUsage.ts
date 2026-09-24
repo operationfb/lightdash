@@ -1,9 +1,7 @@
 import type { AiDeepResearchPhase } from '@lightdash/common';
-import { Track as AnalyticsTrack } from '@rudderstack/rudder-sdk-node';
 import type { EmbeddingModelUsage, LanguageModelUsage } from 'ai';
 import Logger from '../logging/logger';
-
-type BaseTrack = Omit<AnalyticsTrack, 'context'>;
+import type { BaseTrack } from './LightdashAnalytics';
 
 /**
  * Coarse feature bucket for an AI call. Lets us attribute token usage and cost
@@ -115,7 +113,7 @@ export const embeddingModelUsageToTokens = (
 /**
  * One event per AI model call, emitted 100% unsampled (unlike traces) so
  * token usage can be accounted per org/user/feature. Consumed by the usage
- * event stream sink (`ai_usage` stream) and Rudderstack.
+ * event stream sink (`ai_usage` stream).
  */
 export type AiUsageEvent = BaseTrack & {
     event: 'ai.usage';

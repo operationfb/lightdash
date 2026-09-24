@@ -136,7 +136,6 @@ export class HealthService extends BaseService {
             isAuthenticated,
             requiresOrgRegistration,
             latest: { version: dockerHubVersion },
-            rudder: this.lightdashConfig.rudder,
             sentry: {
                 frontend: this.lightdashConfig.sentry.frontend,
                 environment: this.lightdashConfig.sentry.environment,
@@ -145,13 +144,9 @@ export class HealthService extends BaseService {
                 profilesSampleRate:
                     this.lightdashConfig.sentry.profilesSampleRate,
             },
-            intercom: this.lightdashConfig.intercom,
             pylon: {
                 appId: this.lightdashConfig.pylon.appId,
                 verificationHash: this.getPylonVerificationHash(user?.email),
-            },
-            headway: {
-                enabled: this.lightdashConfig.headway.enabled,
             },
             siteUrl: this.lightdashConfig.siteUrl,
             staticIp: this.lightdashConfig.staticIp,

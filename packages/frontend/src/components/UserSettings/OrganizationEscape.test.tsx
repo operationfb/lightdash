@@ -1,7 +1,7 @@
 import { OrganizationMemberRole } from '@lightdash/common';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import nock from 'nock';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { BASE_API_URL } from '../../api';
 import { renderWithProviders } from '../../testing/testUtils';
 import { OrganizationDeleteModal } from './DeleteOrganizationPanel/DeleteOrganizationModal';
@@ -21,6 +21,16 @@ const mockOrganization = (name: string) =>
             status: 'ok',
             results: { name, organizationUuid: user.organizationUuid },
         });
+
+// jsdom cannot navigate, so record where the page sends the browser instead.
+const captureRedirect = () => {
+    const location = { href: window.location.href };
+    const locationSpy = vi
+        .spyOn(window, 'location', 'get')
+        .mockReturnValue(location as Location);
+    onTestFinished(() => locationSpy.mockRestore());
+    return location;
+};
 
 describe('organization escape', () => {
     it.each(['', '   '])(
@@ -52,9 +62,11 @@ describe('organization escape', () => {
             const deletion = nock(BASE_API_URL)
                 .delete(`/api/v1/org/${user.organizationUuid}`)
                 .reply(200, { status: 'ok' });
+            const redirect = captureRedirect();
             fireEvent.click(confirm);
             await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
             expect(deletion.isDone()).toBe(true);
+            expect(redirect.href).toBe('/register');
         },
     );
 
@@ -100,9 +112,11 @@ describe('organization escape', () => {
         const leaving = nock(BASE_API_URL)
             .delete('/api/v1/user/me/leaveOrganization')
             .reply(200, { status: 'ok', results: null });
+        const redirect = captureRedirect();
         fireEvent.click(confirm);
         await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
         expect(leaving.isDone()).toBe(true);
+        expect(redirect.href).toBe('/login');
     });
 
     it.each([

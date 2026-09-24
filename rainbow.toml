@@ -81,13 +81,6 @@ EMAIL_SMTP_SENDER_EMAIL = "noreply@lightdash.local"
 # PR mode implies this (docs/preview-feature-flags.md); kept explicit so a
 # later mode change cannot silently drop the flag-management API.
 LIGHTDASH_PREVIEW_FEATURE_FLAGS_ENABLED = "true"
-# No product analytics from previews. The backend's config bakes in a default
-# RudderStack write key and data plane, so without this every environment
-# tracks into production analytics — and the migrate rung's node process
-# stays alive until the client gives up on that request. With the data plane
-# outside the egress list that was four TCP timeouts, 8m47s, on every fork;
-# with this set the same command takes 2.5s.
-RUDDERSTACK_ANALYTICS_DISABLED = "true"
 
 # Parity with the Okteto previews (docker/docker-compose.preview.yml): the
 # settings that switch on the surfaces e2e and QA exercise. Values that name

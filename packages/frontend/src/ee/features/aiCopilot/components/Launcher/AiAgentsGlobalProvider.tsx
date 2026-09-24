@@ -9,6 +9,7 @@ import {
 import { Provider } from 'react-redux';
 import { useLocation, useMatches } from 'react-router';
 import { useActiveProjectUuid } from '../../../../../hooks/useActiveProject';
+import useApp from '../../../../../providers/App/useApp';
 import { store } from '../../store';
 import { AiAgentThreadStreamAbortControllerContextProvider } from '../../streaming/AiAgentThreadStreamAbortControllerContextProvider';
 import { CreateIssueModalHost } from '../CreateIssue/CreateIssueModalHost';
@@ -35,6 +36,13 @@ const AiAgentsLauncherGate: FC = () => {
             <AiAgentsLauncher />
         </Suspense>
     );
+};
+
+// Signed-out pages have no launcher, and the gate's org, account and AI
+// settings queries would only fail there with 401s.
+const SignedInAiAgentsLauncherGate: FC = () => {
+    const { health } = useApp();
+    return health.data?.isAuthenticated ? <AiAgentsLauncherGate /> : null;
 };
 
 // Keep this tiny tracker eager so full-page AI routes can always restore to
@@ -66,7 +74,7 @@ export const AiAgentsGlobalProvider: FC<PropsWithChildren> = ({ children }) => (
                     <Sentry.ErrorBoundary fallback={<></>}>
                         <AiAgentsLauncherSessionTracker />
                         <AiAgentBuildWatcher />
-                        <AiAgentsLauncherGate />
+                        <SignedInAiAgentsLauncherGate />
                         <CreateIssueModalHost />
                     </Sentry.ErrorBoundary>
                 </LauncherDockProvider>

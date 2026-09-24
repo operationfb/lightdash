@@ -32,8 +32,7 @@ export const AgentOnboardingDemoOffer: FC<{ run: AgentOnboardingRun }> = ({
 }) => {
     const navigate = useNavigate();
     const { health, user } = useApp();
-    const { track, data: trackingData } = useTracking();
-    const isTrackingReady = !!trackingData.rudder;
+    const { track } = useTracking();
     const { data: organization } = useOrganization();
     const { data: projects } = useProjects();
     const { mutateAsync: ensurePlaygroundAsync, isLoading: isProvisioning } =
@@ -69,7 +68,7 @@ export const AgentOnboardingDemoOffer: FC<{ run: AgentOnboardingRun }> = ({
     const shownRunUuidRef = useRef<string | null>(null);
 
     useEffect(() => {
-        if (!isTrackingReady || offerType === null || !organizationUuid) return;
+        if (offerType === null || !organizationUuid) return;
         if (shownRunUuidRef.current === agentOnboardingRunUuid) return;
         shownRunUuidRef.current = agentOnboardingRunUuid;
         track({
@@ -82,7 +81,6 @@ export const AgentOnboardingDemoOffer: FC<{ run: AgentOnboardingRun }> = ({
             },
         });
     }, [
-        isTrackingReady,
         offerType,
         organizationUuid,
         agentOnboardingRunUuid,

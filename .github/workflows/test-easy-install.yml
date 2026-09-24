@@ -19,8 +19,6 @@ jobs:
         egress-policy: audit
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
     - name: Run easy install
-      env: 
-        RUDDERSTACK_WRITE_KEY: '1vikeGadtB0Y0oRDFNL2Prdhkbp' # dev key
       run: ./scripts/install.sh
     - name: Test containers 
       run: |

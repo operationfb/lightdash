@@ -259,15 +259,6 @@ export default class App {
         );
         this.analytics = new LightdashAnalytics({
             lightdashConfig: this.lightdashConfig,
-            writeKey: this.lightdashConfig.rudder.writeKey || 'notrack',
-            dataPlaneUrl: this.lightdashConfig.rudder.dataPlaneUrl
-                ? this.lightdashConfig.rudder.dataPlaneUrl
-                : 'notrack',
-            options: {
-                enable:
-                    this.lightdashConfig.rudder.writeKey &&
-                    this.lightdashConfig.rudder.dataPlaneUrl,
-            },
             eventEmitter: this.analyticsEventEmitter,
             eventStreamSink: this.eventStreamWriter
                 ? new EventStreamSink(
@@ -550,17 +541,9 @@ export default class App {
 
         const contentSecurityPolicyAllowedDomains: string[] = [
             'https://*.sentry.io',
-            'https://analytics.lightdash.com',
             'https://*.usepylon.com',
             'https://*.pusher.com', // used by pylon
             'wss://*.pusher.com', // used by pylon
-            'https://*.headwayapp.co',
-            'https://headway-widget.net',
-            'https://*.intercom.com',
-            'https://*.intercom.io',
-            'wss://*.intercom.io',
-            'https://*.intercomcdn.com',
-            'https://*.rudderlabs.com',
             'https://www.googleapis.com',
             'https://apis.google.com',
             'https://accounts.google.com',
@@ -1176,7 +1159,6 @@ export default class App {
                 flushFeatureFlagChecks(),
                 'api',
             );
-            await this.analytics.flushEvents();
         } catch {
             // telemetry must never break shutdown
         }

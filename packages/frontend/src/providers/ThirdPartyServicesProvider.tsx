@@ -1,7 +1,5 @@
 import { LightdashMode } from '@lightdash/common';
 import { useCallback, useEffect, type FC } from 'react';
-import { IntercomProvider } from 'react-use-intercom';
-import { Intercom } from '../components/Intercom';
 import useSentry from '../hooks/thirdPartyServices/useSentry';
 import useApp from './App/useApp';
 
@@ -104,16 +102,10 @@ const ThirdPartyServicesEnabledProvider: FC<React.PropsWithChildren<{}>> = ({
     usePylon();
 
     return (
-        <IntercomProvider
-            appId={health.data?.intercom.appId || ''}
-            shouldInitialize={!!health.data?.intercom.appId}
-            apiBase={health.data?.intercom.apiBase || ''}
-            autoBoot
-        >
-            <Intercom />
+        <>
             <Clarity />
             {children}
-        </IntercomProvider>
+        </>
     );
 };
 

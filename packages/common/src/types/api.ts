@@ -646,10 +646,6 @@ export type HealthState = {
     latest: {
         version?: string;
     };
-    rudder: {
-        writeKey: string | undefined;
-        dataPlaneUrl: string | undefined;
-    };
     sentry: Pick<
         SentryConfig,
         | 'frontend'
@@ -698,16 +694,9 @@ export type HealthState = {
         };
     };
     siteUrl: string;
-    intercom: {
-        appId: string;
-        apiBase: string;
-    };
     pylon: {
         appId: string;
         verificationHash?: string;
-    };
-    headway: {
-        enabled: boolean;
     };
     staticIp: string;
     signupUrl: string | undefined;

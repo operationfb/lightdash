@@ -62,6 +62,9 @@ const router = sentryCreateBrowserRouter(
         {
             path: '/',
             errorElement: <ChunkErrorRouteBoundary />,
+            // Routes are lazy, so the first render waits for a route chunk;
+            // show nothing meanwhile instead of react-router's warning default.
+            HydrateFallback: () => null,
             element: (
                 <AppProvider>
                     <FullscreenProvider enabled={!isMinimalPage}>
@@ -69,7 +72,7 @@ const router = sentryCreateBrowserRouter(
                         <BuildSkewRefresher />
                         <ThirdPartyProvider enabled={!isMinimalPage}>
                             <ErrorBoundary wrapper={{ mt: '4xl' }}>
-                                <TrackingProvider enabled={!isMinimalPage}>
+                                <TrackingProvider>
                                     <AbilityProvider>
                                         <ActiveJobProvider>
                                             <SchedulerJobsProvider>

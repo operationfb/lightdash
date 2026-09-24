@@ -7,12 +7,10 @@ import { LearnLink } from '../../features/learn/LearnLink';
 import { useHasMetricsInCatalog } from '../../features/metricsCatalog/hooks/useMetricsCatalog';
 import Omnibar from '../../features/omnibar';
 import { useOptionalProjectRoute } from '../../hooks/useProjectRoute';
-import useApp from '../../providers/App/useApp';
 import Logo from '../../svgs/logo-icon.svg?react';
 import { AutopilotNavButton } from './AutopilotNavButton';
 import BrowseMenu from './BrowseMenu';
 import ExploreMenu from './ExploreMenu';
-import HeadwayMenuItem from './HeadwayMenuItem';
 import HelpMenu from './HelpMenu';
 import KontalaReturnButton from './KontalaReturnButton';
 import classes from './MainNavBarContent.module.css';
@@ -59,8 +57,6 @@ export const MainNavBarContent: FC<Props> = ({
     const { data: hasMetrics } = useHasMetricsInCatalog({
         projectUuid: activeProjectUuid,
     });
-    const { health } = useApp();
-    const headwayEnabled = health.data?.headway?.enabled;
     const NavGroup = compact ? Group : Button.Group;
 
     const content = (
@@ -166,15 +162,6 @@ export const MainNavBarContent: FC<Props> = ({
                     )}
 
                     <HelpMenu withLabel={compact} />
-
-                    {headwayEnabled &&
-                        !isLoadingActiveProject &&
-                        activeProjectUuid && (
-                            <HeadwayMenuItem
-                                projectUuid={activeProjectUuid}
-                                withLabel={compact}
-                            />
-                        )}
 
                     {!compact && (
                         <ProjectSwitcher portalTarget="#navbar-header" />

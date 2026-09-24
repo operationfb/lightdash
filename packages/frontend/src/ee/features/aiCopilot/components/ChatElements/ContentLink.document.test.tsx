@@ -3,6 +3,7 @@ import { fireEvent, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { clickLinkWithoutNavigation } from '../../../../../testing/clickLinkWithoutNavigation';
 import { renderWithProviders } from '../../../../../testing/testUtils';
 import { store } from '../../store';
 import { clearPreview } from '../../store/aiArtifactSlice';
@@ -91,7 +92,7 @@ describe('Document content links', () => {
         (event) => {
             const { router } = renderDocumentLink();
             expect(
-                fireEvent.click(
+                clickLinkWithoutNavigation(
                     screen.getByRole('link', { name: 'Hello World' }),
                     event,
                 ),

@@ -104,7 +104,6 @@ const lightdashConfig = {
     },
     license: {},
     customRoles: { enabled: false },
-    rudder: {},
 } as unknown as LightdashConfig;
 
 const featureFlagModel = {

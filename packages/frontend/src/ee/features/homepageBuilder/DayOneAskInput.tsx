@@ -236,8 +236,7 @@ const useHomepageSuggestionChips = ({
     enableSqlMode: boolean;
     hideSuggestions: boolean | undefined;
 }) => {
-    const { track, data: trackingData } = useTracking();
-    const isTrackingReady = !!trackingData.rudder;
+    const { track } = useTracking();
     const referenceAgentUuid = referenceAgent?.uuid;
     const suggestionsQuery = useAgentSuggestions({
         projectUuid: projectUuid ?? '',
@@ -255,7 +254,6 @@ const useHomepageSuggestionChips = ({
     const impressionFiredRef = useRef(false);
     useEffect(() => {
         if (impressionFiredRef.current) return;
-        if (!isTrackingReady) return;
         if (hideSuggestions) return;
         if (!projectUuid || !referenceAgentUuid) return;
         if (chips.length === 0) return;
@@ -269,14 +267,7 @@ const useHomepageSuggestionChips = ({
                 placement: 'homepage_hero',
             },
         });
-    }, [
-        isTrackingReady,
-        chips.length,
-        projectUuid,
-        referenceAgentUuid,
-        hideSuggestions,
-        track,
-    ]);
+    }, [chips.length, projectUuid, referenceAgentUuid, hideSuggestions, track]);
 
     return { chips, isLoading: suggestionsQuery.isLoading };
 };

@@ -6,6 +6,7 @@ import monacoEditorPlugin from 'vite-plugin-monaco-editor';
 import svgrPlugin from 'vite-plugin-svgr';
 import { defineConfig } from 'vitest/config';
 import { buildHashPlugin } from './vite.config.buildHash';
+import { postcssBrowserShimsPlugin } from './vite.config.postcssBrowserShims';
 import { pruneZodLocalesPlugin } from './vite.config.zodLocales';
 
 const FE_PORT = process.env.FE_PORT ? parseInt(process.env.FE_PORT) : 3000;
@@ -84,6 +85,9 @@ export default defineConfig({
     ],
     optimizeDeps: {
         include: ['react-vega'],
+        rolldownOptions: {
+            plugins: [postcssBrowserShimsPlugin()],
+        },
     },
     resolve: {
         dedupe: ['react', 'react-dom'],
@@ -145,7 +149,7 @@ export default defineConfig({
                         },
                         {
                             name: 'thirdparty',
-                            test: /node_modules[\\/](@sentry[\\/]react|rudder-sdk-js)/,
+                            test: /node_modules[\\/]@sentry[\\/]react/,
                             priority: 15,
                         },
                         {

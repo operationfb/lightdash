@@ -79,10 +79,6 @@ export const BaseResponse: HealthState = {
             available: true,
         },
     },
-    intercom: {
-        apiBase: '',
-        appId: '',
-    },
     latest: {
         version: '0.2.7',
     },
@@ -92,9 +88,6 @@ export const BaseResponse: HealthState = {
     pylon: {
         appId: '',
         verificationHash: undefined,
-    },
-    headway: {
-        enabled: false,
     },
     query: {
         csvCellsLimit: 100000,
@@ -109,10 +102,6 @@ export const BaseResponse: HealthState = {
         maxTilesPerTab: 50,
         maxTabsPerDashboard: 20,
         disableSentryTracking: false,
-    },
-    rudder: {
-        dataPlaneUrl: '',
-        writeKey: '',
     },
     sentry: {
         environment: '',

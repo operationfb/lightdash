@@ -16,10 +16,6 @@ vi.mock('../../hooks/useProjectRoute', () => ({
     useOptionalProjectRoute: () => ({ projectUrlIdentifier: 'jaffle-shop' }),
 }));
 
-vi.mock('../../providers/App/useApp', () => ({
-    default: () => ({ health: { data: { headway: { enabled: false } } } }),
-}));
-
 vi.mock('../../features/omnibar', () => ({
     default: () => <button type="button">Search</button>,
 }));
@@ -42,7 +38,6 @@ vi.mock('./ExploreMenu', () => ({ default: () => null }));
 vi.mock('./BrowseMenu', () => ({ default: () => null }));
 vi.mock('./SettingsMenu', () => ({ default: () => null }));
 vi.mock('./HelpMenu', () => ({ default: () => null }));
-vi.mock('./HeadwayMenuItem', () => ({ default: () => null }));
 vi.mock('./UserCredentialsSwitcher', () => ({ default: () => null }));
 vi.mock('./AutopilotNavButton', () => ({ AutopilotNavButton: () => null }));
 vi.mock('./MetricsLink', () => ({ MetricsLink: () => null }));

@@ -1,27 +1,6 @@
-import { LightdashAnalytics } from '../../analytics/LightdashAnalytics';
-import {
-    type UpgradeFailureClass,
-    type UpgradeTelemetryEvent,
-} from '../../analytics/upgradeTelemetryEvents';
-import { type LightdashConfig } from '../../config/parseConfig';
+import { type UpgradeFailureClass } from '../../analytics/upgradeTelemetryEvents';
 import { MigrationLeaseLostError } from './heartbeat';
 import { MigrationWaitTimeoutError } from './migrationWaitTimeoutError';
-
-type UpgradeAnalyticsClient = {
-    track: (event: UpgradeTelemetryEvent & { anonymousId: string }) => void;
-    flushEvents: (timeoutMs?: number) => Promise<void>;
-};
-
-type CreateUpgradeTelemetryArguments = {
-    lightdashConfig: LightdashConfig;
-    analyticsFactory: () => UpgradeAnalyticsClient;
-};
-
-const sleep = async (durationMs: number): Promise<void> => {
-    await new Promise<void>((resolve) => {
-        setTimeout(resolve, durationMs);
-    });
-};
 
 const getErrorProperty = (
     error: unknown,
@@ -102,45 +81,4 @@ export const resolveExecutionMode = (env = process.env): string => {
         /^[a-z0-9_-]{1,32}$/.test(executionMode)
         ? executionMode
         : 'unknown';
-};
-
-export const createUpgradeTelemetry = ({
-    lightdashConfig,
-    analyticsFactory,
-}: CreateUpgradeTelemetryArguments): {
-    emitUpgradeEvent: (event: UpgradeTelemetryEvent) => void;
-    flushUpgradeEvents: () => Promise<void>;
-} => {
-    if (
-        !lightdashConfig.rudder.writeKey ||
-        !lightdashConfig.rudder.dataPlaneUrl
-    ) {
-        return {
-            emitUpgradeEvent: () => {},
-            flushUpgradeEvents: async () => {},
-        };
-    }
-    const analytics = analyticsFactory();
-    return {
-        emitUpgradeEvent: (event) => {
-            try {
-                analytics.track({
-                    ...event,
-                    anonymousId: LightdashAnalytics.anonymousId,
-                });
-            } catch {
-                return;
-            }
-        },
-        flushUpgradeEvents: async () => {
-            try {
-                await Promise.race([
-                    analytics.flushEvents(3_000),
-                    sleep(4_000),
-                ]);
-            } catch {
-                return;
-            }
-        },
-    };
 };

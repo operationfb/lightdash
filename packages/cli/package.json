@@ -15,7 +15,6 @@
   },
   "files": [
     "dist/**/*",
-    "track.sh",
     "entitlements.plist"
   ],
   "scripts": {
@@ -33,8 +32,6 @@
     "fix-lint": "pnpm run linter ./src --fix",
     "format": "oxfmt ./src --check",
     "fix-format": "oxfmt ./src",
-    "preinstall": "bash track.sh started || echo 'skipping preinstall'",
-    "postinstall": "bash track.sh completed || echo 'skipping postinstall'",
     "release": "pnpm publish --no-git-checks --access public"
   },
   "dependencies": {

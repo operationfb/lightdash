@@ -71,8 +71,8 @@ never sends raw error messages, failure detail, stack traces, SQL, schema names,
 or the operator-supplied unlock actor. The local run ledger continues to store
 raw failure detail for operators.
 
-`RUDDERSTACK_ANALYTICS_DISABLED=true` disables these events through the same
-RudderStack configuration opt-out as other Lightdash telemetry.
+This build sends none of these events.
+The migrate CLI still builds them, but its entrypoint connects them to no destination.
 
 ## Execution mode
 

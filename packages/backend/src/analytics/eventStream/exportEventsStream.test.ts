@@ -37,9 +37,6 @@ describe('export usage events', () => {
             const { writer, sink } = setup();
             const analytics = new LightdashAnalytics({
                 lightdashConfig: lightdashConfigMock,
-                writeKey: 'notrack',
-                dataPlaneUrl: 'notrack',
-                options: { enable: false },
                 eventStreamSink: sink,
             });
             analytics.track({

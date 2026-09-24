@@ -403,9 +403,7 @@ const SdkProviders: FC<
                                                 <MemoryRouter
                                                     initialEntries={[route]}
                                                 >
-                                                    <TrackingProvider
-                                                        enabled={true}
-                                                    >
+                                                    <TrackingProvider>
                                                         <AbilityProvider>
                                                             <ChartColorMappingContextProvider>
                                                                 <ActiveJobProvider>

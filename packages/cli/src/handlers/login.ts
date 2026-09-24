@@ -328,7 +328,6 @@ export const login = async (
         serverUrl: url,
         apiKey: token,
     });
-    await LightdashAnalytics.identify({ organizationId: organizationUuid });
 
     GlobalState.debug(`> Saved config on: ${configFilePath}`);
 

@@ -5,6 +5,7 @@ import { afterEach, beforeAll, beforeEach, vi } from 'vitest';
 import mockDocumentFonts from './__mocks__/implementations/documentFonts.mock';
 import mockElementsFromPoint from './__mocks__/implementations/elementsFromPoint.mock';
 import mockMatchMedia from './__mocks__/implementations/matchMedia.mock';
+import mockRangeClientRects from './__mocks__/implementations/rangeClientRects.mock';
 import mockResizeObserver from './__mocks__/implementations/resizeObserver.mock';
 import mockScrollIntoView from './__mocks__/implementations/scrollIntoView.mock';
 import ReactMarkdownPreview from './__mocks__/modules/ReactMarkdwnPreview.mock';
@@ -26,6 +27,7 @@ beforeAll(() => {
     mockScrollIntoView();
     mockElementsFromPoint();
     mockDocumentFonts();
+    mockRangeClientRects();
 });
 
 // Disable all network requests by default

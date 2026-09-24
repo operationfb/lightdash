@@ -72,7 +72,6 @@ vi.mock('../../../providers/App/useApp', () => ({
 vi.mock('../../../providers/Tracking/useTracking', () => ({
     default: () => ({
         track: vi.fn(),
-        data: { rudder: true },
     }),
 }));
 

@@ -1,12 +1,5 @@
 import { FeatureFlags } from '@lightdash/common';
-import {
-    Anchor,
-    Button,
-    Card,
-    Stack,
-    Text,
-    useMantineTheme,
-} from '@mantine/core';
+import { Button, Card, Stack, Text, useMantineTheme } from '@mantine/core';
 import {
     IconCircleCheckFilled,
     IconConfetti,
@@ -14,7 +7,6 @@ import {
 } from '@tabler/icons-react';
 import { type FC } from 'react';
 import { Navigate, useNavigate } from 'react-router';
-import { useIntercom } from 'react-use-intercom';
 import AuthLayout from '../components/common/AuthLayout';
 import { useAuthLayoutVariant } from '../components/common/AuthLayout/useAuthLayoutVariant';
 import MantineIcon from '../components/common/MantineIcon';
@@ -69,7 +61,6 @@ const VerifyEmailPage: FC = () => {
     const { data, isInitialLoading: statusLoading } = useEmailStatus(
         !!health.data?.isAuthenticated,
     );
-    const { show: showIntercom } = useIntercom();
     const { isNewLayout } = useAuthLayoutVariant();
     const navigate = useNavigate();
     const emailOnlySignupFlag = useServerFeatureFlag(
@@ -97,10 +88,7 @@ const VerifyEmailPage: FC = () => {
             footer={
                 <Text c="dimmed" ta="center" px="xs" fz="sm" fw={500}>
                     You need to verify your email to get access to Kontala
-                    Analytics. If you need help, you can{' '}
-                    <Anchor onClick={() => showIntercom()} fz="sm" fw={500}>
-                        chat to support here.
-                    </Anchor>
+                    Analytics.
                 </Text>
             }
         >

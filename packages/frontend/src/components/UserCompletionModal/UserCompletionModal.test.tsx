@@ -648,37 +648,4 @@ describe('UserCompletionModal', () => {
             screen.queryByText('Organization setup page'),
         ).not.toBeInTheDocument();
     });
-
-    it('still redirects to organization setup when telemetry is disabled', async () => {
-        mockFeatureFlag(true);
-
-        renderWithProviders(
-            <MemoryRouter initialEntries={['/']}>
-                <Routes>
-                    <Route path="/" element={<UserCompletionModal />} />
-                    <Route
-                        path="/organization-setup"
-                        element={<div>Organization setup page</div>}
-                    />
-                </Routes>
-            </MemoryRouter>,
-            {
-                user: {
-                    isSetupComplete: false,
-                    organizationName: '',
-                },
-                health: {
-                    rudder: {
-                        writeKey: undefined,
-                        dataPlaneUrl: undefined,
-                    },
-                },
-            },
-        );
-
-        expect(
-            await screen.findByText('Organization setup page'),
-        ).toBeInTheDocument();
-        expect(screen.queryByText('Nearly there...')).not.toBeInTheDocument();
-    });
 });

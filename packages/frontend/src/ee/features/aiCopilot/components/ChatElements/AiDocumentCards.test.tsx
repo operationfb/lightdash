@@ -2,6 +2,7 @@ import { type AiAgentMessageAssistant } from '@lightdash/common';
 import { fireEvent, screen } from '@testing-library/react';
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { clickLinkWithoutNavigation } from '../../../../../testing/clickLinkWithoutNavigation';
 import { renderWithProviders } from '../../../../../testing/testUtils';
 import { type StreamPart } from '../../store/aiAgentThreadStreamSlice';
 import AiDocumentCards from './AiDocumentCards';
@@ -297,7 +298,9 @@ describe('native Document result cards', () => {
         'preserves native modified-click behavior (%j)',
         (event) => {
             const router = renderCards();
-            expect(fireEvent.click(screen.getByRole('link'), event)).toBe(true);
+            expect(
+                clickLinkWithoutNavigation(screen.getByRole('link'), event),
+            ).toBe(true);
             expect(router.state.location.pathname).toBe('/thread');
         },
     );

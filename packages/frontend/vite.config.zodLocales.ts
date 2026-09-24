@@ -1,4 +1,4 @@
-import { type OutputBundle, type Plugin } from 'vite';
+import { type Plugin, type Rolldown } from 'vite';
 
 const ZOD_LOCALE_BARREL_MODULE_PATTERN =
     /[/\\]zod[/\\]v4[/\\]locales[/\\]index\.[cm]?[jt]s(?:\?.*)?$/;
@@ -15,7 +15,7 @@ export const findUnexpectedZodLocaleModules = (moduleIds: string[]): string[] =>
         return locale !== undefined && locale !== 'en' && locale !== 'index';
     });
 
-const getBundleModuleIds = (bundle: OutputBundle): string[] =>
+const getBundleModuleIds = (bundle: Rolldown.OutputBundle): string[] =>
     Object.values(bundle).flatMap((output) =>
         output.type === 'chunk' ? Object.keys(output.modules) : [],
     );

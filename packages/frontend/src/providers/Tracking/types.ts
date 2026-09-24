@@ -12,7 +12,6 @@ import {
     type TimeFrames,
     type WarehouseTypes,
 } from '@lightdash/common';
-import type * as rudderSDK from 'rudder-sdk-js';
 import { type PlaygroundSetupFailure } from '../../components/ProjectConnection/ProjectConnectFlow/playgroundSetupFailure';
 import {
     type CategoryName,
@@ -1198,7 +1197,6 @@ export interface SectionData {
 }
 
 export interface TrackingData {
-    rudder?: typeof rudderSDK;
     page?: PageData;
     section?: SectionData;
 }

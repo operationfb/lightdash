@@ -833,16 +833,6 @@ test('Should fail fast when base S3 is not configured', () => {
     expect(() => parseConfig()).toThrow('S3-compatible storage is required');
 });
 
-test('Should parse rudder config from env', () => {
-    const expected = {
-        dataPlaneUrl: 'customurl',
-        writeKey: 'customkey',
-    };
-    process.env.RUDDERSTACK_DATA_PLANE_URL = 'customurl';
-    process.env.RUDDERSTACK_WRITE_KEY = 'customkey';
-    expect(parseConfig().rudder).toEqual(expected);
-});
-
 test('Should use default sentry configuration if no environment vars', () => {
     const expected: SentryConfig = {
         backend: {

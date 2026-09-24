@@ -12,7 +12,6 @@ import {
 } from '@tabler/icons-react';
 import { type FC } from 'react';
 import { Link } from 'react-router';
-import { useIntercom } from 'react-use-intercom';
 import useHealth from '../../hooks/health/useHealth';
 import useApp from '../../providers/App/useApp';
 import SupportDrawerContent from '../../providers/SupportDrawer/SupportDrawerContent';
@@ -32,8 +31,7 @@ const HelpMenu: FC<{ withLabel?: boolean }> = ({ withLabel = false }) => {
     );
     const isCloudCustomer = health.data?.mode === LightdashMode.CLOUD_BETA;
     const isDevelopment = health.data?.mode === LightdashMode.DEV;
-
-    const { show: showIntercom } = useIntercom();
+    const isPylonEnabled = !!health.data?.pylon.appId;
 
     const helpMenuUrl = health.data?.helpMenuUrl;
 
@@ -90,15 +88,13 @@ const HelpMenu: FC<{ withLabel?: boolean }> = ({ withLabel = false }) => {
                     />
                 )}
 
-                {isCloudCustomer && (
+                {isCloudCustomer && isPylonEnabled && (
                     <LargeMenuItem
                         onClick={() => {
                             // @ts-ignore
                             if (window.Pylon) {
                                 // @ts-ignore
                                 window.Pylon('show');
-                            } else {
-                                showIntercom();
                             }
                         }}
                         title="Talk to support"

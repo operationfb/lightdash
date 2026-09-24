@@ -185,9 +185,7 @@
       "groupName": "Slack and comms packages",
       "matchPackageNames": [
         "@slack/oauth",
-        "slackify-markdown",
-        "@rudderstack/rudder-sdk-node",
-        "rudder-sdk-js"
+        "slackify-markdown"
       ]
     },
     {

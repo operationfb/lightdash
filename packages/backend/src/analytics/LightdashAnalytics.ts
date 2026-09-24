@@ -1,4 +1,3 @@
-/// <reference path="../@types/rudder-sdk-node.d.ts" />
 import {
     Account,
     AdminNotificationType,
@@ -16,8 +15,6 @@ import {
     ExternalSourceType,
     getRequestMethod,
     InviteLinkPurpose,
-    LightdashInstallType,
-    LightdashMode,
     LightdashPage,
     LightdashRequestMethodHeader,
     LightdashUser,
@@ -66,19 +63,14 @@ import {
     type PullRequestProvider,
     type WarehousePhaseTimings,
 } from '@lightdash/common';
-import Analytics, {
-    Track as AnalyticsTrack,
-} from '@rudderstack/rudder-sdk-node';
 import { EventEmitter } from 'events';
 import { Request } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { LightdashConfig } from '../config/parseConfig';
 import { type ExternalConnectionEvent } from '../ee/analytics';
-import Logger from '../logging/logger';
 import type { EnsureOrganizationOverrideOutcome } from '../models/FeatureFlagModel/FeatureFlagModel';
 import type { FeatureFlagCheckAggregateEntry } from '../models/FeatureFlagModel/flagCheckAggregator';
 import { type PersistentDownloadFileSource } from '../services/PersistentDownloadFileService/PersistentDownloadFileService';
-import { VERSION } from '../version';
 import type { AiKeyManagement, AiUsageEvent } from './aiUsage';
 import type { EventStreamSink } from './eventStream/EventStreamSink';
 import type {
@@ -86,17 +78,13 @@ import type {
     UpgradeEventProperties,
 } from './upgradeTelemetryEvents';
 
-type Identify = {
-    userId: string;
-    traits: {
-        email?: string;
-        first_name?: string;
-        last_name?: string;
-        is_tracking_anonymized: boolean;
-        is_marketing_opted_in?: boolean;
-    };
+export type BaseTrack = {
+    userId?: string;
+    anonymousId?: string;
+    messageId?: string;
+    event: string;
+    properties?: Record<string, AnyType>;
 };
-export type BaseTrack = Omit<AnalyticsTrack, 'context'>;
 export const ANONYMOUS_TRACKING_UUID = '00000000-0000-0000-0000-000000000000';
 export type OnboardingFlow = 'new' | 'legacy';
 export type OneTimePasscodePurpose =
@@ -107,13 +95,6 @@ export type OneTimePasscodeFailureReason =
     | 'invalid'
     | 'expired'
     | 'max_attempts';
-type Group = {
-    userId: string;
-    groupId: string;
-    traits: {
-        name?: string;
-    };
-};
 type TrackSimpleEvent = BaseTrack & {
     event:
         | 'password.updated'
@@ -193,10 +174,6 @@ export type DeleteUserEvent = BaseTrack & {
     };
 };
 
-function isUserDeletedEvent(event: BaseTrack): event is DeleteUserEvent {
-    return event.event === 'user.deleted';
-}
-
 export type UpdateUserEvent = BaseTrack & {
     event: 'user.updated';
     userId?: string;
@@ -218,10 +195,6 @@ type HearAboutUsSubmittedEvent = BaseTrack & {
         answer: string | null;
     };
 };
-
-function isUserUpdatedEvent(event: BaseTrack): event is UpdateUserEvent {
-    return event.event === 'user.updated';
-}
 
 type VerifiedUserEvent = BaseTrack & {
     event: 'user.verified';
@@ -253,10 +226,6 @@ type OneTimePasscodeFailedEvent = BaseTrack & {
         onboardingFlow: OnboardingFlow;
     };
 };
-
-function isUserVerifiedEvent(event: BaseTrack): event is VerifiedUserEvent {
-    return event.event === 'user.verified';
-}
 
 type OnboardingStepCompletedEvent = BaseTrack & {
     event: 'onboarding.step_completed';
@@ -4196,17 +4165,14 @@ type UntypedEvent<T extends BaseTrack> = Omit<BaseTrack, 'event'> &
 
 type LightdashAnalyticsArguments = {
     lightdashConfig: LightdashConfig;
-    writeKey: string;
-    dataPlaneUrl: string;
-    options?: ConstructorParameters<typeof Analytics>[1];
     eventEmitter?: EventEmitter;
     eventStreamSink?: EventStreamSink;
 };
 
-export class LightdashAnalytics extends Analytics {
+// KONTALA: no third-party transport. Events only feed the usage event stream
+// and Prometheus; the RudderStack SDK this class used to extend is removed.
+export class LightdashAnalytics {
     private readonly lightdashConfig: LightdashConfig;
-
-    private readonly lightdashContext: Record<string, AnyType>;
 
     private readonly eventEmitter?: EventEmitter;
 
@@ -4214,62 +4180,17 @@ export class LightdashAnalytics extends Analytics {
 
     constructor({
         lightdashConfig,
-        writeKey,
-        dataPlaneUrl,
-        options,
         eventEmitter,
         eventStreamSink,
     }: LightdashAnalyticsArguments) {
-        super(writeKey, { ...options, dataPlaneUrl });
-
         this.lightdashConfig = lightdashConfig;
         this.eventEmitter = eventEmitter;
         this.eventStreamSink = eventStreamSink;
-        this.lightdashContext = {
-            app: {
-                namespace: 'lightdash',
-                name: 'lightdash_server',
-                version: VERSION,
-                mode: lightdashConfig.mode,
-                siteUrl:
-                    lightdashConfig.mode === LightdashMode.CLOUD_BETA ||
-                    lightdashConfig.mode === LightdashMode.DEMO
-                        ? lightdashConfig.siteUrl
-                        : null,
-                installId: process.env.LIGHTDASH_INSTALL_ID || uuidv4(),
-                installType:
-                    process.env.LIGHTDASH_INSTALL_TYPE ||
-                    LightdashInstallType.UNKNOWN,
-                installChartVersion:
-                    process.env.LIGHTDASH_HELM_CHART_VERSION || null,
-            },
-        };
     }
 
     static anonymousId = process.env.LIGHTDASH_INSTALL_ID || uuidv4();
 
-    identify(payload: Identify) {
-        if (!this.lightdashConfig.rudder.writeKey) return; // Tracking disabled
-
-        super.identify({
-            ...payload,
-            context: { ...this.lightdashContext }, // NOTE: spread because rudderstack manipulates arg
-        });
-    }
-
-    // RudderStack asserts that every event carries a userId or anonymousId.
-    // A system event that forgot its actor lands under the instance id
-    // instead of throwing inside the request that emitted it.
-    private static ensureActor<T extends BaseTrack>(payload: T): T {
-        if (payload.userId || payload.anonymousId) return payload;
-        Logger.warn(
-            `Analytics event ${payload.event} has no userId or anonymousId; using the instance anonymous id`,
-        );
-        return { ...payload, anonymousId: LightdashAnalytics.anonymousId };
-    }
-
     track<T extends BaseTrack>(payload: TypedEvent | UntypedEvent<T>) {
-        // Usage event stream fires regardless of Rudderstack/anonymization settings
         this.eventStreamSink?.handle(payload);
 
         if (
@@ -4280,106 +4201,6 @@ export class LightdashAnalytics extends Analytics {
                 `analytics.track.${payload.event}`,
                 payload,
             );
-        }
-
-        if (!this.lightdashConfig.rudder.writeKey) return; // Tracking disabled
-        if (isUserUpdatedEvent(payload)) {
-            const basicEventProperties = {
-                is_tracking_anonymized: payload.properties.isTrackingAnonymized,
-                is_marketing_opted_in: payload.properties.isMarketingOptedIn,
-                job_title: payload.properties.jobTitle,
-                is_setup_complete: payload.properties.isSetupComplete,
-            };
-
-            super.track({
-                ...LightdashAnalytics.ensureActor(payload),
-                event: `${this.lightdashContext.app.name}.${payload.event}`,
-                context: { ...this.lightdashContext }, // NOTE: spread because rudderstack manipulates arg
-                properties: payload.properties.isTrackingAnonymized
-                    ? basicEventProperties
-                    : {
-                          ...basicEventProperties,
-                          email: payload.properties.email,
-                          first_name: payload.properties.firstName,
-                          last_name: payload.properties.lastName,
-                      },
-            });
-            return;
-        }
-        if (isUserVerifiedEvent(payload)) {
-            super.track({
-                ...LightdashAnalytics.ensureActor(payload),
-                event: `${this.lightdashContext.app.name}.${payload.event}`,
-                context: { ...this.lightdashContext }, // NOTE: spread because rudderstack manipulates arg
-                properties: {
-                    ...payload.properties,
-                    email: payload.properties.isTrackingAnonymized
-                        ? undefined
-                        : payload.properties.email,
-                },
-            });
-            return;
-        }
-        if (isUserDeletedEvent(payload)) {
-            const basicEventProperties = {
-                context: payload.properties.context,
-                organizationId: payload.properties.organizationId,
-                deletedUserId: payload.properties.deletedUserId,
-                is_tracking_anonymized: payload.properties.isTrackingAnonymized,
-            };
-
-            super.track({
-                ...LightdashAnalytics.ensureActor(payload),
-                event: `${this.lightdashContext.app.name}.${payload.event}`,
-                context: { ...this.lightdashContext },
-                properties: payload.properties.isTrackingAnonymized
-                    ? basicEventProperties
-                    : {
-                          ...basicEventProperties,
-                          firstName: payload.properties.firstName,
-                          lastName: payload.properties.lastName,
-                          email: payload.properties.email,
-                      },
-            });
-            return;
-        }
-
-        super.track({
-            ...LightdashAnalytics.ensureActor(payload),
-            event: `${this.lightdashContext.app.name}.${payload.event}`,
-            context: { ...this.lightdashContext }, // NOTE: spread because rudderstack manipulates arg
-        });
-    }
-
-    group(payload: Group) {
-        if (!this.lightdashConfig.rudder.writeKey) return; // Tracking disabled
-
-        super.group({
-            ...payload,
-            context: { ...this.lightdashContext }, // NOTE: spread because rudderstack manipulates arg
-        });
-    }
-
-    /**
-     * Drains queued events over the wire. track() only enqueues, so without
-     * this anything tracked during shutdown dies with the process. flush()
-     * sends at most `flushAt` events per call, hence the loop.
-     */
-    async flushEvents(timeoutMs: number = 5000): Promise<void> {
-        if (!this.lightdashConfig.rudder.writeKey) return; // Tracking disabled
-
-        const deadline = Date.now() + timeoutMs;
-        try {
-            do {
-                // eslint-disable-next-line no-await-in-loop
-                await this.flush();
-            } while (this.queue.length > 0 && Date.now() < deadline);
-            // track() auto-flushes on its own once the queue reaches flushAt,
-            // so an empty queue can still have requests in flight. Flushing an
-            // empty queue resolves only once that pending chain settles.
-            await this.flush();
-        } catch (e) {
-            Logger.warn(`Failed to flush analytics events: ${e}`);
         }
     }
 

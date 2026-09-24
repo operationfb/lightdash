@@ -6,7 +6,7 @@ import HomepageStars from './HomepageStars';
 const { track } = vi.hoisted(() => ({ track: vi.fn() }));
 
 vi.mock('../../../providers/Tracking/useTracking', () => ({
-    default: () => ({ track, data: { rudder: true } }),
+    default: () => ({ track }),
 }));
 
 // Only tracking is mocked: the cards are purpose-built presentational markup,

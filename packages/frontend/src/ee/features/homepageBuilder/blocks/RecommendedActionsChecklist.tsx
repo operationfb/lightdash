@@ -238,8 +238,7 @@ export const RecommendedActionsChecklistPlaceholder: FC<{
 export const RecommendedActionsChecklist: FC<{
     actions: RecommendedActionsState;
 }> = ({ actions }) => {
-    const { track, data: trackingData } = useTracking();
-    const isTrackingReady = !!trackingData.rudder;
+    const { track } = useTracking();
     const {
         statuses,
         skippedActions,
@@ -341,7 +340,7 @@ export const RecommendedActionsChecklist: FC<{
     }, [activeIndex, isStackHovered, rotatableCount]);
 
     useEffect(() => {
-        if (!isTrackingReady || !frontActionKey) return;
+        if (!frontActionKey) return;
         if (lastImpressionKeyRef.current === frontActionKey) return;
         lastImpressionKeyRef.current = frontActionKey;
         track({
@@ -353,7 +352,7 @@ export const RecommendedActionsChecklist: FC<{
             },
         });
         impressionTriggerRef.current = 'initial';
-    }, [isTrackingReady, frontActionKey, activeIndex, track]);
+    }, [frontActionKey, activeIndex, track]);
 
     if (visibleActions.length === 0) return null;
 

@@ -95,6 +95,7 @@ vi.mock('../../../components/common/PromptComposer/PromptComposer', () => ({
         {
             getText: () => string;
             clear: () => void;
+            focus: () => void;
             insertContent: (content: { text?: string }[]) => void;
         },
         {
@@ -127,6 +128,7 @@ vi.mock('../../../components/common/PromptComposer/PromptComposer', () => ({
                 if (inputRef.current) inputRef.current.value = '';
                 onEmptyChange(true);
             },
+            focus: () => inputRef.current?.focus(),
             insertContent: (content) => {
                 if (inputRef.current) {
                     inputRef.current.value = content

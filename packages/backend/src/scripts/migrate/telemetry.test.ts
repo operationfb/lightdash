@@ -1,49 +1,7 @@
-import { LightdashAnalytics } from '../../analytics/LightdashAnalytics';
-import {
-    type UpgradeFailureClass,
-    type UpgradeTelemetryEvent,
-} from '../../analytics/upgradeTelemetryEvents';
-import { lightdashConfigMock } from '../../config/lightdashConfig.mock';
-import { type LightdashConfig } from '../../config/parseConfig';
+import { type UpgradeFailureClass } from '../../analytics/upgradeTelemetryEvents';
 import { MigrationWaitTimeoutError } from './cli';
 import { MigrationLeaseLostError } from './heartbeat';
-import {
-    classifyUpgradeFailure,
-    createUpgradeTelemetry,
-    resolveExecutionMode,
-} from './telemetry';
-
-const config = (enabled: boolean): LightdashConfig => ({
-    ...lightdashConfigMock,
-    rudder: {
-        ...lightdashConfigMock.rudder,
-        writeKey: enabled ? 'write-key' : undefined,
-        dataPlaneUrl: enabled ? 'https://analytics.example.com' : undefined,
-    },
-});
-
-const event: UpgradeTelemetryEvent = {
-    event: 'upgrade_started',
-    properties: {
-        migration_run_uuid: 'run-1',
-        to_version: '1.2.3',
-        from_version: '1.1.0',
-        span_migrations: 2,
-        execution_mode: 'compose',
-        duration_seconds: null,
-        duration_ms: null,
-        attempt: 1,
-        outcome: null,
-        failure_class: null,
-        failing_migration: null,
-        preceded_by_unlock: false,
-        preceding_unlock_forced: null,
-        preflight_decision: null,
-        preflight_red: null,
-        preflight_yellow: null,
-        preflight_blocked_checks: null,
-    },
-};
+import { classifyUpgradeFailure, resolveExecutionMode } from './telemetry';
 
 describe('classifyUpgradeFailure', () => {
     test.each<{
@@ -151,56 +109,5 @@ describe('resolveExecutionMode', () => {
         [{ LIGHTDASH_MIGRATION_EXECUTION_MODE: 'a'.repeat(33) }, 'unknown'],
     ])('resolves %j to %s', (env, expected) => {
         expect(resolveExecutionMode(env)).toBe(expected);
-    });
-});
-
-describe('createUpgradeTelemetry', () => {
-    test('does not construct analytics when telemetry is disabled', async () => {
-        const analyticsFactory = vi.fn();
-        const telemetry = createUpgradeTelemetry({
-            lightdashConfig: config(false),
-            analyticsFactory,
-        });
-
-        telemetry.emitUpgradeEvent(event);
-        await expect(telemetry.flushUpgradeEvents()).resolves.toBeUndefined();
-
-        expect(analyticsFactory).not.toHaveBeenCalled();
-    });
-
-    test('tracks the full event with the install anonymous id', () => {
-        const track = vi.fn();
-        const flushEvents = vi.fn(async () => {});
-        const telemetry = createUpgradeTelemetry({
-            lightdashConfig: config(true),
-            analyticsFactory: () => ({ track, flushEvents }),
-        });
-
-        telemetry.emitUpgradeEvent(event);
-
-        expect(track).toHaveBeenCalledWith({
-            ...event,
-            anonymousId: LightdashAnalytics.anonymousId,
-        });
-    });
-
-    test('caps a hanging analytics flush', async () => {
-        vi.useFakeTimers();
-        try {
-            const track = vi.fn();
-            const flushEvents = vi.fn(async () => new Promise<void>(() => {}));
-            const telemetry = createUpgradeTelemetry({
-                lightdashConfig: config(true),
-                analyticsFactory: () => ({ track, flushEvents }),
-            });
-
-            const flushing = telemetry.flushUpgradeEvents();
-            await vi.advanceTimersByTimeAsync(4_000);
-
-            await expect(flushing).resolves.toBeUndefined();
-            expect(flushEvents).toHaveBeenCalledWith(3_000);
-        } finally {
-            vi.useRealTimers();
-        }
     });
 });

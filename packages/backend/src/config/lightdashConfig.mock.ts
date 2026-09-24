@@ -136,15 +136,8 @@ export const lightdashConfigMock: LightdashConfig = {
         readinessProbeTtlMs: 10_000,
         allowMissingMigrations: false,
     },
-    intercom: {
-        appId: '',
-        apiBase: '',
-    },
     pylon: {
         appId: '',
-    },
-    headway: {
-        enabled: false,
     },
     lightdashSecret: 'look away this is a secret',
     lightdashSecrets: {
@@ -190,10 +183,6 @@ export const lightdashConfigMock: LightdashConfig = {
         url: undefined,
         workerConcurrency: 1,
         queueTimeoutMs: 180000,
-    },
-    rudder: {
-        writeKey: '',
-        dataPlaneUrl: '',
     },
     scheduler: {
         concurrency: 0,

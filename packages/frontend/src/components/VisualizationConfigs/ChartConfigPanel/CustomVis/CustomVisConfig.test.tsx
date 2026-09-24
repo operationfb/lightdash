@@ -53,6 +53,8 @@ vi.mock('../../CustomChartType/useSelectProjectChartType', () => ({
 vi.mock('../../../MonacoEditor', () => ({
     default: () => null,
 }));
+// Only the mocked editor reads this schema, and loading its 1.9 MB cold outlasts waitFor.
+vi.mock('vega-lite/vega-lite-schema.json', () => ({ default: {} }));
 vi.mock('./components/CustomVisTemplate', () => ({
     SelectTemplate: () => null,
 }));

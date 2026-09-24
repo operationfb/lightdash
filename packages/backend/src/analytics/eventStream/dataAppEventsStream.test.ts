@@ -28,13 +28,7 @@ describe('data app usage events', () => {
     it('captures the existing view event through track when RudderStack is disabled', () => {
         const writer = createWriter();
         const analytics = new LightdashAnalytics({
-            lightdashConfig: {
-                ...lightdashConfigMock,
-                rudder: { writeKey: '', dataPlaneUrl: 'notrack' },
-            },
-            writeKey: 'notrack',
-            dataPlaneUrl: 'notrack',
-            options: { enable: false },
+            lightdashConfig: lightdashConfigMock,
             eventStreamSink: new EventStreamSink(eventStreamRegistry, writer),
         });
         analytics.track({
