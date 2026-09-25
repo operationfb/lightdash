@@ -80,17 +80,11 @@ const setup = ({
         if (url === ORG_URL) {
             return Promise.resolve(organization(serverNeedsProject));
         }
-        if (url === `/feature-flag/${FeatureFlags.NewOnboarding}`) {
-            return Promise.resolve({
-                id: FeatureFlags.NewOnboarding,
-                enabled: true,
-            });
-        }
-        if (url === `/feature-flag/${CommercialFeatureFlags.HomepageBuilder}`) {
-            return Promise.resolve({
-                id: CommercialFeatureFlags.HomepageBuilder,
-                enabled: false,
-            });
+        if (url === '/feature-flag/resolved') {
+            return Promise.resolve([
+                { id: FeatureFlags.NewOnboarding, enabled: true },
+                { id: CommercialFeatureFlags.HomepageBuilder, enabled: false },
+            ]);
         }
         return Promise.resolve(null);
     });
