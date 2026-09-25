@@ -1,9 +1,13 @@
 import { AnyType, ForbiddenError, getErrorMessage } from '@lightdash/common';
 import { sign } from 'cookie-signature';
 import express, { type Router } from 'express';
-import playwright from 'playwright';
 import { lightdashConfig } from '../config/lightdashConfig';
 import Logger from '../logging/logger';
+import { lazyImport } from '../utils/lazyImport';
+
+// KONTALA: playwright is ~270 files and only these routes use it, so it is
+// loaded on first use rather than at boot.
+const loadPlaywright = lazyImport(() => import('playwright'));
 
 export const headlessBrowserRouter: Router = express.Router({
     mergeParams: true,
@@ -107,7 +111,8 @@ if (
         try {
             const { browserEndpoint } = lightdashConfig.headlessBrowser;
             console.debug(`Headless chrome endpoint: ${browserEndpoint}`);
-            browser = await playwright.chromium.connectOverCDP(browserEndpoint);
+            const { chromium } = await loadPlaywright();
+            browser = await chromium.connectOverCDP(browserEndpoint);
 
             const page = await browser.newPage();
 
@@ -150,7 +155,8 @@ if (
         try {
             const { browserEndpoint } = lightdashConfig.headlessBrowser;
             console.debug(`Headless chrome endpoint: ${browserEndpoint}`);
-            browser = await playwright.chromium.connectOverCDP(browserEndpoint);
+            const { chromium } = await loadPlaywright();
+            browser = await chromium.connectOverCDP(browserEndpoint);
 
             const page = await browser.newPage();
             await page.setExtraHTTPHeaders({

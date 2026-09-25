@@ -1,10 +1,7 @@
 import { metrics } from '@opentelemetry/api';
-import {
-    PrometheusExporter,
-    PrometheusSerializer,
-} from '@opentelemetry/exporter-prometheus';
+import type * as ExporterPrometheus from '@opentelemetry/exporter-prometheus';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-import { AggregationType, MeterProvider } from '@opentelemetry/sdk-metrics';
+import type * as SdkMetrics from '@opentelemetry/sdk-metrics';
 import type { LightdashConfig } from '../config/parseConfig';
 import Logger from '../logging/logger';
 
@@ -16,8 +13,8 @@ const HTTP_SERVER_DURATION_BUCKETS = [
 ];
 
 let initialized = false;
-let reader: PrometheusExporter | null = null;
-let provider: MeterProvider | null = null;
+let reader: ExporterPrometheus.PrometheusExporter | null = null;
+let provider: SdkMetrics.MeterProvider | null = null;
 let httpInstrumentation: HttpInstrumentation | null = null;
 
 // True when nothing else registers @opentelemetry/instrumentation-http, so we must
@@ -59,6 +56,16 @@ export function initOtelHttpMetrics(
     }
     initialized = true;
     try {
+        // KONTALA: required here rather than imported at the top: the metrics
+        // SDK and its exporter are ~55 files and only this enabled path uses
+        // them. Synchronous on purpose, like the imports they replace, so the
+        // provider is still registered before Sentry.init().
+        /* eslint-disable global-require */
+        const { PrometheusExporter } =
+            require('@opentelemetry/exporter-prometheus') as typeof ExporterPrometheus;
+        const { AggregationType, MeterProvider } =
+            require('@opentelemetry/sdk-metrics') as typeof SdkMetrics;
+        /* eslint-enable global-require */
         process.env.OTEL_SEMCONV_STABILITY_OPT_IN = 'http';
         reader = new PrometheusExporter({ preventServerStart: true });
         provider = new MeterProvider({
@@ -105,6 +112,11 @@ export async function serializeOtelHttpMetrics(): Promise<string> {
         return '';
     }
     const { resourceMetrics } = await reader.collect();
+    // KONTALA: see initOtelHttpMetrics; a reader means it already loaded.
+    /* eslint-disable global-require */
+    const { PrometheusSerializer } =
+        require('@opentelemetry/exporter-prometheus') as typeof ExporterPrometheus;
+    /* eslint-enable global-require */
     return new PrometheusSerializer().serialize(resourceMetrics);
 }
 

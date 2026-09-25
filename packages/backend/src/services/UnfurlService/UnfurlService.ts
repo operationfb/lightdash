@@ -54,7 +54,8 @@ import { WebClient } from '@slack/web-api';
 import * as fsPromise from 'fs/promises';
 import { nanoid as useNanoid } from 'nanoid';
 import fetch from 'node-fetch';
-import playwright, { type ElementHandle, type Page } from 'playwright';
+import type * as playwright from 'playwright';
+import type { ElementHandle, Page } from 'playwright';
 import { type Readable } from 'stream';
 import { LightdashAnalytics } from '../../analytics/LightdashAnalytics';
 import { type FileStorageClient } from '../../clients/FileStorage/FileStorageClient';
@@ -78,10 +79,15 @@ import { ShareModel } from '../../models/ShareModel';
 import { SlackAuthenticationModel } from '../../models/SlackAuthenticationModel';
 import { SlackUnfurlImageModel } from '../../models/SlackUnfurlImageModel';
 import { traceSpan } from '../../tracing/tracing';
+import { lazyImport } from '../../utils/lazyImport';
 import { validatePublicHttpUrl } from '../../utils/ssrfProtection';
 import { BaseService } from '../BaseService';
 import type { SpacePermissionService } from '../SpaceService/SpacePermissionService';
 import { countPdfPages } from './countPdfPages';
+
+// KONTALA: playwright is ~270 files and only runs when a headless browser
+// renders an image or PDF, so it is loaded on first use rather than at boot.
+const loadPlaywright = lazyImport(() => import('playwright'));
 
 const uuid = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
 const uuidRegex = new RegExp(uuid, 'g');
@@ -1583,7 +1589,8 @@ export class UnfurlService extends BaseService {
                           )
                         : browserEndpoint;
 
-                    browser = await playwright.chromium.connectOverCDP(
+                    const { chromium } = await loadPlaywright();
+                    browser = await chromium.connectOverCDP(
                         browserConnectionEndpoint,
                         {
                             timeout: 1000 * 60 * 30, // 30 minutes
@@ -2506,10 +2513,11 @@ export class UnfurlService extends BaseService {
 
                     return { imageBuffer, pdfBuffer };
                 } catch (e) {
+                    const { errors: playwrightErrors } = await loadPlaywright();
                     const errorMessage = getErrorMessage(e);
                     const isQueueFullError = isBrowserQueueFullError(e);
                     const isRetryableError =
-                        e instanceof playwright.errors.TimeoutError ||
+                        e instanceof playwrightErrors.TimeoutError ||
                         // Following error messages were taken from the Playwright source code
                         errorMessage.includes('Protocol error') ||
                         errorMessage.includes('ECONNREFUSED') ||
@@ -2588,7 +2596,7 @@ export class UnfurlService extends BaseService {
                     );
 
                     const errorType =
-                        e instanceof playwright.errors.TimeoutError
+                        e instanceof playwrightErrors.TimeoutError
                             ? 'timeout'
                             : 'failed';
                     span.setStatus({
@@ -2677,7 +2685,8 @@ export class UnfurlService extends BaseService {
         let browser: playwright.Browser | undefined;
         let page: playwright.Page | undefined;
         try {
-            browser = await playwright.chromium.connectOverCDP(
+            const { chromium } = await loadPlaywright();
+            browser = await chromium.connectOverCDP(
                 getAppBrowserEndpoint(
                     this.lightdashConfig.headlessBrowser.browserEndpoint,
                     appViewport,

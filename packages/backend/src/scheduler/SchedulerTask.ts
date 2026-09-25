@@ -142,7 +142,6 @@ import {
     type SchedulerIndexCatalogJobPayload,
     type SlackBatchNotificationPayload,
 } from '@lightdash/common';
-import archiver from 'archiver';
 import { createHash } from 'crypto';
 import fsSync from 'fs';
 import fs from 'fs/promises';
@@ -150,7 +149,6 @@ import moment from 'moment';
 import { nanoid } from 'nanoid';
 import ExecutionContext from 'node-execution-context';
 import pLimit from 'p-limit';
-import slackifyMarkdown from 'slackify-markdown';
 import { Readable } from 'stream';
 import {
     DownloadCsv,
@@ -207,8 +205,19 @@ import { ValidationService } from '../services/ValidationService/ValidationServi
 import { EncryptionUtil } from '../utils/EncryptionUtil/EncryptionUtil';
 import { sanitizeGenericFileName } from '../utils/FileDownloadUtils/FileDownloadUtils';
 import { buildGoogleSheetsFilterSummaryRows } from '../utils/googleSheetsFilterSummary';
+import { lazyImport } from '../utils/lazyImport';
 import { SchedulerClient } from './SchedulerClient';
 import { SchedulerDeliveryError } from './SchedulerDeliveryError';
+
+// KONTALA: the markdown converter and the zip writer are ~230 files between
+// them and each serves one kind of delivery, so they are loaded on first use
+// rather than at boot.
+const loadSlackifyMarkdown = lazyImport(() =>
+    import('slackify-markdown').then((module) => module.default),
+);
+const loadArchiver = lazyImport(() =>
+    import('archiver').then((module) => module.default),
+);
 
 // AI augmentation runner. Implemented by the EE SchedulerAiAugmentationService
 // and injected only by the commercial worker, so OSS deliveries skip it.
@@ -2158,7 +2167,8 @@ export default class SchedulerTask {
                 name: details.name,
                 description: details.description,
                 message:
-                    scheduler.message && slackifyMarkdown(scheduler.message),
+                    scheduler.message &&
+                    (await loadSlackifyMarkdown())(scheduler.message),
                 ctaUrl: url,
                 footerMarkdown: `This is a ${schedulerFooter} ${getHumanReadableCronExpression(
                     cron,
@@ -5882,7 +5892,7 @@ export default class SchedulerTask {
         let zipFileName: string;
         try {
             const zipWriteStream = fsSync.createWriteStream(zipPath);
-            const archive = archiver('zip', {
+            const archive = (await loadArchiver())('zip', {
                 zlib: { level: 9 },
             });
 

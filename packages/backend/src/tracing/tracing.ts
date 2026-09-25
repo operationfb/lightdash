@@ -48,7 +48,7 @@ import {
     defaultResource,
     resourceFromAttributes,
 } from '@opentelemetry/resources';
-import { NodeSDK } from '@opentelemetry/sdk-node';
+import type * as OtelSdkNode from '@opentelemetry/sdk-node';
 import {
     ParentBasedSampler,
     SamplingDecision,
@@ -549,7 +549,7 @@ export const createOtelInstrumentations = () => [
 class OtelTracingStrategy implements TracingStrategy {
     private readonly isEnabled = otelTracingEnabled;
 
-    private sdk: NodeSDK | undefined;
+    private sdk: OtelSdkNode.NodeSDK | undefined;
 
     private tracer = trace.getTracer('lightdash-backend', serviceVersion);
 
@@ -560,6 +560,15 @@ class OtelTracingStrategy implements TracingStrategy {
         exportConfig.warnings.forEach((warning) => Logger.warn(warning));
 
         const restoreOtelLogLevel = installRedactingOtelDiagnostics();
+
+        // KONTALA: required here rather than imported at the top: sdk-node
+        // brings every OTLP, Zipkin and Jaeger exporter (~140 files) and is
+        // only used with tracing enabled. Synchronous on purpose, because the
+        // SDK has to patch modules before they load.
+        /* eslint-disable global-require */
+        const { NodeSDK } =
+            require('@opentelemetry/sdk-node') as typeof OtelSdkNode;
+        /* eslint-enable global-require */
 
         // Leaving spanProcessors unset delegates exporter and protocol
         // selection to the Node SDK's standard OTEL_* environment handling.

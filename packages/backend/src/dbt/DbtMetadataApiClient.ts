@@ -14,10 +14,24 @@ import {
     type DbtSemanticMetricTypeParams,
     type DbtSemanticModel,
 } from '@lightdash/common';
-import { gql, GraphQLClient } from 'graphql-request';
+import type { GraphQLClient } from 'graphql-request';
 import Logger from '../logging/logger';
 import { DbtClient } from '../types';
 import { DEFAULT_DBT_CLOUD_DISCOVERY_ENDPOINT } from '../utils/credentialDestination';
+import { lazyImport } from '../utils/lazyImport';
+
+// KONTALA: graphql-request brings graphql with it, ~135 files that only a dbt
+// Cloud project uses, so the client is loaded on first use rather than at boot.
+// `gql` is graphql-request's own: it only joins the template back together.
+const loadGraphQLClient = lazyImport(() =>
+    import('graphql-request').then((module) => module.GraphQLClient),
+);
+const gql = (chunks: TemplateStringsArray, ...variables: unknown[]): string =>
+    chunks.reduce(
+        (query, chunk, index) =>
+            `${query}${chunk}${index in variables ? variables[index] : ''}`,
+        '',
+    );
 
 const quoteChars: Record<SupportedDbtAdapter, string> = {
     bigquery: '`',
@@ -363,7 +377,7 @@ export class DbtMetadataApiClient implements DbtClient {
 
     private readonly endpoint: URL;
 
-    private readonly client: GraphQLClient;
+    private client: Promise<GraphQLClient> | undefined;
 
     constructor({
         environmentId,
@@ -382,13 +396,20 @@ export class DbtMetadataApiClient implements DbtClient {
             '/graphql',
             discoveryApiEndpoint || this.domain,
         );
-        this.client = new GraphQLClient(this.endpoint.href, {
-            headers: {
-                Authorization: `Bearer ${this.bearerToken}`,
-                'X-dbt-partner-source': 'lightdash',
-            },
-        });
         this.tags = tags;
+    }
+
+    private getClient(): Promise<GraphQLClient> {
+        this.client ??= loadGraphQLClient().then(
+            (Client) =>
+                new Client(this.endpoint.href, {
+                    headers: {
+                        Authorization: `Bearer ${this.bearerToken}`,
+                        'X-dbt-partner-source': 'lightdash',
+                    },
+                }),
+        );
+        return this.client;
     }
 
     static parseError(e: AnyType): DbtError {
@@ -419,19 +440,17 @@ export class DbtMetadataApiClient implements DbtClient {
     private async getModels(
         prevResponse?: DbtCloudEnvironmentResponse,
     ): Promise<DbtCloudEnvironmentResponse> {
-        const response = await this.client.request<DbtCloudEnvironmentResponse>(
-            dbtCloudEnvironmentQuery,
-            {
-                environmentId: this.environmentId,
-                first: PAGE_SIZE,
-                after: prevResponse?.environment.applied.models.pageInfo
-                    .endCursor,
-                filter: {
-                    lastRunStatus: 'success',
-                    tags: this.tags,
-                },
+        const response = await (
+            await this.getClient()
+        ).request<DbtCloudEnvironmentResponse>(dbtCloudEnvironmentQuery, {
+            environmentId: this.environmentId,
+            first: PAGE_SIZE,
+            after: prevResponse?.environment.applied.models.pageInfo.endCursor,
+            filter: {
+                lastRunStatus: 'success',
+                tags: this.tags,
             },
-        );
+        });
 
         // Accumulate models
         const responseWithNewModels = {
@@ -468,7 +487,7 @@ export class DbtMetadataApiClient implements DbtClient {
         afterSemanticModels: string | undefined,
         afterMetrics: string | undefined,
     ): Promise<DbtCloudDefinitionResponse> {
-        return this.client.request<DbtCloudDefinitionResponse>(
+        return (await this.getClient()).request<DbtCloudDefinitionResponse>(
             dbtCloudDefinitionQuery,
             {
                 environmentId: this.environmentId,
@@ -654,7 +673,9 @@ export class DbtMetadataApiClient implements DbtClient {
                     }
                 }
             `;
-            await this.client.request(query, {
+            await (
+                await this.getClient()
+            ).request(query, {
                 environmentId: this.environmentId,
             });
         } catch (e) {

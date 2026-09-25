@@ -1,5 +1,10 @@
 import { getErrorMessage } from '@lightdash/common';
-import * as Excel from 'exceljs';
+import type * as Excel from 'exceljs';
+import { lazyImport } from '../../utils/lazyImport';
+
+// KONTALA: exceljs is ~190 files and only runs for a spreadsheet export, so it
+// is loaded on first use rather than at boot.
+const loadExcel = lazyImport(() => import('exceljs'));
 
 type WorkbookExportFile = {
     filename: string;
@@ -32,7 +37,7 @@ export class WorkbookExportHelper {
             }
 
             const buffer = Buffer.from(await response.arrayBuffer());
-            const sourceWorkbook = new Excel.Workbook();
+            const sourceWorkbook = new (await loadExcel()).Workbook();
             await sourceWorkbook.xlsx.load(
                 buffer as unknown as Parameters<
                     typeof sourceWorkbook.xlsx.load
@@ -110,7 +115,7 @@ export class WorkbookExportHelper {
         outputPath,
         onFileError,
     }: CreateWorkbookFileArgs) {
-        const workbook = new Excel.Workbook();
+        const workbook = new (await loadExcel()).Workbook();
         const usedSheetNames = new Set<string>();
         const sourceWorksheets = await Promise.all(
             files.map((file) =>

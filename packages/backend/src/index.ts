@@ -2,7 +2,6 @@ import './tracing/bootstrap'; // Must run before modules that can load Knex
 import { getErrorMessage } from '@lightdash/common';
 import App from './App';
 import { lightdashConfig } from './config/lightdashConfig';
-import { getEnterpriseAppArguments } from './ee';
 import knexConfig from './knexfile';
 import Logger from './logging/logger';
 import { installProcessExitLogging } from './logging/processExit';
@@ -14,6 +13,15 @@ import { getProcessTimezoneWarning } from './utils/processTimezone';
 // for both events. Logger uses exitOnError: false so rejections are tolerated.
 // We still want uncaught exceptions to terminate — process state may be corrupt.
 installProcessExitLogging();
+
+// KONTALA: the enterprise module, and the AI, sandbox and chart-registry
+// clients it imports, are ~1.4k of the ~9.9k files a boot reads, and without a
+// licence key getEnterpriseAppArguments() returns {} having used none of them.
+const getEnterpriseAppArgumentsIfLicensed = async () => {
+    if (!lightdashConfig.license.licenseKey) return {};
+    const { getEnterpriseAppArguments } = await import('./ee');
+    return getEnterpriseAppArguments();
+};
 
 (async () => {
     try {
@@ -34,7 +42,7 @@ installProcessExitLogging();
                     ? 'development'
                     : 'production',
             knexConfig,
-            ...(await getEnterpriseAppArguments()),
+            ...(await getEnterpriseAppArgumentsIfLicensed()),
         });
 
         const onExit = () => {

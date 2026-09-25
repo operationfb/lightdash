@@ -23,11 +23,18 @@ import {
     toIsoWithProjectOffset,
     UnexpectedGoogleSheetsError,
 } from '@lightdash/common';
-import { google, sheets_v4 } from 'googleapis';
+import type { sheets_v4 } from 'googleapis';
 import moment from 'moment';
 import { LightdashConfig } from '../../config/parseConfig';
 import Logger from '../../logging/logger';
 import { processFieldsForExport } from '../../utils/FileDownloadUtils/FileDownloadUtils';
+import { lazyImport } from '../../utils/lazyImport';
+
+// KONTALA: googleapis is ~680 files, and this client only runs for a Google
+// Sheets sync or upload, so it is loaded on first use rather than at boot.
+const loadGoogleApis = lazyImport(() =>
+    import('googleapis').then(({ google }) => google),
+);
 
 type GoogleDriveClientArguments = {
     lightdashConfig: LightdashConfig;
@@ -109,6 +116,7 @@ export class GoogleDriveClient {
                     this.lightdashConfig.auth.google.oauth2ClientSecret,
                 refresh_token: refreshToken,
             };
+            const google = await loadGoogleApis();
             const authClient = google.auth.fromJSON(credentials);
             return new google.auth.GoogleAuth({
                 authClient,
@@ -207,7 +215,7 @@ export class GoogleDriveClient {
             throw new MissingConfigError('Google Drive is not enabled');
         }
         const auth = await this.getCredentials(refreshToken);
-        const sheets = google.sheets({ version: 'v4', auth });
+        const sheets = (await loadGoogleApis()).sheets({ version: 'v4', auth });
 
         // Creates a new tab in the sheet
         const tabTitle = tabName.replaceAll(':', '.'); // we can't use ranges with colons in their tab ids
@@ -248,7 +256,7 @@ export class GoogleDriveClient {
             throw new MissingConfigError('Google Drive is not enabled');
         }
         const auth = await this.getCredentials(refreshToken);
-        const sheets = google.sheets({ version: 'v4', auth });
+        const sheets = (await loadGoogleApis()).sheets({ version: 'v4', auth });
 
         const response = await GoogleDriveClient.catchApiError(
             sheets.spreadsheets.create({
@@ -270,7 +278,7 @@ export class GoogleDriveClient {
             throw new MissingConfigError('Google Drive is not enabled');
         }
         const auth = await this.getCredentials(refreshToken);
-        const sheets = google.sheets({ version: 'v4', auth });
+        const sheets = (await loadGoogleApis()).sheets({ version: 'v4', auth });
 
         const response = await GoogleDriveClient.catchApiError(
             sheets.spreadsheets.get({
@@ -296,7 +304,7 @@ export class GoogleDriveClient {
             throw new MissingConfigError('Google Drive is not enabled');
         }
         const auth = await this.getCredentials(refreshToken);
-        const sheets = google.sheets({ version: 'v4', auth });
+        const sheets = (await loadGoogleApis()).sheets({ version: 'v4', auth });
 
         const response = await GoogleDriveClient.catchApiError(
             sheets.spreadsheets.values.get({
@@ -323,7 +331,7 @@ export class GoogleDriveClient {
             throw new MissingConfigError('Google Drive is not enabled');
         }
         const auth = await this.getCredentials(refreshToken);
-        const sheets = google.sheets({ version: 'v4', auth });
+        const sheets = (await loadGoogleApis()).sheets({ version: 'v4', auth });
         const metadata = await GoogleDriveClient.catchApiError(
             sheets.spreadsheets.get({
                 spreadsheetId: fileId,
@@ -360,7 +368,7 @@ export class GoogleDriveClient {
 
     async assertFileIsGoogleSheet(refreshToken: string, fileId: string) {
         const auth = await this.getCredentials(refreshToken);
-        const sheets = google.sheets({ version: 'v4', auth });
+        const sheets = (await loadGoogleApis()).sheets({ version: 'v4', auth });
 
         // We try to fetch the spreadsheet properties. If it's a valid Google Sheets file, this will succeed.
         // Otherwise, if an invalid file like Excel .xlsx, an error will be thrown which we catch and handle.
@@ -388,7 +396,7 @@ export class GoogleDriveClient {
 
         const metadataTabName = 'metadata';
         const auth = await this.getCredentials(refreshToken);
-        const sheets = google.sheets({ version: 'v4', auth });
+        const sheets = (await loadGoogleApis()).sheets({ version: 'v4', auth });
         await this.createNewTab(refreshToken, fileId, metadataTabName);
 
         await GoogleDriveClient.clearTabName(sheets, fileId, metadataTabName); // in case already exists
@@ -701,7 +709,7 @@ export class GoogleDriveClient {
         await this.assertFileIsGoogleSheet(refreshToken, fileId);
 
         const auth = await this.getCredentials(refreshToken);
-        const sheets = google.sheets({ version: 'v4', auth });
+        const sheets = (await loadGoogleApis()).sheets({ version: 'v4', auth });
 
         let sanitizedTabName: string | undefined;
         if (tabName) {

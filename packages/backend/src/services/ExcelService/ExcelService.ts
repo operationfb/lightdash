@@ -37,7 +37,7 @@ import {
     type PivotRowTotalsByIndex,
     type ReadyQueryResultsPage,
 } from '@lightdash/common';
-import * as Excel from 'exceljs';
+import type * as Excel from 'exceljs';
 import fs from 'fs';
 import moment from 'moment';
 import os from 'os';
@@ -53,6 +53,11 @@ import {
     processFieldsForExport,
     streamJsonlData,
 } from '../../utils/FileDownloadUtils/FileDownloadUtils';
+import { lazyImport } from '../../utils/lazyImport';
+
+// KONTALA: exceljs is ~190 files and only runs for a spreadsheet export, so it
+// is loaded on first use rather than at boot.
+const loadExcel = lazyImport(() => import('exceljs'));
 
 export class ExcelService {
     private static readonly EXCEL_ROW_LIMIT = 1_000_000;
@@ -550,7 +555,7 @@ export class ExcelService {
             });
         }
 
-        const workbook = new Excel.Workbook();
+        const workbook = new (await loadExcel()).Workbook();
         const worksheet = workbook.addWorksheet('Pivot Table');
 
         // Add header rows
@@ -670,7 +675,7 @@ export class ExcelService {
             ),
         ];
 
-        const workbook = new Excel.Workbook();
+        const workbook = new (await loadExcel()).Workbook();
         const worksheet = workbook.addWorksheet('Pivot Table');
 
         csvResults.forEach((row, index) => {
@@ -879,7 +884,7 @@ export class ExcelService {
         columnTotals?: Record<string, number>,
     ): Promise<{ truncated: boolean }> {
         // Use the same approach as our working tests - direct filename instead of stream
-        const workbook = new Excel.stream.xlsx.WorkbookWriter({
+        const workbook = new (await loadExcel()).stream.xlsx.WorkbookWriter({
             filename: tempFilePath,
             useStyles: true,
             // Inline strings avoid buffering a shared-strings table that

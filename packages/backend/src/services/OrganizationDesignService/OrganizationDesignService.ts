@@ -39,7 +39,6 @@ import {
     type UuidOrSlug,
 } from '@lightdash/common';
 import createDOMPurify from 'dompurify';
-import { JSDOM } from 'jsdom';
 import { Readable } from 'node:stream';
 import { v4 as uuidv4 } from 'uuid';
 import { resolveS3Credentials } from '../../clients/Aws/S3BaseClient';
@@ -48,6 +47,7 @@ import {
     OrganizationDesignModel,
     type OrganizationDesignFileWrite,
 } from '../../models/OrganizationDesignModel';
+import { lazyImport } from '../../utils/lazyImport';
 import { BaseService } from '../BaseService';
 import {
     buildOrganizationDesignPackage,
@@ -78,27 +78,26 @@ type OrganizationDesignServiceArguments = {
  * The jsdom window is constructed lazily so this module imports cleanly
  * in any process that doesn't actually call the sanitizer (e.g. tests
  * for unrelated service methods).
+ *
+ * KONTALA: jsdom itself is imported lazily too. It is ~500 files, and
+ * importing it at the top of this module made every server boot read them.
  */
-let svgPurifier: ReturnType<typeof createDOMPurify> | null = null;
-const getSvgPurifier = (): ReturnType<typeof createDOMPurify> => {
-    if (svgPurifier) return svgPurifier;
-    const { window } = new JSDOM('');
-    svgPurifier = createDOMPurify(window);
-    return svgPurifier;
-};
+const getSvgPurifier = lazyImport(() =>
+    import('jsdom').then(({ JSDOM }) => createDOMPurify(new JSDOM('').window)),
+);
 
-const sanitizeSvg = (svgText: string): string =>
-    getSvgPurifier().sanitize(svgText, {
+const sanitizeSvg = async (svgText: string): Promise<string> =>
+    (await getSvgPurifier()).sanitize(svgText, {
         USE_PROFILES: { svg: true, svgFilters: true },
     });
 
-const sanitizeOrganizationDesignFile = (
+const sanitizeOrganizationDesignFile = async (
     body: Buffer,
     filename: string,
-): Buffer => {
+): Promise<Buffer> => {
     if (getOrganizationDesignFileExtension(filename) !== '.svg') return body;
     const sanitizedBody = Buffer.from(
-        sanitizeSvg(body.toString('utf8')),
+        await sanitizeSvg(body.toString('utf8')),
         'utf8',
     );
     if (sanitizedBody.length === 0) {
@@ -490,22 +489,28 @@ export class OrganizationDesignService extends BaseService {
             throw new ParameterError('Theme package body is empty');
         }
         const parsed = await parseOrganizationDesignPackage(archive);
-        const validatedFiles = parsed.files.map((file) => {
-            const { kind, filename } = validateOrganizationDesignFileMetadata({
-                kind: file.kind,
-                filename: file.filename,
-            });
-            validateOrganizationDesignFileContent({
-                body: file.body,
-                filename,
-            });
-            return {
-                kind,
-                filename,
-                contentType: file.contentType,
-                body: sanitizeOrganizationDesignFile(file.body, filename),
-            };
-        });
+        const validatedFiles = await Promise.all(
+            parsed.files.map(async (file) => {
+                const { kind, filename } =
+                    validateOrganizationDesignFileMetadata({
+                        kind: file.kind,
+                        filename: file.filename,
+                    });
+                validateOrganizationDesignFileContent({
+                    body: file.body,
+                    filename,
+                });
+                return {
+                    kind,
+                    filename,
+                    contentType: file.contentType,
+                    body: await sanitizeOrganizationDesignFile(
+                        file.body,
+                        filename,
+                    ),
+                };
+            }),
+        );
         const violation = checkThemeLimits(
             validatedFiles.map((file) => ({ sizeBytes: file.body.length })),
         );
@@ -830,7 +835,7 @@ export class OrganizationDesignService extends BaseService {
             filename,
             kind,
         });
-        const body = sanitizeOrganizationDesignFile(rawBody, filename);
+        const body = await sanitizeOrganizationDesignFile(rawBody, filename);
 
         const contentType =
             input.contentType?.trim() || 'application/octet-stream';

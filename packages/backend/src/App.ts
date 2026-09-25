@@ -958,6 +958,11 @@ export default class App {
                     `\n   |     |     |     |     |     |     |\n   |     |     |     |     |     |     |\n   |     |     |     |     |     |     |  \n \\ | / \\ | / \\ | / \\ | / \\ | / \\ | / \\ | /\n  \\|/   \\|/   \\|/   \\|/   \\|/   \\|/   \\|/\n------------------------------------------\nLaunch lightdash at http://localhost:${this.port}\n------------------------------------------\n  /|\\   /|\\   /|\\   /|\\   /|\\   /|\\   /|\\\n / | \\ / | \\ / | \\ / | \\ / | \\ / | \\ / | \\\n   |     |     |     |     |     |     |\n   |     |     |     |     |     |     |\n   |     |     |     |     |     |     |`,
                 );
             }
+            // KONTALA: how long this process took to listen, which on a
+            // scale-to-zero deployment is most of what a cold start costs.
+            Logger.info(
+                `Listening after ${Math.round(process.uptime() * 1000)}ms`,
+            );
         });
         server.keepAliveTimeout =
             this.lightdashConfig.httpServer.keepAliveTimeoutMs;
