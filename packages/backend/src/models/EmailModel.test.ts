@@ -47,4 +47,17 @@ describe('EmailModel', () => {
         );
         expect(upsert.bindings).toContain(resetAttemptsIfOtpCreatedBefore);
     });
+
+    it('verifies an email only while it is unverified', async () => {
+        tracker.on.any(() => true).response({ rows: [] });
+
+        await expect(
+            model.verifyUserEmailIfExists('user-uuid', 'person@example.com'),
+        ).resolves.toEqual([]);
+
+        const [update] = tracker.history.all;
+        expect(update.sql).toContain('SET is_verified = true');
+        expect(update.sql).toContain('AND NOT emails.is_verified');
+        expect(update.bindings).toEqual(['user-uuid', 'person@example.com']);
+    });
 });

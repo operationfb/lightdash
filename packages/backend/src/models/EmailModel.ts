@@ -178,14 +178,17 @@ export class EmailModel {
     }
 
     /**
-     * No-op if email/user does not exist
+     * No-op if email/user does not exist, or the email is already verified
      * @param userUuid
      * @param email
+     * @returns the emails this call verified
      */
     async verifyUserEmailIfExists(
         userUuid: string,
         email: string,
     ): Promise<{ email: string }[]> {
+        // KONTALA: `NOT is_verified` makes a repeat call write nothing, and
+        // return nothing, so callers only see a verification that happened.
         const updatedRows = await this.database.raw<{
             rows: { email: string }[];
         }>(
@@ -196,6 +199,7 @@ export class EmailModel {
                 WHERE emails.user_id = users.user_id
                   AND users.user_uuid = ?
                   AND emails.email = ?
+                  AND NOT emails.is_verified
                 RETURNING emails.email`,
             [userUuid, email],
         );

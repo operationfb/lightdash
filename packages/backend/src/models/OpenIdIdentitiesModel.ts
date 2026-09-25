@@ -89,23 +89,30 @@ export class OpenIdIdentityModel {
         return OpenIdIdentityModel._parseDbIdentity(identity);
     }
 
+    /**
+     * KONTALA: writes only what changed. Every sign-in calls this, and an
+     * unconditional update rewrote the row each time with the values it
+     * already held. A refresh token that is not given is left as stored.
+     */
     async updateIdentityByOpenId({
         email,
         subject,
         issuer,
         refreshToken,
-    }: UpdateOpenIdentity): Promise<OpenIdIdentity> {
-        const [identity] = await this.database('openid_identities')
+    }: UpdateOpenIdentity): Promise<void> {
+        await this.database(OpenIdIdentitiesTableName)
             .update({ email, refresh_token: refreshToken })
             .where('issuer', issuer)
             .andWhere('subject', subject)
-            .returning('*');
-        if (!identity) {
-            throw new NotFoundError(
-                'No identity exists with subject and issuer',
-            );
-        }
-        return this.getIdentityByOpenId(identity.issuer, identity.subject);
+            .andWhere((changed) => {
+                void changed.whereRaw('email IS DISTINCT FROM ?', [email]);
+                if (refreshToken !== undefined) {
+                    void changed.orWhereRaw(
+                        'refresh_token IS DISTINCT FROM ?',
+                        [refreshToken],
+                    );
+                }
+            });
     }
 
     async getIdentitiesByUserId(
