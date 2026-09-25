@@ -3,6 +3,7 @@ import {
     OrganizationSsoProvider,
 } from '@lightdash/common';
 import { Request } from 'express';
+import type { TokenSet } from 'openid-client';
 import { Profile as PassportProfile } from 'passport';
 import { Strategy } from 'passport-strategy';
 import Logger from '../../../logging/logger';
@@ -10,6 +11,7 @@ import {
     DeferredPassportStrategy,
     genericOidcHandler,
     getOrganizationHint,
+    withIdTokenProfile,
 } from './oidcStrategy';
 
 const makeRequest = ({
@@ -373,5 +375,99 @@ describe('getOrganizationHint', () => {
         ['repeated', { organization: ['a', 'b'] }],
     ])('forwards nothing when the parameter is %s', (_, query) => {
         expect(getOrganizationHint(withQuery(query))).toBeNull();
+    });
+});
+
+// KONTALA: the instance-wide OIDC strategy reads the profile from the id_token
+// rather than paying a userinfo round trip on every sign-in.
+describe('withIdTokenProfile', () => {
+    const tokenSet = (claims: Record<string, unknown>) =>
+        ({ claims: () => claims }) as unknown as TokenSet;
+
+    const verifiedClaims = {
+        sub: 'subject-1',
+        email: 'user@example.com',
+        email_verified: true,
+        given_name: 'Ada',
+        family_name: 'Lovelace',
+        lightdash_organization_uuid: '371c115d-9530-484b-a617-f19dae37ecb9',
+    };
+
+    test('declares three parameters, so openid-client does not fetch userinfo', () => {
+        expect(withIdTokenProfile({ userinfo: vi.fn() }, vi.fn()).length).toBe(
+            3,
+        );
+    });
+
+    test('hands the id_token claims to the handler when they carry an email', async () => {
+        const userinfo = vi.fn();
+        const handler = vi.fn();
+        const done = vi.fn();
+        const tokens = tokenSet(verifiedClaims);
+
+        withIdTokenProfile({ userinfo }, handler)({} as Request, tokens, done);
+
+        await vi.waitFor(() => expect(handler).toHaveBeenCalledTimes(1));
+        expect(handler).toHaveBeenCalledWith({}, tokens, verifiedClaims, done);
+        expect(userinfo).not.toHaveBeenCalled();
+    });
+
+    test('fetches userinfo when the id_token has no email', async () => {
+        const profile = { sub: 'subject-1', email: 'user@example.com' };
+        const userinfo = vi.fn().mockResolvedValue(profile);
+        const handler = vi.fn();
+        const tokens = tokenSet({ sub: 'subject-1' });
+
+        withIdTokenProfile({ userinfo }, handler)(
+            {} as Request,
+            tokens,
+            vi.fn(),
+        );
+
+        await vi.waitFor(() => expect(handler).toHaveBeenCalledTimes(1));
+        expect(userinfo).toHaveBeenCalledWith(tokens);
+        expect(handler.mock.calls[0][2]).toBe(profile);
+    });
+
+    test('reports a failed userinfo fetch as an error', async () => {
+        const userinfo = vi.fn().mockRejectedValue(new Error('provider down'));
+        const done = vi.fn();
+
+        withIdTokenProfile({ userinfo }, vi.fn())(
+            {} as Request,
+            tokenSet({ sub: 'subject-1' }),
+            done,
+        );
+
+        await vi.waitFor(() => expect(done).toHaveBeenCalledTimes(1));
+        expect(done.mock.calls[0][0]).toEqual(new Error('provider down'));
+    });
+
+    test('signs in with the email, names and organization from the id_token', async () => {
+        const loginWithOpenId = vi.fn().mockResolvedValue({ userUuid: 'u1' });
+        const done = vi.fn();
+
+        withIdTokenProfile(
+            { userinfo: vi.fn() },
+            genericOidcHandler(
+                OpenIdIdentityIssuerType.GENERIC_OIDC,
+                'https://konta.la/api/v1/oidc',
+            ),
+        )(makeRequest({ loginWithOpenId }), tokenSet(verifiedClaims), done);
+
+        await vi.waitFor(() =>
+            expect(done).toHaveBeenCalledWith(null, { userUuid: 'u1' }),
+        );
+        expect(loginWithOpenId.mock.calls[0][0]).toEqual({
+            openId: {
+                issuer: 'https://konta.la/api/v1/oidc',
+                email: 'user@example.com',
+                subject: 'subject-1',
+                firstName: 'Ada',
+                lastName: 'Lovelace',
+                issuerType: OpenIdIdentityIssuerType.GENERIC_OIDC,
+                organizationUuid: '371c115d-9530-484b-a617-f19dae37ecb9',
+            },
+        });
     });
 });

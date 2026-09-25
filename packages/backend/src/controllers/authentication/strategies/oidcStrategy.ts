@@ -14,6 +14,8 @@ import {
     Issuer,
     Strategy as OpenIdClientStrategy,
     StrategyVerifyCallback,
+    type BaseClient,
+    type TokenSet,
 } from 'openid-client';
 import type { Profile as PassportProfile } from 'passport';
 import { VerifyFunctionWithRequest } from 'passport-openidconnect';
@@ -328,6 +330,47 @@ export const genericOidcHandler =
         }
     };
 
+/**
+ * KONTALA: a verify callback that reads the profile from the id_token instead
+ * of fetching userinfo.
+ *
+ * openid-client fetches userinfo whenever the verify callback declares more
+ * than three parameters (req included), and genericOidcHandler declares four:
+ * one more round trip to the provider on every sign-in, for claims the
+ * id_token, signed and already verified, normally carries. This declares three
+ * and hands the id_token's claims to the handler where the userinfo body went.
+ * When the id_token has no email it fetches userinfo itself, so a provider
+ * that keeps profile claims out of its id_token still signs in.
+ */
+export const withIdTokenProfile =
+    (
+        client: Pick<BaseClient, 'userinfo'>,
+        handler: VerifyFunctionWithRequest,
+    ) =>
+    (
+        req: Request,
+        tokenset: TokenSet,
+        done: ArgumentsOf<VerifyFunctionWithRequest>['3'],
+    ): void => {
+        const claims = idTokenClaimsOf(tokenset);
+        const profile: Promise<unknown> =
+            typeof claims.email === 'string'
+                ? Promise.resolve(claims)
+                : client.userinfo(tokenset);
+        profile.then(
+            (resolved) =>
+                handler(
+                    req,
+                    // The handler reads the id_token claims off this argument;
+                    // see idTokenClaimsOf.
+                    tokenset as unknown as string,
+                    resolved as PassportProfile,
+                    done,
+                ),
+            (e: unknown) => done(e instanceof Error ? e : new Error(String(e))),
+        );
+    };
+
 export const createGenericOidcPassportStrategy = async () => {
     const { oidc } = lightdashConfig.auth;
     const issuer = await Issuer.discover(oidc.metadataDocumentEndpoint!);
@@ -385,9 +428,12 @@ export const createGenericOidcPassportStrategy = async () => {
         /**
          * This is compatible, but types differ from what's otherwise expected.
          */
-        genericOidcHandler(
-            OpenIdIdentityIssuerType.GENERIC_OIDC,
-            issuer.metadata.issuer,
+        withIdTokenProfile(
+            client,
+            genericOidcHandler(
+                OpenIdIdentityIssuerType.GENERIC_OIDC,
+                issuer.metadata.issuer,
+            ),
         ) as unknown as StrategyVerifyCallback<unknown>,
     );
 };
