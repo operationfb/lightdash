@@ -4391,6 +4391,19 @@ export class UserService extends BaseService {
         };
     }
 
+    /**
+     * KONTALA: the URL that starts sign-in when the instance offers exactly one
+     * way in and it is SSO, otherwise null. The login page reaches the same
+     * answer through getLoginOptions(); this lets the server act on it for a
+     * page request before any of the app has loaded. It reads configuration
+     * only.
+     */
+    async getForcedSsoLoginUrl(): Promise<string | null> {
+        const { forceRedirect, redirectUri } =
+            await this.getUnfilteredLoginOptions();
+        return forceRedirect && redirectUri ? redirectUri : null;
+    }
+
     async getLoginOptions(
         email?: string,
         mobileLoginIntent?: MobileLoginIntent,

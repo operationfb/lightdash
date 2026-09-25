@@ -61,6 +61,7 @@ import {
     oneLoginPassportStrategy,
     OpenIDClientOktaStrategy,
 } from './controllers/authentication';
+import { createSsoPageRedirect } from './controllers/authentication/ssoPageRedirect';
 import { databricksPassportStrategy } from './controllers/authentication/strategies/databricksStrategy';
 import { slackPassportStrategy } from './controllers/authentication/strategies/slackStrategy';
 import { snowflakePassportStrategy } from './controllers/authentication/strategies/snowflakeStrategy';
@@ -723,14 +724,13 @@ export default class App {
         // the ~70 files the first page preloads. Every router and every TSOA
         // route is under /api/, and express-session matches its cookie path
         // against req.originalUrl, so the base path still applies.
+        const sessionOptions = buildExpressSessionOptions(
+            this.lightdashConfig,
+            store,
+            this.port,
+        );
         expressApp.use('/api', [
-            expressSession(
-                buildExpressSessionOptions(
-                    this.lightdashConfig,
-                    store,
-                    this.port,
-                ),
-            ),
+            expressSession(sessionOptions),
             flash(),
             passport.initialize(),
             passport.session(),
@@ -738,6 +738,20 @@ export default class App {
 
         expressApp.use(expressWinstonPreResponseMiddleware); // log request before response is sent
         expressApp.use(expressWinstonMiddleware); // log request + response
+
+        // KONTALA: a signed-out page visit goes straight to SSO when that is
+        // the only way in; see controllers/authentication/ssoPageRedirect.ts.
+        expressApp.use(
+            createSsoPageRedirect({
+                sessionCookieName: sessionOptions.name ?? 'connect.sid',
+                cookiePath: this.lightdashConfig.basePath || '/',
+                secureCookies: this.lightdashConfig.secureCookies,
+                getForcedSsoLoginUrl: () =>
+                    this.serviceRepository
+                        .getUserService()
+                        .getForcedSsoLoginUrl(),
+            }),
+        );
 
         expressApp.get('/', (req, res) => {
             res.sendFile(
