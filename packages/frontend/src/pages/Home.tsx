@@ -1,7 +1,14 @@
 import { subject } from '@casl/ability';
 import { DbtProjectType, ProjectType } from '@lightdash/common';
 import { Stack } from '@mantine/core';
-import { useState, type FC, type ReactNode } from 'react';
+import {
+    lazy,
+    Suspense,
+    useEffect,
+    useState,
+    type FC,
+    type ReactNode,
+} from 'react';
 import { useUnmount } from 'react-use';
 import ErrorState from '../components/common/ErrorState';
 import Page from '../components/common/Page/Page';
@@ -15,12 +22,10 @@ import AiSearchBox from '../ee/components/Home/AiSearchBox';
 import { useAiAgentButtonVisibility } from '../ee/features/aiCopilot/hooks/useAiAgentsButtonVisibility';
 import { AdminHomepageControls } from '../ee/features/homepageBuilder/AdminHomepageControls';
 import { PersonalFavoritesBar } from '../ee/features/homepageBuilder/blocks/FavoritesBlock';
-import { DayOneHomepage } from '../ee/features/homepageBuilder/DayOneHomepage';
 import {
     useHomepageBuilderFlag,
     useResolvedHomepage,
 } from '../ee/features/homepageBuilder/hooks/useProjectHomepage';
-import { PublishedHomepage } from '../ee/features/homepageBuilder/PublishedHomepage';
 import {
     TryNewHomepageCard,
     TryNewHomepageModal,
@@ -38,6 +43,24 @@ import useApp from '../providers/App/useApp';
 import { FavoritesProvider } from '../providers/Favorites/FavoritesProvider';
 import { PinnedItemsProvider } from '../providers/PinnedItems/PinnedItemsProvider';
 import { getProjectUrlIdentifier } from '../utils/projectUrl';
+
+// KONTALA: the homepage builder renders only for an organization that turned
+// it on, yet its blocks brought echarts, tiptap and markdown-it (~0.8 MB gzip)
+// to every Home visit. Loaded once the flag says it is on.
+const loadPublishedHomepage = () =>
+    import('../ee/features/homepageBuilder/PublishedHomepage').then(
+        (module) => module.PublishedHomepage,
+    );
+const loadDayOneHomepage = () =>
+    import('../ee/features/homepageBuilder/DayOneHomepage').then(
+        (module) => module.DayOneHomepage,
+    );
+const PublishedHomepage = lazy(() =>
+    loadPublishedHomepage().then((component) => ({ default: component })),
+);
+const DayOneHomepage = lazy(() =>
+    loadDayOneHomepage().then((component) => ({ default: component })),
+);
 
 const Home: FC = () => {
     const [isTryNewHomepageOpen, setIsTryNewHomepageOpen] = useState(false);
@@ -65,6 +88,13 @@ const Home: FC = () => {
     const resolvedHomepage = useResolvedHomepage(selectedProjectUuid, {
         enabled: isHomepageBuilderEnabled,
     });
+
+    // KONTALA: fetched alongside the resolved homepage rather than after it.
+    useEffect(() => {
+        if (!isHomepageBuilderEnabled) return;
+        void loadPublishedHomepage();
+        void loadDayOneHomepage();
+    }, [isHomepageBuilderEnabled]);
 
     const isLoading =
         onboarding.isInitialLoading ||
@@ -126,24 +156,26 @@ const Home: FC = () => {
             row.blocks.some((block) => block.type === 'favorites'),
         );
         body = (
-            <Page withFooter noContentPadding>
-                <AdminHomepageControls
-                    projectUuid={project.data.projectUuid}
-                    organizationUuid={project.data.organizationUuid}
-                    showNewHomepage
-                />
-                <PublishedHomepage
-                    config={homepage.config}
-                    projectUuid={project.data.projectUuid}
-                    topBar={
-                        !hasFavoritesBlock ? (
-                            <PersonalFavoritesBar
-                                projectUuid={project.data.projectUuid}
-                            />
-                        ) : null
-                    }
-                />
-            </Page>
+            <Suspense fallback={<PageSpinner />}>
+                <Page withFooter noContentPadding>
+                    <AdminHomepageControls
+                        projectUuid={project.data.projectUuid}
+                        organizationUuid={project.data.organizationUuid}
+                        showNewHomepage
+                    />
+                    <PublishedHomepage
+                        config={homepage.config}
+                        projectUuid={project.data.projectUuid}
+                        topBar={
+                            !hasFavoritesBlock ? (
+                                <PersonalFavoritesBar
+                                    projectUuid={project.data.projectUuid}
+                                />
+                            ) : null
+                        }
+                    />
+                </Page>
+            </Suspense>
         );
     } else if (
         isHomepageBuilderEnabled &&
@@ -151,25 +183,27 @@ const Home: FC = () => {
         onboarding.data.ranQuery
     ) {
         body = (
-            <Page withFooter noContentPadding>
-                <AdminHomepageControls
-                    projectUuid={project.data.projectUuid}
-                    organizationUuid={project.data.organizationUuid}
-                />
-                <FavoritesProvider projectUuid={project.data.projectUuid}>
-                    <PinnedItemsProvider
-                        organizationUuid={project.data.organizationUuid}
+            <Suspense fallback={<PageSpinner />}>
+                <Page withFooter noContentPadding>
+                    <AdminHomepageControls
                         projectUuid={project.data.projectUuid}
-                        pinnedListUuid={project.data.pinnedListUuid || ''}
-                        allowDelete={false}
-                    >
-                        <DayOneHomepage
+                        organizationUuid={project.data.organizationUuid}
+                    />
+                    <FavoritesProvider projectUuid={project.data.projectUuid}>
+                        <PinnedItemsProvider
+                            organizationUuid={project.data.organizationUuid}
                             projectUuid={project.data.projectUuid}
-                            pinnedItems={pinnedItems.data ?? []}
-                        />
-                    </PinnedItemsProvider>
-                </FavoritesProvider>
-            </Page>
+                            pinnedListUuid={project.data.pinnedListUuid || ''}
+                            allowDelete={false}
+                        >
+                            <DayOneHomepage
+                                projectUuid={project.data.projectUuid}
+                                pinnedItems={pinnedItems.data ?? []}
+                            />
+                        </PinnedItemsProvider>
+                    </FavoritesProvider>
+                </Page>
+            </Suspense>
         );
     } else {
         body = (
