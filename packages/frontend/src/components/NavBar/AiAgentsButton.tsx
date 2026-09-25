@@ -1,9 +1,8 @@
 import { Anchor, Button, HoverCard, Stack, Text } from '@mantine/core';
 import { IconArrowRight } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { AiAgentIcon } from '../../ee/features/aiCopilot/components/AiAgentIcon';
-import { ReviewFindingsPreview } from '../../ee/features/aiCopilot/components/ReviewFindingsPreview';
 import {
     useAiAgentAdminProjectPromptActivity,
     useAiAgentAdminReviewItems,
@@ -16,6 +15,17 @@ import { useNavBarPortalTarget } from './NavBarPortalContext';
 
 const PREVIEW_LIMIT = 3;
 const PROMPT_TREND_DAYS = 30;
+
+// KONTALA: the preview charts the prompt trend with echarts (~330 KB gzip), and
+// this button's chunk loads on every page with the navbar. Only someone who can
+// open the preview fetches it.
+const loadReviewFindingsPreview = () =>
+    import('../../ee/features/aiCopilot/components/ReviewFindingsPreview').then(
+        (module) => module.ReviewFindingsPreview,
+    );
+const ReviewFindingsPreview = lazy(() =>
+    loadReviewFindingsPreview().then((component) => ({ default: component })),
+);
 
 type Props = {
     projectUuid: string;
@@ -53,6 +63,11 @@ export const AiAgentsButton = ({ projectUuid }: Props) => {
     );
 
     const reviewCount = projectReviewItems.length;
+    const canOpenPreview = isVisible && showReviews && reviewCount > 0;
+    // KONTALA: fetched ahead of the first hover, so the card opens at once.
+    useEffect(() => {
+        if (canOpenPreview) void loadReviewFindingsPreview();
+    }, [canOpenPreview]);
     const promptActivityQuery = useAiAgentAdminProjectPromptActivity(
         projectUuid,
         PROMPT_TREND_DAYS,
@@ -171,14 +186,16 @@ export const AiAgentsButton = ({ projectUuid }: Props) => {
                 </Button>
             </HoverCard.Target>
             <HoverCard.Dropdown p="xs">
-                <ReviewFindingsPreview
-                    items={projectReviewItems.slice(0, PREVIEW_LIMIT)}
-                    totalOpen={reviewCount}
-                    reviewsUrl={reviewsUrl}
-                    promptTrend={promptActivityQuery.data ?? []}
-                    promptTrendDays={PROMPT_TREND_DAYS}
-                    isLoadingPromptTrend={promptActivityQuery.isFetching}
-                />
+                <Suspense fallback={null}>
+                    <ReviewFindingsPreview
+                        items={projectReviewItems.slice(0, PREVIEW_LIMIT)}
+                        totalOpen={reviewCount}
+                        reviewsUrl={reviewsUrl}
+                        promptTrend={promptActivityQuery.data ?? []}
+                        promptTrendDays={PROMPT_TREND_DAYS}
+                        isLoadingPromptTrend={promptActivityQuery.isFetching}
+                    />
+                </Suspense>
             </HoverCard.Dropdown>
         </HoverCard>
     );
