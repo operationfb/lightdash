@@ -56,8 +56,13 @@ export default defineConfig({
         pruneZodLocalesPlugin(),
         compression({
             include: [/\.(js)$/, /\.(css)$/],
-            algorithms: ['gzip'],
-            filename: '[path][base].gzip',
+            // KONTALA: brotli beside gzip. It is noticeably smaller for this
+            // bundle and every current browser accepts it; the server prefers
+            // it when offered (App.ts, expressStaticGzip). gzip keeps the
+            // .gzip name the server also looks for.
+            algorithms: ['gzip', 'brotliCompress'],
+            filename: (id, { algorithm }) =>
+                `${id}.${algorithm === 'brotliCompress' ? 'br' : 'gzip'}`,
         }),
         svgrPlugin(),
         reactPlugin(),
@@ -122,14 +127,21 @@ export default defineConfig({
                     `assets/${trackingChunkNames[name] ?? '[name]'}-[hash].js`,
                 codeSplitting: {
                     groups: [
+                        // KONTALA: every pattern ends at a path separator. Without
+                        // one, `react` also matched react-ace, react-vega,
+                        // react-leaflet and every other react-* package, and
+                        // their dependencies came into the entry with them.
                         {
                             name: 'react',
-                            test: /node_modules[\\/](react|react-dom|react-router|react-use|@hello-pangea[\\/]dnd|@tanstack[\\/]react-query|@tanstack[\\/]react-table|@tanstack[\\/]react-virtual)/,
+                            test: /node_modules[\\/](react|react-dom|react-router|react-use|@hello-pangea[\\/]dnd|@tanstack[\\/]react-query|@tanstack[\\/]react-table|@tanstack[\\/]react-virtual)[\\/]/,
                             priority: 20,
                         },
+                        // KONTALA: not @mantine/tiptap, which brings the tiptap
+                        // and prosemirror editor to every page for the few that
+                        // edit rich text.
                         {
                             name: 'mantine',
-                            test: /node_modules[\\/]@mantine[\\/](code-highlight|core|dates|form|hooks|modals|notifications|tiptap)/,
+                            test: /node_modules[\\/]@mantine[\\/](code-highlight|core|dates|form|hooks|modals|notifications)[\\/]/,
                             priority: 20,
                         },
                         {
@@ -143,8 +155,10 @@ export default defineConfig({
                             priority: 20,
                         },
                         {
+                            // KONTALA: not jspdf, which only PDF exports use;
+                            // grouped with lodash and zod it loaded on every page.
                             name: 'modules',
-                            test: /node_modules[\\/](jspdf|lodash|colorjs\.io|zod)/,
+                            test: /node_modules[\\/](lodash|colorjs\.io|zod)[\\/]/,
                             priority: 15,
                         },
                         {

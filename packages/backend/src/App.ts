@@ -864,6 +864,10 @@ export default class App {
                 path.join(__dirname, '../../frontend/build/assets'),
                 {
                     index: false,
+                    // KONTALA: the frontend build writes a .br beside each
+                    // .gzip; brotli is preferred when the browser accepts it.
+                    enableBrotli: true,
+                    orderPreference: ['br', 'gzip'],
                     customCompressions: [
                         {
                             encodingName: 'gzip',
