@@ -43,6 +43,9 @@ const DEFAULT_RULE: VizBigNumberConditionalRule = {
     color: '#00A47E',
 };
 
+// Stable empty array so the selector below keeps its result between calls
+const EMPTY_RULES: VizBigNumberConditionalRule[] = [];
+
 export const BigNumberConditionalFormatting = ({
     colors,
 }: {
@@ -50,7 +53,8 @@ export const BigNumberConditionalFormatting = ({
 }) => {
     const dispatch = useVizDispatch();
     const rules = useVizSelector(
-        (state) => state.bigNumberConfig.display?.conditionalFormatting ?? [],
+        (state) =>
+            state.bigNumberConfig.display?.conditionalFormatting ?? EMPTY_RULES,
     );
 
     return (

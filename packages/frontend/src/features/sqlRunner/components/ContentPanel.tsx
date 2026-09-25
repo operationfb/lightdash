@@ -4,7 +4,6 @@ import {
     getParameterReferences,
     isVizBigNumberConfig,
     isVizTableConfig,
-    type VizTableConfig,
     type VizTableHeaderSortConfig,
     formatSql,
 } from '@lightdash/common';
@@ -60,6 +59,7 @@ import {
     EditorTabs,
     selectActiveChartType,
     selectActiveEditorTab,
+    selectActiveVizConfigs,
     selectFetchResultsOnLoad,
     selectLimit,
     selectParameterValues,
@@ -249,29 +249,7 @@ export const ContentPanel: FC = () => {
         ],
     );
 
-    const activeConfigs = useAppSelector((state) => {
-        const configsWithTable = state.sqlRunner.activeConfigs
-            .map((type) => selectCompleteConfigByKind(state, type))
-            .filter(
-                (config): config is NonNullable<typeof config> =>
-                    config !== undefined,
-            );
-
-        const tableConfig = configsWithTable.find(isVizTableConfig);
-        const chartConfigs = configsWithTable.filter(
-            (
-                c,
-            ): c is Exclude<
-                NonNullable<ReturnType<typeof selectCompleteConfigByKind>>,
-                VizTableConfig
-            > => !isVizTableConfig(c),
-        );
-
-        return {
-            chartConfigs,
-            tableConfig,
-        };
-    });
+    const activeConfigs = useAppSelector(selectActiveVizConfigs);
 
     const showTable = useMemo(
         () => isVizTableConfig(currentVizConfig),

@@ -21,7 +21,7 @@ import { Editor } from '../../../components/MonacoEditor';
 import { useEditorTheme } from '../../../hooks/useEditorTheme';
 import { useTimeAgo } from '../../../hooks/useTimeAgo';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setSql } from '../store/sqlRunnerSlice';
+import { selectSqlQueryHistory, setSql } from '../store/sqlRunnerSlice';
 import styles from './SqlQueryHistory.module.css';
 
 type Props = {
@@ -114,11 +114,7 @@ const SqlQueryHistoryItem: FC<Props> = ({ timestamp, sql }) => {
 };
 
 export const SqlQueryHistory: FC = () => {
-    const sqlPastHistory = useAppSelector((state) =>
-        state.sqlRunner.successfulSqlQueries.past.filter(
-            (item) => !!item.value,
-        ),
-    );
+    const sqlPastHistory = useAppSelector(selectSqlQueryHistory);
 
     if (!sqlPastHistory || sqlPastHistory.length === 0) {
         return null;

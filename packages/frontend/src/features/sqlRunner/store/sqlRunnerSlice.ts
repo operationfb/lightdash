@@ -1,5 +1,7 @@
 import {
     ChartKind,
+    isVizTableConfig,
+    type AllVizChartConfig,
     type ApiErrorDetail,
     type ParametersValuesMap,
     type ParameterValue,
@@ -14,7 +16,10 @@ import {
 } from '@lightdash/common';
 import type { PayloadAction, SerializedError } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
-import { createSelector } from 'reselect';
+import { shallowEqual } from 'react-redux';
+import { createSelector, lruMemoize } from 'reselect';
+import { type RootState } from '.';
+import { selectCompleteConfigByKind } from '../../../components/DataViz/store/selectors';
 import { type MonacoHighlightChar } from '../components/SqlEditor';
 import { SqlRunnerResultsRunnerFrontend } from '../runners/SqlRunnerResultsRunnerFrontend';
 import { createHistoryReducer, withHistory, type WithHistory } from './history';
@@ -167,16 +172,21 @@ export const sqlRunnerSlice = createSlice({
         selectColumns: (state) => state.sqlColumns,
         selectRows: (state) => state.sqlRows,
         selectParameterValues: (state) => state.parameterValues,
-        selectSqlQueryResults: (state) => {
-            if (state.sqlColumns === undefined || state.sqlRows === undefined) {
-                return undefined;
-            }
-            return {
-                columns: state.sqlColumns,
-                fileUrl: state.fileUrl,
-                results: state.sqlRows,
-            };
-        },
+        selectSqlQueryResults: createSelector(
+            [
+                (state: SqlRunnerState) => state.sqlColumns,
+                (state: SqlRunnerState) => state.sqlRows,
+                (state: SqlRunnerState) => state.fileUrl,
+            ],
+            (columns, results, fileUrl) =>
+                columns === undefined || results === undefined
+                    ? undefined
+                    : { columns, fileUrl, results },
+        ),
+        selectSqlQueryHistory: createSelector(
+            [(state: SqlRunnerState) => state.successfulSqlQueries.past],
+            (past) => past.filter((item) => !!item.value),
+        ),
     },
     reducers: {
         resetState: () => initialState,
@@ -445,6 +455,7 @@ export const {
     selectActiveEditorTab,
     selectSavedSqlChart,
     selectSqlQueryResults,
+    selectSqlQueryHistory,
     selectParameterValues,
 } = sqlRunnerSlice.selectors;
 
@@ -469,4 +480,29 @@ export const selectSqlRunnerResultsRunner = createSelector(
             parameters: parameterValues,
         });
     },
+);
+
+export const selectActiveVizConfigs = createSelector(
+    [
+        (state: RootState) =>
+            state.sqlRunner.activeConfigs.map((kind) =>
+                selectCompleteConfigByKind(state, kind),
+            ),
+    ],
+    (configs) => {
+        const completeConfigs = configs.filter(
+            (config): config is AllVizChartConfig => config !== undefined,
+        );
+        return {
+            chartConfigs: completeConfigs.filter(
+                (
+                    config,
+                ): config is Exclude<AllVizChartConfig, VizTableConfig> =>
+                    !isVizTableConfig(config),
+            ),
+            tableConfig: completeConfigs.find(isVizTableConfig),
+        };
+    },
+    // The input maps to a new array on every call, so compare it config by config
+    { memoize: lruMemoize, memoizeOptions: { equalityCheck: shallowEqual } },
 );
