@@ -449,6 +449,28 @@ RUN duckdb_version="$(cd /usr/app/packages/warehouses && node -e "process.stdout
         exit 1; \
     fi
 
+# KONTALA: record what the server reads before it listens, for
+# prod-entrypoint.sh to read ahead of it on a cold start (see there). The server
+# is stopped at its first listen(), so the values below only have to carry it
+# through config parsing; the DB connections it starts in the background are
+# abandoned with the process. The feature variables mirror production, because
+# they decide which modules load.
+#
+# Deliberately not fatal: without the list an instance boots exactly as it
+# did before, only slower, and that is no reason to fail an hour-long build.
+COPY docker/record-boot-files.cjs /tmp/record-boot-files.cjs
+RUN cd /usr/app/packages/backend \
+    && LIGHTDASH_BOOT_FILES_OUT=/usr/app/boot-files.txt \
+       LIGHTDASH_SECRET=record-boot-files \
+       SITE_URL=http://localhost:8080 \
+       PGHOST=127.0.0.1 PGPORT=1 PGUSER=boot PGPASSWORD=boot PGDATABASE=boot \
+       S3_ENDPOINT=http://127.0.0.1:1 S3_BUCKET=boot S3_REGION=boot \
+       AUTH_OIDC_CLIENT_ID=boot AUTH_OIDC_CLIENT_SECRET=boot \
+       AUTH_OIDC_METADATA_DOCUMENT_URL=http://127.0.0.1:1/.well-known/openid-configuration \
+       SCHEDULER_ENABLED=true \
+       timeout 120 node --require /tmp/record-boot-files.cjs dist/index.js \
+    || { rm -f /usr/app/boot-files.txt; echo >&2 "WARNING: boot file list not recorded; cold starts will not read ahead"; }
+
 # -----------------------------
 # Stage 5: runtime base
 # -----------------------------
@@ -552,6 +574,7 @@ FROM runtime-selected AS prod
 # destination here must stay a real directory.
 COPY --link --from=build-final /usr/app /usr/app
 COPY --link ./docker/prod-entrypoint.sh /usr/bin/prod-entrypoint.sh
+COPY --link ./docker/read-ahead.cjs /usr/bin/read-ahead.cjs
 
 EXPOSE 8080
 
