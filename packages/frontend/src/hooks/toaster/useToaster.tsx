@@ -11,14 +11,13 @@ import {
     IconInfoCircle,
     type Icon,
 } from '@tabler/icons-react';
-import MarkdownPreview from '@uiw/react-markdown-preview';
 import React, { useCallback, useRef, type ReactNode } from 'react';
-import rehypeExternalLinks from 'rehype-external-links';
 import { v4 as uuid } from 'uuid';
 import MantineIcon, {
     type MantineIconSize,
 } from '../../components/common/MantineIcon';
 import ApiErrorDisplay from './ApiErrorDisplay';
+import ToastMarkdown from './LazyToastMarkdown';
 import MultipleToastBody from './MultipleToastBody';
 import { type NotificationData, type ToastVariant } from './types';
 import styles from './useToaster.module.css';
@@ -104,15 +103,9 @@ const useToaster = () => {
                     subtitle || action ? (
                         <Stack gap={0} align="flex-start">
                             {typeof subtitle == 'string' ? (
-                                <MarkdownPreview
+                                <ToastMarkdown
                                     className={styles.markdown}
                                     source={subtitle}
-                                    rehypePlugins={[
-                                        [
-                                            rehypeExternalLinks,
-                                            { target: '_blank' },
-                                        ],
-                                    ]}
                                 />
                             ) : (
                                 <Box className={styles.subtitle}>

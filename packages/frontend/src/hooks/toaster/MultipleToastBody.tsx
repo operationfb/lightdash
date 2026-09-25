@@ -7,12 +7,11 @@ import {
     UnstyledButton,
 } from '@mantine/core';
 import { IconX } from '@tabler/icons-react';
-import MarkdownPreview from '@uiw/react-markdown-preview';
 import { useState } from 'react';
-import rehypeExternalLinks from 'rehype-external-links';
 import MantineIcon from '../../components/common/MantineIcon';
 import ApiErrorDisplay, { CopyErrorButton } from './ApiErrorDisplay';
 import { errorClipboardValue } from './errorClipboardValue';
+import ToastMarkdown from './LazyToastMarkdown';
 import styles from './MultipleToastBody.module.css';
 import { type NotificationData } from './types';
 
@@ -32,12 +31,9 @@ const MultipleToastBody = ({
             {newest.apiError ? (
                 <ApiErrorDisplay apiError={newest.apiError} />
             ) : typeof newest.subtitle === 'string' ? (
-                <MarkdownPreview
+                <ToastMarkdown
                     className={styles.markdown}
                     source={newest.subtitle}
-                    rehypePlugins={[
-                        [rehypeExternalLinks, { target: '_blank' }],
-                    ]}
                 />
             ) : (
                 <Box className={styles.newestMessage}>
@@ -72,17 +68,9 @@ const MultipleToastBody = ({
                                     >
                                         <Box className={styles.olderMessage}>
                                             {typeof olderText === 'string' ? (
-                                                <MarkdownPreview
+                                                <ToastMarkdown
                                                     className={styles.markdown}
                                                     source={olderText}
-                                                    rehypePlugins={[
-                                                        [
-                                                            rehypeExternalLinks,
-                                                            {
-                                                                target: '_blank',
-                                                            },
-                                                        ],
-                                                    ]}
                                                 />
                                             ) : (
                                                 olderText

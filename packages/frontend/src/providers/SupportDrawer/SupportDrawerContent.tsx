@@ -11,7 +11,6 @@ import {
 } from '@mantine/core';
 import { modals } from '@mantine/modals';
 import { IconIdOff } from '@tabler/icons-react';
-import html2canvas from 'html2canvas-pro';
 import { useCallback, useEffect, useState, type FC } from 'react';
 import { lightdashApi, networkHistory } from '../../api';
 import MantineIcon from '../../components/common/MantineIcon';
@@ -71,7 +70,13 @@ const SupportDrawerContent: FC<SupportDrawerContentProps> = () => {
     useEffect(() => {
         const element = document.querySelector('body');
         if (element) {
-            void html2canvas(element as HTMLElement)
+            // KONTALA: imported when the drawer opens rather than with this
+            // module, which the error toasts load on every page; html2canvas
+            // is ~490 KB and only this screenshot uses it.
+            void import('html2canvas-pro')
+                .then(({ default: html2canvas }) =>
+                    html2canvas(element as HTMLElement),
+                )
                 .then((canvas) => {
                     const base64 = canvas.toDataURL('image/png');
                     setScreenshot(base64);

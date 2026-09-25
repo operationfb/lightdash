@@ -1,5 +1,6 @@
 import { type OrganizationColorPalette } from '@lightdash/common';
 import {
+    Box,
     ColorSwatch,
     Group,
     Select,
@@ -8,10 +9,15 @@ import {
     Tooltip,
 } from '@mantine/core';
 import { IconMoon, IconSun } from '@tabler/icons-react';
-import { useMemo, type FC } from 'react';
-import EChartsReact, { type EChartsOption } from '../../EChartsReactWrapper';
+import { lazy, Suspense, useMemo, type FC } from 'react';
+import type { EChartsOption } from '../../EChartsReactWrapper';
 import MantineIcon from '../MantineIcon';
 import classes from './PalettePicker.module.css';
+
+// KONTALA: echarts is ~340 KB gzip, and this picker sits in the space and
+// dashboard modals the nav bar can open, so importing the chart here put
+// echarts in the entry bundle. It now loads when a picker first renders.
+const EChartsReact = lazy(() => import('../../EChartsReactWrapper'));
 
 const INHERIT_VALUE = '__inherit__';
 const SWATCH_LIMIT = 5;
@@ -122,11 +128,13 @@ const MiniBarChart: FC<{ colors: string[]; theme: 'light' | 'dark' }> = ({
                     : classes.miniChartLight
             }
         >
-            <EChartsReact
-                option={option}
-                style={{ height: 60, width: '100%' }}
-                opts={{ renderer: 'svg' }}
-            />
+            <Suspense fallback={<Box h={60} />}>
+                <EChartsReact
+                    option={option}
+                    style={{ height: 60, width: '100%' }}
+                    opts={{ renderer: 'svg' }}
+                />
+            </Suspense>
         </div>
     );
 };
