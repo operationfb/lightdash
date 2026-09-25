@@ -716,7 +716,14 @@ export default class App {
         expressApp.use(express.json());
         expressApp.use(express.urlencoded({ extended: false }));
 
-        expressApp.use(
+        // KONTALA: sessions for the API only. Pages, assets and the
+        // .well-known routes never read one, yet every request that reached
+        // them with a session cookie paid a session read, a user rebuild and
+        // a session write first: about five database round trips for each of
+        // the ~70 files the first page preloads. Every router and every TSOA
+        // route is under /api/, and express-session matches its cookie path
+        // against req.originalUrl, so the base path still applies.
+        expressApp.use('/api', [
             expressSession(
                 buildExpressSessionOptions(
                     this.lightdashConfig,
@@ -724,10 +731,10 @@ export default class App {
                     this.port,
                 ),
             ),
-        );
-        expressApp.use(flash());
-        expressApp.use(passport.initialize());
-        expressApp.use(passport.session());
+            flash(),
+            passport.initialize(),
+            passport.session(),
+        ]);
 
         expressApp.use(expressWinstonPreResponseMiddleware); // log request before response is sent
         expressApp.use(expressWinstonMiddleware); // log request + response
