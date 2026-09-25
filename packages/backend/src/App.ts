@@ -617,6 +617,13 @@ export default class App {
                         ...contentSecurityPolicyAllowedDomains,
                     ],
                     'report-uri': reportUris.map((uri) => uri.href),
+                    // KONTALA: a report-only policy cannot upgrade requests,
+                    // and Chrome logs that as a console error on every page.
+                    // An enforced policy keeps helmet's default.
+                    'upgrade-insecure-requests': this.lightdashConfig.security
+                        .contentSecurityPolicy.reportOnly
+                        ? null
+                        : [],
                 },
                 reportOnly:
                     this.lightdashConfig.security.contentSecurityPolicy
