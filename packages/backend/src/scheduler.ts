@@ -1,6 +1,8 @@
 import './tracing/bootstrap'; // Must run before modules that can load Knex
 import { lightdashConfig } from './config/lightdashConfig';
-import { getEnterpriseAppArguments } from './ee';
+// KONTALA: loads the enterprise module only with a licence key, as the server
+// does. Imported directly, it brought the AI stack to every scheduler worker.
+import { getEnterpriseAppArgumentsIfLicensed } from './enterpriseAppArguments';
 import knexConfig from './knexfile';
 import Logger from './logging/logger';
 import { installProcessExitLogging } from './logging/processExit';
@@ -31,7 +33,7 @@ installProcessExitLogging();
                     ? 'development'
                     : 'production',
             knexConfig,
-            ...(await getEnterpriseAppArguments()),
+            ...(await getEnterpriseAppArgumentsIfLicensed()),
         });
         schedulerApp.start().catch((e) => {
             Logger.error('Error starting standalone scheduler worker', e);
