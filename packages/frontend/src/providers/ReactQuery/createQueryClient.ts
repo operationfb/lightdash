@@ -1,5 +1,6 @@
 import { type ApiError } from '@lightdash/common';
-import { QueryClient, type DefaultOptions } from '@tanstack/react-query';
+import { type DefaultOptions } from '@tanstack/react-query';
+import { LicenseAwareQueryClient } from './LicenseAwareQueryClient';
 
 const MAX_QUERY_RETRIES = 5;
 
@@ -24,7 +25,8 @@ export const getQueryRetryDelay = (attemptIndex: number): number =>
     Math.min(1000 * 2 ** attemptIndex, 8000);
 
 export const createQueryClient = (options?: DefaultOptions) => {
-    const queryClient = new QueryClient({
+    // KONTALA: see LicenseAwareQueryClient.
+    const queryClient = new LicenseAwareQueryClient({
         defaultOptions: {
             queries: {
                 retry: shouldRetryQuery,
