@@ -1,4 +1,3 @@
-import { DBSQLClient } from '@databricks/sql';
 import IDBSQLClient, {
     ConnectionOptions,
 } from '@databricks/sql/dist/contracts/IDBSQLClient';
@@ -35,6 +34,7 @@ import {
 } from '@lightdash/common';
 import fetch from 'node-fetch';
 import { WarehouseCatalog } from '../types';
+import { lazyImport } from '../utils/lazyImport';
 import { DEFAULT_BATCH_SIZE } from '../utils/processPromisesInBatches';
 import { normalizeUnicode } from '../utils/sql';
 import {
@@ -43,6 +43,14 @@ import {
 } from './DatabricksWarehouseStartupRetry';
 import WarehouseBaseClient from './WarehouseBaseClient';
 import WarehouseBaseSqlBuilder from './WarehouseBaseSqlBuilder';
+
+// KONTALA: the driver's entry point brings Arrow, an OAuth stack and a
+// WebSocket client, ~475 files that only a Databricks project needs, so it is
+// loaded when a client first connects rather than whenever this file loads.
+// The contract, error and thrift-type imports above are light and stay.
+const loadDBSQLClient = lazyImport(() =>
+    import('@databricks/sql').then(({ DBSQLClient }) => DBSQLClient),
+);
 
 /**
  * Pre-registered Databricks public OAuth client ID for U2M authentication.
@@ -537,6 +545,7 @@ export class DatabricksWarehouseClient extends WarehouseBaseClient<CreateDatabri
     private async openSession(
         retry: DatabricksWarehouseStartupRetry,
     ): Promise<DatabricksSession> {
+        const DBSQLClient = await loadDBSQLClient();
         const client = new DBSQLClient({});
         let connection: IDBSQLClient;
         let session: IDBSQLSession;
