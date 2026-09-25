@@ -66,6 +66,17 @@ export class DeferredPassportStrategy extends Strategy {
         };
     }
 
+    /**
+     * KONTALA: builds the real strategy now, in the background, so the first
+     * sign-in after a boot does not wait for discovery. A failure is only
+     * logged; the first sign-in then builds it, exactly as without this.
+     */
+    warm(): void {
+        this.load().catch((e: unknown) => {
+            Logger.info(`Could not warm the OIDC strategy: ${e}`);
+        });
+    }
+
     authenticate(req: Request, options?: object) {
         this.load().then(
             (inner) => {

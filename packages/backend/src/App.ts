@@ -1096,10 +1096,14 @@ export default class App {
             passport.use('azuread', await createAzureAdPassportStrategy());
         }
         if (isGenericOidcPassportStrategyAvailableToUse) {
-            passport.use(
-                'oidc',
-                new DeferredPassportStrategy(createGenericOidcPassportStrategy),
+            const oidcStrategy = new DeferredPassportStrategy(
+                createGenericOidcPassportStrategy,
             );
+            passport.use('oidc', oidcStrategy);
+            // KONTALA: this runs just after listen(), so discovery overlaps
+            // the first request instead of sitting in front of the first
+            // sign-in.
+            oidcStrategy.warm();
         }
         if (snowflakePassportStrategy) {
             passport.use('snowflake', snowflakePassportStrategy);

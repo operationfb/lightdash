@@ -232,6 +232,42 @@ describe('DeferredPassportStrategy', () => {
         );
         expect(build).toHaveBeenCalledTimes(2);
     });
+
+    test('warm() builds ahead of the first request, which reuses it', async () => {
+        const build = vi
+            .fn()
+            .mockResolvedValue(innerRedirectingTo('https://idp/auth'));
+        const strategy = new DeferredPassportStrategy(build);
+
+        strategy.warm();
+        expect(build).toHaveBeenCalledTimes(1);
+
+        await expect(authenticateOnce(strategy)).resolves.toBe(
+            'redirect:https://idp/auth',
+        );
+        expect(build).toHaveBeenCalledTimes(1);
+    });
+
+    test('a failed warm() is logged rather than thrown, and the first request builds again', async () => {
+        vi.spyOn(Logger, 'info').mockImplementation((() => undefined) as never);
+        const build = vi
+            .fn()
+            .mockRejectedValueOnce(new Error('provider is cold'))
+            .mockResolvedValue(innerRedirectingTo('https://idp/auth'));
+        const strategy = new DeferredPassportStrategy(build);
+
+        strategy.warm();
+        await vi.waitFor(() =>
+            expect(Logger.info).toHaveBeenCalledWith(
+                expect.stringContaining('provider is cold'),
+            ),
+        );
+
+        await expect(authenticateOnce(strategy)).resolves.toBe(
+            'redirect:https://idp/auth',
+        );
+        expect(build).toHaveBeenCalledTimes(2);
+    });
 });
 
 // KONTALA: the regression that cost a whole sign-on its organization.
