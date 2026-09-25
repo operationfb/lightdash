@@ -14,3 +14,13 @@ vi.mock('./src/config/lightdashConfig', async () => {
         lightdashConfig: lightdashConfigMock,
     };
 });
+
+vi.mock('knex-mock-client', async (importOriginal) => {
+    const knexMockClient =
+        await importOriginal<typeof import('knex-mock-client')>();
+    // `dialect` chains MockClient.prototype to a pg client instance, whose `_events` every knex
+    // transaction client (Object.create) would then share; shadow it so each gets its own.
+    Object.assign(knexMockClient.MockClient.prototype, { _events: undefined });
+
+    return knexMockClient;
+});
