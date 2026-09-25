@@ -1727,6 +1727,14 @@ export type LightdashConfig = {
         enabled: boolean;
         concurrency: number;
         pollInterval: number;
+        /**
+         * KONTALA: ms to wait after the server listens before the API
+         * process starts its scheduler worker. On a scale-to-zero instance
+         * the first seconds after listen() are a person's first page, and
+         * the worker's start (migrations, cron backfill, the jobs it queues)
+         * competes with it for the one CPU. 0 starts it at once.
+         */
+        startDelay: number;
         jobTimeout: number;
         screenshotTimeout?: number;
         shutdownTimeout: number;
@@ -3580,6 +3588,8 @@ export const parseConfig = (): LightdashConfig => {
             pollInterval:
                 getIntegerFromEnvironmentVariable('SCHEDULER_POLL_INTERVAL') ||
                 1000,
+            startDelay:
+                getIntegerFromEnvironmentVariable('SCHEDULER_START_DELAY') ?? 0,
             jobTimeout: process.env.SCHEDULER_JOB_TIMEOUT
                 ? parseInt(process.env.SCHEDULER_JOB_TIMEOUT, 10)
                 : DEFAULT_JOB_TIMEOUT,

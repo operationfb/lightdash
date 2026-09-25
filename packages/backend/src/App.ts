@@ -245,6 +245,8 @@ export default class App {
 
     private featureFlagCheckFlushInterval: NodeJS.Timeout | undefined;
 
+    private schedulerStartTimeout: NodeJS.Timeout | undefined;
+
     constructor(args: AppArguments) {
         this.lightdashConfig = args.lightdashConfig;
         this.port = args.port;
@@ -405,10 +407,25 @@ export default class App {
         }
 
         if (this.lightdashConfig.scheduler?.enabled) {
-            this.initSchedulerWorker();
-            this.prometheusMetrics.monitorQueues(
-                this.clients.getSchedulerClient(),
-            );
+            const startScheduler = () => {
+                this.schedulerStartTimeout = undefined;
+                this.initSchedulerWorker();
+                this.prometheusMetrics.monitorQueues(
+                    this.clients.getSchedulerClient(),
+                );
+            };
+            // KONTALA: optionally after the first requests rather than during
+            // them; see scheduler.startDelay. Jobs queued meanwhile wait in the
+            // table and run once the worker starts.
+            const { startDelay } = this.lightdashConfig.scheduler;
+            if (startDelay > 0) {
+                this.schedulerStartTimeout = setTimeout(
+                    startScheduler,
+                    startDelay,
+                );
+            } else {
+                startScheduler();
+            }
         }
 
         try {
@@ -1188,6 +1205,10 @@ export default class App {
         await MotherduckInstanceCache.closeAll('shutdown');
         await this.prometheusMetrics.stop();
         await shutdownOtelTracing();
+        if (this.schedulerStartTimeout) {
+            clearTimeout(this.schedulerStartTimeout);
+            this.schedulerStartTimeout = undefined;
+        }
         if (this.schedulerWorker) {
             try {
                 await this.schedulerWorker.stop();

@@ -188,6 +188,7 @@ export const lightdashConfigMock: LightdashConfig = {
         concurrency: 0,
         enabled: false,
         pollInterval: 1000,
+        startDelay: 0,
         jobTimeout: 0,
         shutdownTimeout: 60_000,
         tasks: ALL_TASK_NAMES,

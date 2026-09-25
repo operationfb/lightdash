@@ -478,7 +478,11 @@ export class SchedulerWorker extends SchedulerTask {
                 task: SCHEDULER_TASKS.CHECK_FOR_STUCK_JOBS,
                 pattern: '*/30 * * * *', // Every 30 minutes
                 options: {
-                    backfillPeriod: 24 * 3600 * 1000, // 24 hours in ms
+                    // KONTALA: one interval, so a start after downtime catches
+                    // up with a single run. With 24h, an instance that scales
+                    // to zero queued up to 48 identical checks on every cold
+                    // start, alongside its first requests.
+                    backfillPeriod: 30 * 60 * 1000, // 30 minutes in ms
                     maxAttempts: 3,
                 },
             },
@@ -486,7 +490,8 @@ export class SchedulerWorker extends SchedulerTask {
                 task: SCHEDULER_TASKS.CLEAN_DEPLOY_SESSIONS,
                 pattern: '0 * * * *', // Every hour
                 options: {
-                    backfillPeriod: 2 * 3600 * 1000, // 2 hours in ms
+                    // KONTALA: one interval; see CHECK_FOR_STUCK_JOBS.
+                    backfillPeriod: 3600 * 1000, // 1 hour in ms
                     maxAttempts: 3,
                 },
             },
@@ -494,7 +499,8 @@ export class SchedulerWorker extends SchedulerTask {
                 task: SCHEDULER_TASKS.CLEAN_EXPIRED_PREVIEWS,
                 pattern: '0 * * * *', // Every hour
                 options: {
-                    backfillPeriod: 2 * 3600 * 1000, // 2 hours in ms
+                    // KONTALA: one interval; see CHECK_FOR_STUCK_JOBS.
+                    backfillPeriod: 3600 * 1000, // 1 hour in ms
                     maxAttempts: 3,
                 },
             },
@@ -513,7 +519,8 @@ export class SchedulerWorker extends SchedulerTask {
                 task: SCHEDULER_TASKS.POLL_EMAIL_WHITELABEL,
                 pattern: '17 * * * *', // Hourly, off the top of the hour
                 options: {
-                    backfillPeriod: 2 * 3600 * 1000, // 2 hours in ms
+                    // KONTALA: one interval; see CHECK_FOR_STUCK_JOBS.
+                    backfillPeriod: 3600 * 1000, // 1 hour in ms
                     maxAttempts: 1,
                 },
             },
@@ -521,7 +528,8 @@ export class SchedulerWorker extends SchedulerTask {
                 task: SCHEDULER_TASKS.CLEAN_WAREHOUSE_CONNECT_CODES,
                 pattern: '41 * * * *', // Hourly, off the top of the hour
                 options: {
-                    backfillPeriod: 2 * 3600 * 1000, // 2 hours in ms
+                    // KONTALA: one interval; see CHECK_FOR_STUCK_JOBS.
+                    backfillPeriod: 3600 * 1000, // 1 hour in ms
                     maxAttempts: 3,
                 },
             },
