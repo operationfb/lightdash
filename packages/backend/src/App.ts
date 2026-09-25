@@ -365,9 +365,15 @@ export default class App {
         expressApp.use('/api/v1', createProbeRouter(this.readinessService));
 
         // Slack must be initialized before our own middleware / routes, which cause the slack app to fail
-        this.initSlack(expressApp).catch((e) => {
-            Logger.error('Error starting slack bot', e);
-        });
+        // KONTALA: only when Slack is configured, which is the same test
+        // SlackClient.start() makes. Without it every boot logged "Error
+        // starting slack bot" (setupEventListeners() found no app), and getting
+        // the client started a scheduler client the boot does not need.
+        if (this.lightdashConfig.slack?.clientId) {
+            this.initSlack(expressApp).catch((e) => {
+                Logger.error('Error starting slack bot', e);
+            });
+        }
 
         Sentry.setTags({
             k8s_pod_name: this.lightdashConfig.k8s.podName,
@@ -473,6 +479,10 @@ export default class App {
             createtable: false,
             tablename: 'sessions',
             sidfieldname: 'sid',
+            // KONTALA: sweep expired sessions hourly rather than every minute
+            // (the library default). A session is refused once expired either
+            // way; the sweep only reclaims rows.
+            clearInterval: 60 * 60 * 1000,
         });
 
         // Use custom middlewares if provided
