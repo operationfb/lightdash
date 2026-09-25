@@ -6,6 +6,7 @@ import monacoEditorPlugin from 'vite-plugin-monaco-editor';
 import svgrPlugin from 'vite-plugin-svgr';
 import { defineConfig } from 'vitest/config';
 import { buildHashPlugin } from './vite.config.buildHash';
+import { monacoWorkersServedPlugin } from './vite.config.monacoWorkers';
 import { postcssBrowserShimsPlugin } from './vite.config.postcssBrowserShims';
 import { pruneZodLocalesPlugin } from './vite.config.zodLocales';
 
@@ -70,9 +71,20 @@ export default defineConfig({
             forceBuildCDN: true,
             languageWorkers: ['editorWorkerService', 'json', 'html'],
             customWorkers: [
-                { label: 'yaml', entry: 'monaco-yaml/yaml.worker.js' },
+                // KONTALA: no .js, which the plugin's naming turned into
+                // yaml.worker..bundle.js.
+                { label: 'yaml', entry: 'monaco-yaml/yaml.worker' },
             ],
+            // KONTALA: base belongs in the workers' URL, not their output path.
+            // The plugin's default wrote build/analytics/monacoeditorwork, but
+            // the backend serves build/ at the base path, as it does vite's
+            // own assets, so /analytics/monacoeditorwork/* got index.html.
+            customDistPath: (root, buildOutDir) =>
+                path.resolve(root, buildOutDir, 'monacoeditorwork'),
         }),
+        // KONTALA: fails the build when index.html asks for a Monaco worker
+        // that the backend would not serve (vite.config.monacoWorkers.ts).
+        monacoWorkersServedPlugin(),
         sentryVitePlugin({
             telemetry: false,
             org: 'lightdash',
