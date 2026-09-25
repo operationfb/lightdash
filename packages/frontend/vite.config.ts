@@ -230,7 +230,12 @@ export default defineConfig({
             ...(FE_HOST ? [FE_HOST] : []),
         ],
         watch: {
-            ignored: ['!**/node_modules/@lightdash/common/**'],
+            ignored: [
+                '!**/node_modules/@lightdash/common/**',
+                // KONTALA: the build output. vite unwatches outDir only when
+                // emptyOutDir is on, so every build logged a dev page reload.
+                `${path.resolve(__dirname, 'build')}/**`,
+            ],
         },
         proxy: {
             '/api': {
