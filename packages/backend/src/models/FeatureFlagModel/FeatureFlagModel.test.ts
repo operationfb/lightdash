@@ -819,3 +819,185 @@ describe('FeatureFlagModel', () => {
         });
     });
 });
+
+// KONTALA: getMany resolves a whole page's flags from one read of each table.
+describe('FeatureFlagModel.getMany', () => {
+    type SnapshotRows = {
+        flags?: Pick<DbFeatureFlag, 'flag_id' | 'default_enabled'>[];
+        overrides?: Pick<
+            DbFeatureFlagOverride,
+            'flag_id' | 'user_uuid' | 'enabled'
+        >[];
+        fail?: boolean;
+    };
+
+    // Serves both tables and records which were read, and with what filters.
+    const buildSnapshotDatabase = ({
+        flags = [],
+        overrides = [],
+        fail = false,
+    }: SnapshotRows) => {
+        const reads: string[] = [];
+        const filters: unknown[][] = [];
+        const database = ((table: string) => {
+            reads.push(table);
+            if (fail) throw new Error('connection refused');
+            if (table === FeatureFlagsTableName) {
+                return { select: () => Promise.resolve(flags) };
+            }
+            return {
+                select: () => ({
+                    where: (callback: (query: unknown) => void) => {
+                        const query = {
+                            orWhere: (...args: unknown[]) => {
+                                if (typeof args[0] === 'function') {
+                                    const organization = {
+                                        where: (...where: unknown[]) => {
+                                            filters.push(['org', ...where]);
+                                            return {
+                                                whereNull: (column: string) =>
+                                                    filters.push([
+                                                        'null',
+                                                        column,
+                                                    ]),
+                                            };
+                                        },
+                                    };
+                                    args[0](organization);
+                                } else {
+                                    filters.push(['user', ...args]);
+                                }
+                                return query;
+                            },
+                        };
+                        callback(query);
+                        return Promise.resolve(overrides);
+                    },
+                }),
+            };
+        }) as unknown as Knex;
+        return { database, reads, filters };
+    };
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.mocked(record).mockClear();
+    });
+
+    it('resolves every flag from one read of each table, with the usual precedence', async () => {
+        const { database, reads } = buildSnapshotDatabase({
+            flags: [
+                { flag_id: 'default-on', default_enabled: true },
+                { flag_id: 'default-off', default_enabled: false },
+                { flag_id: 'org-override', default_enabled: false },
+                { flag_id: 'user-beats-org', default_enabled: false },
+                { flag_id: 'no-opinion', default_enabled: null },
+            ],
+            overrides: [
+                { flag_id: 'org-override', user_uuid: null, enabled: true },
+                { flag_id: 'user-beats-org', user_uuid: null, enabled: false },
+                {
+                    flag_id: 'user-beats-org',
+                    user_uuid: VALID_USER_UUID,
+                    enabled: true,
+                },
+                { flag_id: 'no-row', user_uuid: null, enabled: true },
+            ],
+        });
+
+        await expect(
+            buildModel({}, database).getMany(dbUser, [
+                'default-on',
+                'default-off',
+                'org-override',
+                'user-beats-org',
+                'no-opinion',
+                'no-row',
+                'unknown',
+            ]),
+        ).resolves.toEqual([
+            { id: 'default-on', enabled: true },
+            { id: 'default-off', enabled: false },
+            { id: 'org-override', enabled: true },
+            { id: 'user-beats-org', enabled: true },
+            { id: 'no-opinion', enabled: false },
+            // get() ignores overrides on a flag that has no row
+            { id: 'no-row', enabled: false },
+            { id: 'unknown', enabled: false },
+        ]);
+        expect(reads).toEqual([
+            FeatureFlagsTableName,
+            FeatureFlagOverridesTableName,
+        ]);
+    });
+
+    it('still applies the env allowlists and config handlers', async () => {
+        const { database } = buildSnapshotDatabase({
+            flags: [
+                { flag_id: FeatureFlags.EditYamlInUi, default_enabled: false },
+            ],
+        });
+        const model = buildModel(
+            {
+                enabledFeatureFlags: new Set(['env-on']),
+                editYamlInUi: { enabled: true },
+            } as Partial<LightdashConfig>,
+            database,
+        );
+
+        await expect(
+            model.getMany(dbUser, ['env-on', FeatureFlags.EditYamlInUi]),
+        ).resolves.toEqual([
+            { id: 'env-on', enabled: true },
+            { id: FeatureFlags.EditYamlInUi, enabled: true },
+        ]);
+    });
+
+    it('reads no overrides for an anonymous caller', async () => {
+        const { database, reads } = buildSnapshotDatabase({});
+
+        await buildModel({}, database).getMany(undefined, ['any']);
+
+        expect(reads).toEqual([FeatureFlagsTableName]);
+    });
+
+    it('looks up user overrides only for a real user uuid, as get() does', async () => {
+        const { database, filters } = buildSnapshotDatabase({});
+
+        await buildModel({}, database).getMany(
+            { userUuid: 'embed-external-id', organizationUuid: 'org-uuid' },
+            ['any'],
+        );
+
+        expect(filters).toEqual([
+            ['org', 'organization_uuid', 'org-uuid'],
+            ['null', 'user_uuid'],
+        ]);
+    });
+
+    it('resolves as if there were no rows when the read fails', async () => {
+        const warnSpy = vi
+            .spyOn(Logger, 'warn')
+            .mockImplementation((() => undefined) as never);
+        const { database } = buildSnapshotDatabase({ fail: true });
+
+        await expect(
+            buildModel(
+                { enabledFeatureFlags: new Set(['env-on']) },
+                database,
+            ).getMany(dbUser, ['env-on', 'from-db']),
+        ).resolves.toEqual([
+            { id: 'env-on', enabled: true },
+            { id: 'from-db', enabled: false },
+        ]);
+        expect(warnSpy).toHaveBeenCalled();
+    });
+
+    it('does not record flag checks', async () => {
+        const { database } = buildSnapshotDatabase({});
+
+        await buildModel({}, database).getMany(dbUser, ['any']);
+
+        expect(record).not.toHaveBeenCalled();
+    });
+});

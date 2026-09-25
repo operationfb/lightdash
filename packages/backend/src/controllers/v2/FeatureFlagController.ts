@@ -55,6 +55,31 @@ export class FeatureFlagController extends BaseController {
     }
 
     /**
+     * Get every known feature flag, resolved for the requesting user. Declared
+     * before /{featureFlagId} so that route does not take "resolved" for an id.
+     * @summary Get all feature flags
+     */
+    @Middlewares([allowApiKeyAuthenticationIfPresent])
+    @SuccessResponse('200', 'Success')
+    @Get('/resolved')
+    @OperationId('Get all feature flags')
+    async getAllFeatureFlags(@Request() req: express.Request): Promise<{
+        status: 'ok';
+        results: FeatureFlag[];
+    }> {
+        this.setStatus(200);
+        return {
+            status: 'ok',
+            results: await this.services.getFeatureFlagService().getAll({
+                user:
+                    req.account && !isJwtUser(req.account)
+                        ? toSessionUser(req.account)
+                        : undefined,
+            }),
+        };
+    }
+
+    /**
      * Get feature flag
      * @summary Get feature flag
      */

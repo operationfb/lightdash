@@ -31,10 +31,28 @@ export type EnsureOrganizationOverrideOutcome =
     | 'already_enabled'
     | 'kept_disabled';
 
+/**
+ * KONTALA: the flag rows, and the overrides that apply to one caller, read
+ * once for a request that resolves many flags (see getMany).
+ */
+type FeatureFlagSnapshot = {
+    defaults: Map<string, boolean | null>;
+    userOverrides: Map<string, boolean>;
+    organizationOverrides: Map<string, boolean>;
+};
+
+const EMPTY_SNAPSHOT: FeatureFlagSnapshot = {
+    defaults: new Map(),
+    userOverrides: new Map(),
+    organizationOverrides: new Map(),
+};
+
 type FeatureFlagQueryOptions = {
     trx?: Knex;
     /** Set false for admin listings so they don't inflate flag-usage telemetry. */
     recordCheck?: boolean;
+    /** KONTALA: resolve from these rows instead of querying. */
+    snapshot?: FeatureFlagSnapshot;
 };
 
 export class FeatureFlagModel {
@@ -88,6 +106,86 @@ export class FeatureFlagModel {
         }
 
         return result;
+    }
+
+    /**
+     * KONTALA: resolves many flags for one caller from a single read of the two
+     * flag tables, where resolving them one by one costs up to three queries
+     * each. Resolution is otherwise exactly get()'s. If the read fails, every
+     * flag resolves as if it had no row, which is what get() does when its own
+     * query fails.
+     */
+    public async getMany(
+        user: FeatureFlagLogicArgs['user'],
+        featureFlagIds: readonly string[],
+    ): Promise<FeatureFlag[]> {
+        let snapshot: FeatureFlagSnapshot;
+        try {
+            snapshot = await this.loadSnapshot(user);
+        } catch (e) {
+            Logger.warn(
+                `Failed to read feature flags from database, falling through: ${e}`,
+            );
+            snapshot = EMPTY_SNAPSHOT;
+        }
+        return Promise.all(
+            featureFlagIds.map((featureFlagId) =>
+                this.get(
+                    { user, featureFlagId },
+                    { snapshot, recordCheck: false },
+                ),
+            ),
+        );
+    }
+
+    private async loadSnapshot(
+        user: FeatureFlagLogicArgs['user'],
+    ): Promise<FeatureFlagSnapshot> {
+        // Same filters as getOverrideFromDatabase().
+        const userUuid =
+            user?.userUuid && UUID_REGEX.test(user.userUuid)
+                ? user.userUuid
+                : undefined;
+        const organizationUuid = user?.organizationUuid;
+        const [flagRows, overrideRows] = await Promise.all([
+            this.database(FeatureFlagsTableName).select(
+                'flag_id',
+                'default_enabled',
+            ),
+            userUuid || organizationUuid
+                ? this.database(FeatureFlagOverridesTableName)
+                      .select('flag_id', 'user_uuid', 'enabled')
+                      .where((query) => {
+                          if (userUuid) {
+                              void query.orWhere('user_uuid', userUuid);
+                          }
+                          if (organizationUuid) {
+                              void query.orWhere((organization) =>
+                                  organization
+                                      .where(
+                                          'organization_uuid',
+                                          organizationUuid,
+                                      )
+                                      .whereNull('user_uuid'),
+                              );
+                          }
+                      })
+                : Promise.resolve([]),
+        ]);
+        const snapshot: FeatureFlagSnapshot = {
+            defaults: new Map(
+                flagRows.map((row) => [row.flag_id, row.default_enabled]),
+            ),
+            userOverrides: new Map(),
+            organizationOverrides: new Map(),
+        };
+        overrideRows.forEach((row) => {
+            (row.user_uuid
+                ? snapshot.userOverrides
+                : snapshot.organizationOverrides
+            ).set(row.flag_id, row.enabled);
+        });
+        return snapshot;
     }
 
     private async resolve(
@@ -249,8 +347,11 @@ export class FeatureFlagModel {
 
     protected async tryGetFromDatabase(
         args: FeatureFlagLogicArgs,
-        { trx = this.database }: FeatureFlagQueryOptions = {},
+        { trx = this.database, snapshot }: FeatureFlagQueryOptions = {},
     ): Promise<FeatureFlag | null> {
+        if (snapshot) {
+            return FeatureFlagModel.getFromSnapshot(args, snapshot);
+        }
         try {
             return await FeatureFlagModel.getFromDatabase(args, trx);
         } catch (e) {
@@ -291,8 +392,11 @@ export class FeatureFlagModel {
 
     protected async tryGetOverrideFromDatabase(
         args: FeatureFlagLogicArgs,
-        { trx = this.database }: FeatureFlagQueryOptions = {},
+        { trx = this.database, snapshot }: FeatureFlagQueryOptions = {},
     ): Promise<FeatureFlag | null> {
+        if (snapshot) {
+            return FeatureFlagModel.getOverrideFromSnapshot(args, snapshot);
+        }
         try {
             return await FeatureFlagModel.getOverrideFromDatabase(args, trx);
         } catch (e) {
@@ -301,6 +405,40 @@ export class FeatureFlagModel {
             );
             return null;
         }
+    }
+
+    // KONTALA: getFromDatabase() and getOverrideFromDatabase(), over a
+    // snapshot. The precedence is theirs: a flag without a row resolves to
+    // null whatever its overrides say; a user override beats an organization
+    // override, which beats the flag's default.
+    private static getFromSnapshot(
+        args: FeatureFlagLogicArgs,
+        snapshot: FeatureFlagSnapshot,
+    ): FeatureFlag | null {
+        if (!snapshot.defaults.has(args.featureFlagId)) {
+            return null;
+        }
+        const override = FeatureFlagModel.getOverrideFromSnapshot(
+            args,
+            snapshot,
+        );
+        if (override) {
+            return override;
+        }
+        const defaultEnabled = snapshot.defaults.get(args.featureFlagId);
+        return defaultEnabled === null || defaultEnabled === undefined
+            ? null
+            : { id: args.featureFlagId, enabled: defaultEnabled };
+    }
+
+    private static getOverrideFromSnapshot(
+        { featureFlagId }: FeatureFlagLogicArgs,
+        snapshot: FeatureFlagSnapshot,
+    ): FeatureFlag | null {
+        const enabled =
+            snapshot.userOverrides.get(featureFlagId) ??
+            snapshot.organizationOverrides.get(featureFlagId);
+        return enabled === undefined ? null : { id: featureFlagId, enabled };
     }
 
     // User override > org override. Returns null when neither exists.

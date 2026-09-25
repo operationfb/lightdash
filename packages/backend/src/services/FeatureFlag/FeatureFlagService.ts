@@ -44,6 +44,19 @@ export class FeatureFlagService extends BaseService {
         return this.featureFlagModel.get({ user, featureFlagId });
     }
 
+    /**
+     * KONTALA: every known flag, resolved for the caller, in one request. A
+     * page used to fetch its flags one request each, about twenty on a first
+     * load. It reveals nothing get() does not: any caller can ask for any flag.
+     */
+    getAll({
+        user,
+    }: {
+        user?: Pick<LightdashUser, 'userUuid' | 'organizationUuid'>;
+    }) {
+        return this.featureFlagModel.getMany(user, ALL_FEATURE_FLAG_IDS);
+    }
+
     // Returns the organization the caller is allowed to manage.
     private assertOrganizationAdmin(
         accountOrUser: RegisteredAccount | SessionUser,
