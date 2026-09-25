@@ -1771,6 +1771,38 @@ export class UserModel {
         return lightdashUser;
     }
 
+    /**
+     * KONTALA: the user whose primary email this is, with their role in one
+     * organization (null when they are not a member of it), in one query.
+     * Kontala reconciles a person on every crossing, and almost every time
+     * nothing has changed; this answers that case without building the user.
+     */
+    async findOrganizationRoleByPrimaryEmail(
+        email: string,
+        organizationUuid: string,
+    ): Promise<
+        { userUuid: string; role: OrganizationMemberRole | null } | undefined
+    > {
+        const row = await this.database(UserTableName)
+            .joinRaw(
+                `INNER JOIN ${EmailTableName} ON ${EmailTableName}.user_id = ${UserTableName}.user_id AND ${EmailTableName}.is_primary`,
+            )
+            .joinRaw(
+                `LEFT JOIN ${OrganizationMembershipsTableName} ON ${OrganizationMembershipsTableName}.user_id = ${UserTableName}.user_id AND ${OrganizationMembershipsTableName}.organization_id = (SELECT organization_id FROM ${OrganizationTableName} WHERE organization_uuid = ?)`,
+                [organizationUuid],
+            )
+            .where(`${EmailTableName}.email`, email)
+            .andWhere(`${UserTableName}.is_internal`, false)
+            .first<
+                | { user_uuid: string; role: OrganizationMemberRole | null }
+                | undefined
+            >(
+                `${UserTableName}.user_uuid`,
+                `${OrganizationMembershipsTableName}.role`,
+            );
+        return row && { userUuid: row.user_uuid, role: row.role };
+    }
+
     async findUserByEmail(email: string): Promise<LightdashUser | undefined> {
         const [user] = await userDetailsQueryBuilder(this.database)
             .where('email', email)

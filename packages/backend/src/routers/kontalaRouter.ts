@@ -208,7 +208,12 @@ export const kontalaRouter = ({
             const firstName = asString(body.firstName || '-', 'firstName');
             const lastName = asString(body.lastName || '-', 'lastName');
 
-            const existing = await userModel.findUserByEmail(email);
+            // One query, because this runs inside Kontala's token exchange on
+            // every crossing, and almost every time nothing has changed.
+            const existing = await userModel.findOrganizationRoleByPrimaryEmail(
+                email,
+                organizationUuid,
+            );
 
             if (!existing) {
                 // isActive, and setup complete: this person signs in through
@@ -237,14 +242,7 @@ export const kontalaRouter = ({
                 return;
             }
 
-            const member = await organizationMemberProfileModel
-                .getOrganizationMemberByUuid(
-                    organizationUuid,
-                    existing.userUuid,
-                )
-                .catch(() => undefined);
-
-            if (!member) {
+            if (existing.role === null) {
                 await organizationMemberProfileModel.createOrganizationMembershipByUuid(
                     {
                         organizationUuid,
@@ -256,7 +254,7 @@ export const kontalaRouter = ({
                 return;
             }
 
-            if (member.role !== role) {
+            if (existing.role !== role) {
                 await organizationMemberProfileModel.updateOrganizationMember(
                     organizationUuid,
                     existing.userUuid,

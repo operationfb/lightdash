@@ -68,6 +68,9 @@ const bigqueryProject = {
 
 const buildModels = (overrides: Partial<Models> = {}): Models => ({
     userModel: {
+        findOrganizationRoleByPrimaryEmail: vi
+            .fn()
+            .mockResolvedValue(undefined),
         findUserByEmail: vi.fn().mockResolvedValue(undefined),
         createUser: vi.fn().mockResolvedValue({ userUuid: 'user-uuid-1' }),
         createPendingUser: vi
@@ -239,6 +242,146 @@ const savedNothing = (models: Models) =>
     expect(
         models.projectService.saveExploresToCacheAndIndexCatalog,
     ).not.toHaveBeenCalled();
+
+const ensureMember = (
+    port: number,
+    body: unknown,
+    headers: Record<string, string> = { [KONTALA_ADMIN_HEADER]: SECRET },
+) => send('POST', port, '/api/v1/kontala/members', body, headers);
+
+const person = {
+    organizationUuid: ORG,
+    email: 'Person@Example.com',
+    firstName: 'Per',
+    lastName: 'Son',
+    role: OrganizationMemberRole.EDITOR,
+};
+
+const knownPerson = (models: Models, role: OrganizationMemberRole | null) =>
+    models.userModel.findOrganizationRoleByPrimaryEmail.mockResolvedValue({
+        userUuid: 'user-uuid-2',
+        role,
+    });
+
+const reconciledNothing = (models: Models) => {
+    expect(models.userModel.createPendingUser).not.toHaveBeenCalled();
+    expect(models.emailModel.verifyUserEmailIfExists).not.toHaveBeenCalled();
+    expect(
+        models.organizationMemberProfileModel
+            .createOrganizationMembershipByUuid,
+    ).not.toHaveBeenCalled();
+    expect(
+        models.organizationMemberProfileModel.updateOrganizationMember,
+    ).not.toHaveBeenCalled();
+};
+
+describe('kontala members', () => {
+    it('creates a person it has never seen, with their email verified', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        const res = await ensureMember(port, person);
+
+        expect(res.status).toBe(201);
+        expect(JSON.parse(res.body).results).toBe('created');
+        expect(
+            models.userModel.findOrganizationRoleByPrimaryEmail,
+        ).toHaveBeenCalledExactlyOnceWith('person@example.com', ORG);
+        expect(models.userModel.createPendingUser).toHaveBeenCalledWith(
+            ORG,
+            expect.objectContaining({
+                email: 'person@example.com',
+                role: OrganizationMemberRole.EDITOR,
+            }),
+            true,
+            true,
+        );
+        expect(models.emailModel.verifyUserEmailIfExists).toHaveBeenCalledWith(
+            'user-uuid-1',
+            'person@example.com',
+        );
+    });
+
+    it('attaches a known person to an organization they are not in', async () => {
+        const models = buildModels();
+        knownPerson(models, null);
+        const port = start(models, configWith());
+
+        const res = await ensureMember(port, person);
+
+        expect(res.status).toBe(201);
+        expect(JSON.parse(res.body).results).toBe('attached');
+        expect(
+            models.organizationMemberProfileModel
+                .createOrganizationMembershipByUuid,
+        ).toHaveBeenCalledExactlyOnceWith({
+            organizationUuid: ORG,
+            userUuid: 'user-uuid-2',
+            role: OrganizationMemberRole.EDITOR,
+        });
+        expect(models.userModel.createPendingUser).not.toHaveBeenCalled();
+    });
+
+    it('corrects a role that has drifted', async () => {
+        const models = buildModels();
+        knownPerson(models, OrganizationMemberRole.VIEWER);
+        const port = start(models, configWith());
+
+        const res = await ensureMember(port, person);
+
+        expect(res.status).toBe(200);
+        expect(JSON.parse(res.body).results).toBe('role-updated');
+        expect(
+            models.organizationMemberProfileModel.updateOrganizationMember,
+        ).toHaveBeenCalledExactlyOnceWith(ORG, 'user-uuid-2', {
+            role: OrganizationMemberRole.EDITOR,
+        });
+    });
+
+    it('answers a crossing that changes nothing with one lookup and no writes', async () => {
+        const models = buildModels();
+        knownPerson(models, OrganizationMemberRole.EDITOR);
+        const port = start(models, configWith());
+
+        const res = await ensureMember(port, person);
+
+        expect(res.status).toBe(200);
+        expect(JSON.parse(res.body).results).toBe('unchanged');
+        expect(
+            models.userModel.findOrganizationRoleByPrimaryEmail,
+        ).toHaveBeenCalledTimes(1);
+        expect(models.userModel.findUserByEmail).not.toHaveBeenCalled();
+        reconciledNothing(models);
+    });
+
+    it('refuses a role it does not know before reading anything', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        const res = await ensureMember(port, { ...person, role: 'owner' });
+
+        expect(res.status).toBe(400);
+        expect(
+            models.userModel.findOrganizationRoleByPrimaryEmail,
+        ).not.toHaveBeenCalled();
+        reconciledNothing(models);
+    });
+
+    it('refuses a bad secret before reading anything', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        const res = await ensureMember(port, person, {
+            [KONTALA_ADMIN_HEADER]: 'wrong',
+        });
+
+        expect(res.status).toBe(401);
+        expect(
+            models.userModel.findOrganizationRoleByPrimaryEmail,
+        ).not.toHaveBeenCalled();
+        reconciledNothing(models);
+    });
+});
 
 describe('kontala semantic layer', () => {
     it('compiles the posted model and replaces the project explores', async () => {
