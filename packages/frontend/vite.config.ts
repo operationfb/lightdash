@@ -67,21 +67,24 @@ export default defineConfig({
         }),
         svgrPlugin(),
         reactPlugin(),
-        monacoEditorPlugin({
-            forceBuildCDN: true,
-            languageWorkers: ['editorWorkerService', 'json', 'html'],
-            customWorkers: [
-                // KONTALA: no .js, which the plugin's naming turned into
-                // yaml.worker..bundle.js.
-                { label: 'yaml', entry: 'monaco-yaml/yaml.worker' },
-            ],
-            // KONTALA: base belongs in the workers' URL, not their output path.
-            // The plugin's default wrote build/analytics/monacoeditorwork, but
-            // the backend serves build/ at the base path, as it does vite's
-            // own assets, so /analytics/monacoeditorwork/* got index.html.
-            customDistPath: (root, buildOutDir) =>
-                path.resolve(root, buildOutDir, 'monacoeditorwork'),
-        }),
+        // KONTALA: not under vitest, whose server start makes the plugin delete
+        // node_modules/.monaco, the worker cache a concurrent build reads.
+        !process.env.VITEST &&
+            monacoEditorPlugin({
+                forceBuildCDN: true,
+                languageWorkers: ['editorWorkerService', 'json', 'html'],
+                customWorkers: [
+                    // KONTALA: no .js, which the plugin's naming turned into
+                    // yaml.worker..bundle.js.
+                    { label: 'yaml', entry: 'monaco-yaml/yaml.worker' },
+                ],
+                // KONTALA: base belongs in the workers' URL, not their output path.
+                // The plugin's default wrote build/analytics/monacoeditorwork, but
+                // the backend serves build/ at the base path, as it does vite's
+                // own assets, so /analytics/monacoeditorwork/* got index.html.
+                customDistPath: (root, buildOutDir) =>
+                    path.resolve(root, buildOutDir, 'monacoeditorwork'),
+            }),
         // KONTALA: fails the build when index.html asks for a Monaco worker
         // that the backend would not serve (vite.config.monacoWorkers.ts).
         monacoWorkersServedPlugin(),
