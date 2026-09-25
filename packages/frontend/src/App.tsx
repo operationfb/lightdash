@@ -1,10 +1,11 @@
 import { ModalsProvider } from '@mantine/modals';
 import { wrapCreateBrowserRouterV7 } from '@sentry/react';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, type FC } from 'react';
 import { flushSync } from 'react-dom';
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router';
 import { APP_ROUTES } from './AppRoutes';
 import { DocumentTitle } from './components/common/DocumentTitle';
+import PageSpinner from './components/PageSpinner';
 import VersionAutoUpdater from './components/VersionAutoUpdater/VersionAutoUpdater';
 import { AiAgentsGlobalProvider } from './ee/features/aiCopilot/components/Launcher/AiAgentsGlobalProvider';
 import { parseEmbedThemeParams } from './ee/providers/Embed/parseEmbedThemeParams';
@@ -17,6 +18,7 @@ import ChartColorMappingContextProvider from './hooks/useChartColorConfig/ChartC
 import AbilityProvider from './providers/Ability/AbilityProvider';
 import ActiveJobProvider from './providers/ActiveJob/ActiveJobProvider';
 import AppProvider from './providers/App/AppProvider';
+import useApp from './providers/App/useApp';
 import FullscreenProvider from './providers/Fullscreen/FullscreenProvider';
 import MantineProvider from './providers/MantineProvider';
 import ReactQueryProvider from './providers/ReactQuery/ReactQueryProvider';
@@ -35,6 +37,19 @@ const AgentOnboardingCompletionWatcher = lazy(() =>
         (module) => ({ default: module.AgentOnboardingCompletionWatcher }),
     ),
 );
+
+// KONTALA: agent onboarding is an enterprise AI flow. Without a valid licence
+// there is never a run to watch, yet the watcher's chunk was fetched on every
+// page load.
+const LicensedAgentOnboardingCompletionWatcher: FC = () => {
+    const { health } = useApp();
+    if (!health.data?.license?.valid) return null;
+    return (
+        <Suspense fallback={null}>
+            <AgentOnboardingCompletionWatcher />
+        </Suspense>
+    );
+};
 
 // KONTALA: `window.location.pathname` carries the base path this build is
 // served under; the router's paths do not. Both sides of the test have to be
@@ -62,9 +77,11 @@ const router = sentryCreateBrowserRouter(
         {
             path: '/',
             errorElement: <ChunkErrorRouteBoundary />,
-            // Routes are lazy, so the first render waits for a route chunk;
-            // show nothing meanwhile instead of react-router's warning default.
-            HydrateFallback: () => null,
+            // Routes are lazy, so the first render waits for a route chunk.
+            // KONTALA: show the loading mark meanwhile, the same one index.html
+            // draws before the bundle runs and PageSpinner draws after, so the
+            // wait reads as one instead of a mark, a blank page and a mark.
+            HydrateFallback: PageSpinner,
             element: (
                 <AppProvider>
                     <FullscreenProvider enabled={!isMinimalPage}>
@@ -80,13 +97,7 @@ const router = sentryCreateBrowserRouter(
                                                     <SourceCodeEditorProvider>
                                                         <AiAgentsGlobalProvider>
                                                             {!isMinimalPage && (
-                                                                <Suspense
-                                                                    fallback={
-                                                                        null
-                                                                    }
-                                                                >
-                                                                    <AgentOnboardingCompletionWatcher />
-                                                                </Suspense>
+                                                                <LicensedAgentOnboardingCompletionWatcher />
                                                             )}
                                                             <Outlet />
                                                         </AiAgentsGlobalProvider>

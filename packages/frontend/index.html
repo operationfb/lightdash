@@ -23,10 +23,81 @@
         />
 
         <title>Kontala Analytics</title>
+        <!--
+          KONTALA: the app's loading mark, drawn by the browser before any of
+          the bundle has arrived. It copies PageSpinner (same mark, colours and
+          shimmer), which React renders in its place until the first page is
+          ready, so the whole load reads as one wait rather than a blank page
+          followed by spinners.
+        -->
+        <style>
+            .boot-splash {
+                position: fixed;
+                inset: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #ffffff;
+            }
+            .boot-splash__mark {
+                width: 56px;
+                height: 56px;
+                background: linear-gradient(
+                    110deg,
+                    #3f3f46 0%,
+                    #3f3f46 20%,
+                    #a1a1aa 50%,
+                    #3f3f46 80%,
+                    #3f3f46 100%
+                );
+                background-size: 400% 100%;
+                animation: boot-splash-shimmer 3s linear infinite;
+                -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='4' y='8' width='3' height='6'/%3E%3Crect x='9' y='2' width='3' height='12'/%3E%3C/svg%3E")
+                    center / contain no-repeat;
+                mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='4' y='8' width='3' height='6'/%3E%3Crect x='9' y='2' width='3' height='12'/%3E%3C/svg%3E")
+                    center / contain no-repeat;
+            }
+            body[data-color-mode='dark'] .boot-splash {
+                background: #141417;
+            }
+            body[data-color-mode='dark'] .boot-splash__mark {
+                background-image: linear-gradient(
+                    110deg,
+                    #72727a 0%,
+                    #72727a 20%,
+                    #d4d4d9 50%,
+                    #72727a 80%,
+                    #72727a 100%
+                );
+            }
+            @keyframes boot-splash-shimmer {
+                from {
+                    background-position: 100% 0;
+                }
+                to {
+                    background-position: -100% 0;
+                }
+            }
+        </style>
     </head>
     <body data-color-mode="light">
         <noscript>You need to enable JavaScript to run this app.</noscript>
-        <div id="root"></div>
+        <script>
+            // KONTALA: the colour scheme MantineProvider will apply, set before
+            // the first paint so a dark-mode reader is not shown a white page.
+            try {
+                if (JSON.parse(localStorage.getItem('color-scheme')) === 'dark') {
+                    document.body.dataset.colorMode = 'dark';
+                }
+            } catch (e) {
+                // Storage blocked or unreadable: stay light, as the app would.
+            }
+        </script>
+        <div id="root">
+            <div class="boot-splash" role="progressbar" aria-label="Loading">
+                <div class="boot-splash__mark"></div>
+            </div>
+        </div>
 
         <script type="module" src="/src/index.tsx"></script>
     </body>

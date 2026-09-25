@@ -5,6 +5,7 @@ import PrivateRoute from './PrivateRoute';
 
 const state = vi.hoisted(() => ({
     isAuthenticated: true,
+    hasEmailClient: false,
     user: undefined as { organizationUuid?: string } | undefined,
     isUserError: false,
     account: undefined as { registered: boolean } | undefined,
@@ -16,7 +17,10 @@ vi.mock('../providers/App/useApp', () => ({
         health: {
             isInitialLoading: false,
             error: null,
-            data: { isAuthenticated: state.isAuthenticated },
+            data: {
+                isAuthenticated: state.isAuthenticated,
+                hasEmailClient: state.hasEmailClient,
+            },
         },
         user: {
             data: state.user ? { ...state.user, abilityRules: [] } : undefined,
@@ -35,12 +39,14 @@ vi.mock('../hooks/user/useAccount', () => ({
     }),
 }));
 
-vi.mock('../hooks/useEmailVerification', () => ({
-    useEmailStatus: () => ({
+const useEmailStatus = vi.hoisted(() =>
+    vi.fn((_enabled: boolean) => ({
         data: { isVerified: true },
         isInitialLoading: false,
-    }),
-}));
+    })),
+);
+
+vi.mock('../hooks/useEmailVerification', () => ({ useEmailStatus }));
 
 vi.mock('../providers/Ability/useAbilityContext', () => ({
     useAbilityContext: () => ({ rules: [], update: vi.fn() }),
@@ -80,6 +86,7 @@ describe('PrivateRoute', () => {
         state.isUserError = false;
         state.account = { registered: true };
         state.isAccountError = false;
+        state.hasEmailClient = false;
     });
 
     it('renders its children for a user in an organization', () => {
@@ -127,6 +134,18 @@ describe('PrivateRoute', () => {
         renderPrivateRoute();
 
         expect(screen.getByText('join organization')).toBeInTheDocument();
+    });
+
+    // KONTALA: without an email server the verification check never runs, so
+    // the page must not wait for the request that feeds it.
+    it('asks for the email status only when an email server is configured', () => {
+        state.hasEmailClient = false;
+        renderPrivateRoute();
+        expect(useEmailStatus).toHaveBeenLastCalledWith(false);
+
+        state.hasEmailClient = true;
+        renderPrivateRoute();
+        expect(useEmailStatus).toHaveBeenLastCalledWith(true);
     });
 
     it('sends an unauthenticated visitor to log in', () => {

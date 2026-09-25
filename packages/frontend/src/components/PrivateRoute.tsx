@@ -15,8 +15,13 @@ const PrivateRoute: FC<React.PropsWithChildren> = ({ children }) => {
     const location = useLocation();
     const account = useAccount();
     const ability = useAbilityContext();
-    const emailStatus = useEmailStatus(!!health.data?.isAuthenticated);
     const isEmailServerConfigured = health.data?.hasEmailClient;
+    // KONTALA: only asked where its answer is used. Without an email server
+    // the verification check below never runs, yet every page waited for
+    // this request before rendering.
+    const emailStatus = useEmailStatus(
+        !!health.data?.isAuthenticated && !!isEmailServerConfigured,
+    );
     // Initialize based on whether ability already has rules (e.g., from previous navigation)
     // This prevents a loading flash when navigating between pages
     const [abilityInitialized, setAbilityInitialized] = useState(
