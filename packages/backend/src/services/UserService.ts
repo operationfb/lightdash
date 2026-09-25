@@ -1227,8 +1227,12 @@ export class UserService extends BaseService {
                     `Multiple openid identities found with the same email ${openIdUser.openId.email}`,
                 );
             } else if (identitiesUsers.length === 1) {
-                const sessionUser = await this.userModel.findSessionUserByUUID(
-                    identitiesUsers[0],
+                // KONTALA: see inClaimedOrganization.
+                const sessionUser = await this.inClaimedOrganization(
+                    await this.userModel.findSessionUserByUUID(
+                        identitiesUsers[0],
+                    ),
+                    openIdUser,
                 );
                 const managedAzureIdentityLink =
                     options?.managedAzureIdentityLink;
@@ -1296,10 +1300,17 @@ export class UserService extends BaseService {
         // have the same verified primary email (instance env OR per-org
         // organization_settings). Otherwise, fail closed without an invite.
         if (!authenticatedUser) {
-            const userWithSameEmail =
+            const userByPrimaryEmail =
                 await this.userModel.findSessionUserByPrimaryEmail(
                     openIdUser.openId.email,
                 );
+            // KONTALA: see inClaimedOrganization.
+            const userWithSameEmail =
+                userByPrimaryEmail &&
+                (await this.inClaimedOrganization(
+                    userByPrimaryEmail,
+                    openIdUser,
+                ));
 
             if (userWithSameEmail) {
                 const isLinkingEnabled =
@@ -2927,6 +2938,32 @@ export class UserService extends BaseService {
         // TODO check valid login methods allowed in org
         // const organization = await this.organizationModel.get(organizations[0].organization_uuid)
         return organizations[0];
+    }
+
+    /**
+     * KONTALA: the same user, in the organization the provider says this login
+     * is for. A first sign-in finds its user by email, and that lookup lands on
+     * whichever membership it meets first; this applies the claim and the
+     * membership check that loginToOrganization gives every later sign-in.
+     * Without a claim the user is returned unchanged.
+     */
+    private async inClaimedOrganization(
+        user: SessionUser,
+        openIdUser: OpenIdUser,
+    ): Promise<SessionUser> {
+        const claimed = openIdUser.openId.organizationUuid;
+        if (!claimed || user.organizationUuid === claimed) {
+            return user;
+        }
+        await this.loginToOrganization(
+            user.userUuid,
+            openIdUser.openId.issuerType,
+            claimed,
+        );
+        return this.userModel.findSessionUserAndOrgByUuid(
+            user.userUuid,
+            claimed,
+        );
     }
 
     async findSessionUser(passportUser: { id: string; organization: string }) {

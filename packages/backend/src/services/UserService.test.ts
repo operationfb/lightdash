@@ -15,6 +15,7 @@ import {
     LocalIssuerTypes,
     NotFoundError,
     OpenIdIdentityIssuerType,
+    OpenIdUser,
     OrganizationMemberProfile,
     OrganizationMemberRole,
     OrganizationSettings,
@@ -438,6 +439,163 @@ describe('UserService', () => {
             ).resolves.toEqual({
                 ...organizationlessSessionUser,
                 ...selectedOrganization,
+            });
+        });
+
+        describe('when the identity provider names the organization', () => {
+            const claimingOpenIdUser: OpenIdUser = {
+                openId: {
+                    ...openIdUser.openId,
+                    organizationUuid: otherOrganization.organizationUuid,
+                },
+            };
+            const userInOtherOrganization: SessionUser = {
+                ...sessionUser,
+                ...otherOrganization,
+            };
+            const notAMember = new ForbiddenError(
+                'You are not a member of the organization this login is for.',
+            );
+            const createLinkingService = (
+                linking: 'enableOidcLinking' | 'enableOidcToEmailLinking',
+            ) =>
+                createUserService({
+                    ...lightdashConfigMock,
+                    auth: { ...lightdashConfigMock.auth, [linking]: true },
+                });
+
+            test('logs a returning user into that organization', async () => {
+                userModel.findSessionUserByOpenId.mockResolvedValueOnce(
+                    organizationlessSessionUser,
+                );
+                userModel.getOrganizationsForUser.mockResolvedValueOnce([
+                    selectedOrganization,
+                    otherOrganization,
+                ]);
+
+                await expect(
+                    userService.loginWithOpenId(
+                        claimingOpenIdUser,
+                        undefined,
+                        undefined,
+                    ),
+                ).resolves.toEqual({
+                    ...organizationlessSessionUser,
+                    ...otherOrganization,
+                });
+            });
+
+            test('refuses a returning user who is not a member of it', async () => {
+                userModel.findSessionUserByOpenId.mockResolvedValueOnce(
+                    organizationlessSessionUser,
+                );
+                userModel.getOrganizationsForUser.mockResolvedValueOnce([
+                    selectedOrganization,
+                ]);
+
+                await expect(
+                    userService.loginWithOpenId(
+                        claimingOpenIdUser,
+                        undefined,
+                        undefined,
+                    ),
+                ).rejects.toThrow(notAMember);
+            });
+
+            test('logs a first sign-in matched by email into that organization', async () => {
+                openIdIdentityModel.findIdentitiesByEmail.mockResolvedValueOnce(
+                    [],
+                );
+                userModel.getOrganizationsForUser.mockResolvedValueOnce([
+                    selectedOrganization,
+                    otherOrganization,
+                ]);
+                userModel.findSessionUserAndOrgByUuid.mockResolvedValueOnce(
+                    userInOtherOrganization,
+                );
+
+                await expect(
+                    createLinkingService(
+                        'enableOidcToEmailLinking',
+                    ).loginWithOpenId(claimingOpenIdUser, undefined, undefined),
+                ).resolves.toEqual(userInOtherOrganization);
+
+                expect(
+                    userModel.findSessionUserAndOrgByUuid,
+                ).toHaveBeenCalledExactlyOnceWith(
+                    sessionUser.userUuid,
+                    otherOrganization.organizationUuid,
+                );
+                expect(
+                    openIdIdentityModel.createIdentity,
+                ).toHaveBeenCalledExactlyOnceWith(
+                    expect.objectContaining({ userId: sessionUser.userId }),
+                );
+            });
+
+            test('logs a first sign-in matched by another identity into that organization', async () => {
+                userModel.getOrganizationsForUser.mockResolvedValueOnce([
+                    selectedOrganization,
+                    otherOrganization,
+                ]);
+                userModel.findSessionUserAndOrgByUuid.mockResolvedValueOnce(
+                    userInOtherOrganization,
+                );
+
+                await expect(
+                    createLinkingService('enableOidcLinking').loginWithOpenId(
+                        claimingOpenIdUser,
+                        undefined,
+                        undefined,
+                    ),
+                ).resolves.toEqual(userInOtherOrganization);
+
+                expect(
+                    openIdIdentityModel.createIdentity,
+                ).toHaveBeenCalledExactlyOnceWith(
+                    expect.objectContaining({ userId: sessionUser.userId }),
+                );
+            });
+
+            test('refuses a first sign-in for an organization the user is not in, before linking', async () => {
+                openIdIdentityModel.findIdentitiesByEmail.mockResolvedValueOnce(
+                    [],
+                );
+                userModel.getOrganizationsForUser.mockResolvedValueOnce([
+                    selectedOrganization,
+                ]);
+
+                await expect(
+                    createLinkingService(
+                        'enableOidcToEmailLinking',
+                    ).loginWithOpenId(claimingOpenIdUser, undefined, undefined),
+                ).rejects.toThrow(notAMember);
+
+                expect(
+                    openIdIdentityModel.createIdentity,
+                ).not.toHaveBeenCalled();
+            });
+
+            test('keeps a first sign-in that is already in that organization as found', async () => {
+                openIdIdentityModel.findIdentitiesByEmail.mockResolvedValueOnce(
+                    [],
+                );
+                userModel.findSessionUserByPrimaryEmail.mockResolvedValueOnce(
+                    userInOtherOrganization,
+                );
+
+                await expect(
+                    createLinkingService(
+                        'enableOidcToEmailLinking',
+                    ).loginWithOpenId(claimingOpenIdUser, undefined, undefined),
+                ).resolves.toEqual(userInOtherOrganization);
+
+                expect(
+                    userModel.getOrganizationsForUser,
+                ).not.toHaveBeenCalled();
+                expect(
+                    userModel.findSessionUserAndOrgByUuid,
+                ).not.toHaveBeenCalled();
             });
         });
     });
