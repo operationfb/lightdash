@@ -99,7 +99,10 @@
     width: 100%;
 }
 
-.markdown {
+/* The previewer's stylesheet loads with its lazy chunk, after this one, so the
+   second selector outranks its `.wmde-markdown` rather than relying on order. */
+.markdown,
+.markdown:global(.wmde-markdown) {
     background-color: transparent;
     color: var(--toast-text);
     font-size: 13px;

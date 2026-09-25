@@ -4,7 +4,9 @@
     line-height: 18px;
 }
 
-.markdown {
+/* See .markdown in useToaster.module.css. */
+.markdown,
+.markdown:global(.wmde-markdown) {
     background-color: transparent;
     color: var(--mantine-color-ldGray-7);
     font-size: 13px;
