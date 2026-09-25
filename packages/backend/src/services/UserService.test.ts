@@ -597,6 +597,36 @@ describe('UserService', () => {
                     userModel.findSessionUserAndOrgByUuid,
                 ).not.toHaveBeenCalled();
             });
+
+            test('links a first sign-in to its own account, not to the one signed in', async () => {
+                const someoneElse: SessionUser = {
+                    ...authenticatedUser,
+                    userUuid: 'someone-else-uuid',
+                    email: 'someone@else.com',
+                };
+                openIdIdentityModel.findIdentitiesByEmail.mockResolvedValueOnce(
+                    [],
+                );
+                userModel.findSessionUserByPrimaryEmail.mockResolvedValueOnce(
+                    userInOtherOrganization,
+                );
+
+                await expect(
+                    createLinkingService(
+                        'enableOidcToEmailLinking',
+                    ).loginWithOpenId(
+                        claimingOpenIdUser,
+                        someoneElse,
+                        undefined,
+                    ),
+                ).resolves.toEqual(userInOtherOrganization);
+
+                expect(
+                    openIdIdentityModel.createIdentity,
+                ).toHaveBeenCalledExactlyOnceWith(
+                    expect.objectContaining({ userId: sessionUser.userId }),
+                );
+            });
         });
     });
 

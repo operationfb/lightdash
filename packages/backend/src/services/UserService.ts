@@ -1001,7 +1001,14 @@ export class UserService extends BaseService {
         try {
             const loggedInUser = await this.loginWithOpenIdInner(
                 openIdUser,
-                authenticatedUser,
+                // KONTALA: a provider that names the organization also says
+                // who is signing in. The session already in the browser may be
+                // someone else's, since signing out of Kontala leaves it
+                // behind, and linking a new identity to it would give that
+                // identity their account for good.
+                openIdUser.openId.organizationUuid
+                    ? undefined
+                    : authenticatedUser,
                 inviteCode,
                 refreshToken,
                 options,
