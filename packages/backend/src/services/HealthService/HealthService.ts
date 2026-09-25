@@ -59,6 +59,17 @@ export class HealthService extends BaseService {
         return this.lightdashConfig.license.licenseKey !== undefined;
     }
 
+    private async requiresMigrationFromStatus(): Promise<boolean> {
+        const { status, currentVersion } =
+            await this.migrationModel.getMigrationStatus();
+        if (status > 0) {
+            console.warn(
+                `There are more DB migrations than defined in the code (you are running old code against a newer DB). Current version: ${currentVersion}`,
+            );
+        }
+        return status < 0;
+    }
+
     async getHealthState(
         user: SessionUser | undefined,
         _options: { skipMigrationCheck: boolean } = {
@@ -85,17 +96,17 @@ export class HealthService extends BaseService {
               };
 
         const migrationStartTime = performance.now();
-        const { status: migrationStatus, currentVersion } =
-            await this.migrationModel.getMigrationStatus();
-        const migrationExecutionTime = performance.now() - migrationStartTime;
-        const requiresMigration = migrationStatus < 0;
         const readiness = await this.readinessService?.getReadiness();
-
-        if (migrationStatus > 0) {
-            console.warn(
-                `There are more DB migrations than defined in the code (you are running old code against a newer DB). Current version: ${currentVersion}`,
-            );
-        }
+        // KONTALA: from the readiness check when the app has one. It already
+        // runs knex's migration status for the startup probe and caches the
+        // answer, and running it again on every /health call cost the SPA's
+        // first request five database round trips (the skipMigrationCheck the
+        // frontend sends is deliberately not honoured).
+        const requiresMigration = readiness
+            ? readiness.status === 'not_ready' &&
+              readiness.reason === 'schema_pending'
+            : await this.requiresMigrationFromStatus();
+        const migrationExecutionTime = performance.now() - migrationStartTime;
 
         const hasOrgsStartTime = performance.now();
         const requiresOrgRegistration =
@@ -113,7 +124,7 @@ export class HealthService extends BaseService {
             performance.now() - getDockerHubVersionStartTime;
 
         this.logger.info(
-            `Health check execution times: getMigrationStatus ${migrationExecutionTime.toFixed(
+            `Health check execution times: migration state ${migrationExecutionTime.toFixed(
                 2,
             )}ms, hasOrgs ${hasOrgsExecutionTime.toFixed(
                 2,

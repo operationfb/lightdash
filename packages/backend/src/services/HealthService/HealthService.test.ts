@@ -278,6 +278,39 @@ describe('health', () => {
         });
     });
 
+    describe('with a readiness check', () => {
+        const serviceWithReadiness = (result: ReadinessResult) =>
+            new HealthService({
+                organizationModel:
+                    organizationModel as unknown as OrganizationModel,
+                lightdashConfig: lightdashConfigMock,
+                licenseService,
+                migrationModel: migrationModel as unknown as MigrationModel,
+                organizationSettingsModel:
+                    organizationSettingsModel as unknown as OrganizationSettingsModel,
+                readinessService: { getReadiness: vi.fn(async () => result) },
+            });
+
+        it('takes requiresMigration from it instead of checking migrations again', async () => {
+            await expect(
+                serviceWithReadiness({
+                    status: 'not_ready',
+                    reason: 'schema_pending',
+                }).getHealthState(undefined),
+            ).resolves.toEqual({ ...BaseResponse, requiresMigration: true });
+            expect(migrationModel.getMigrationStatus).not.toHaveBeenCalled();
+        });
+
+        it('reports no migration when ready', async () => {
+            await expect(
+                serviceWithReadiness({ status: 'ready' }).getHealthState(
+                    undefined,
+                ),
+            ).resolves.toEqual(BaseResponse);
+            expect(migrationModel.getMigrationStatus).not.toHaveBeenCalled();
+        });
+    });
+
     it('reports a parked migration warning', async () => {
         const getReadiness = vi.fn(
             async (): Promise<ReadinessResult> => ({
