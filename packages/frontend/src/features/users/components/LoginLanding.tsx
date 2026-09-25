@@ -592,7 +592,12 @@ const Login: FC<{}> = () => {
 
     const isFormLoading =
         isLoginOptionsLoadingDebounced ||
-        (loginOptionsSuccess && loginOptions.forceRedirect === true) ||
+        // KONTALA: only while the forced redirect is still going to happen.
+        // After a refusal the effect above holds it back, and the form has to
+        // stay usable so the reader can try again.
+        (loginOptionsSuccess &&
+            loginOptions.forceRedirect === true &&
+            !flashMessages.data?.error) ||
         isLoading ||
         isSuccess;
 
