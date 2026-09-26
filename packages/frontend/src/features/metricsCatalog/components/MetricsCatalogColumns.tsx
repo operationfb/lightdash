@@ -145,7 +145,9 @@ export const MetricsCatalogColumns: ContentTableColumnDef<CatalogField>[] = [
                         },
                     })}
                 >
-                    {renderedCellValue}
+                    <Text span inherit truncate="end">
+                        {renderedCellValue}
+                    </Text>
                 </Button>
             );
         },
