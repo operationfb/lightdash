@@ -760,9 +760,11 @@ export const ContentTable = <TData extends RowData>({
         }
     }, [options.rowVirtualizerInstanceRef, rowVirtualizer]);
 
+    // Back to the top on a new sort or filter. By offset, not scrollToIndex(0),
+    // which warns when the list is (or soon becomes) empty.
     useEffect(() => {
         if (!enableVirtualization) return;
-        rowVirtualizer.scrollToIndex(0);
+        rowVirtualizer.scrollToOffset(0);
     }, [enableVirtualization, globalFilterState, rowVirtualizer, sortingState]);
 
     const handleContainerRef = useCallback(
