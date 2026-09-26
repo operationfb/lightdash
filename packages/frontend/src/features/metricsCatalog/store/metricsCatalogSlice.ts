@@ -66,15 +66,25 @@ export function convertStateToTableColumnConfig(
 export function convertTableColumnConfigToState(
     columnConfig: SpotlightTableConfig['columnConfig'],
 ): MetricsCatalogState['columnConfig'] {
-    // Merge with defaults to ensure all columns exist (handles old configs missing new columns)
-    const mergedConfig = DEFAULT_SPOTLIGHT_TABLE_COLUMN_CONFIG.map(
-        (defaultCol) => {
-            const savedCol = columnConfig.find(
-                (c) => c.column === defaultCol.column,
-            );
-            return savedCol ?? defaultCol;
-        },
+    // KONTALA: saved columns keep their saved order. A column the config lacks
+    // (all of them when nothing is saved) goes in after its default neighbour.
+    const defaults = DEFAULT_SPOTLIGHT_TABLE_COLUMN_CONFIG;
+    const indexOf = (
+        config: SpotlightTableConfig['columnConfig'],
+        column: SpotlightTableColumns | undefined,
+    ) => config.findIndex((c) => c.column === column);
+
+    const mergedConfig = columnConfig.filter(
+        (c, index) =>
+            indexOf(defaults, c.column) !== -1 &&
+            indexOf(columnConfig, c.column) === index,
     );
+    defaults.forEach((defaultCol, defaultIndex) => {
+        if (indexOf(mergedConfig, defaultCol.column) !== -1) return;
+        const previousColumn = defaults[defaultIndex - 1]?.column;
+        const insertAt = indexOf(mergedConfig, previousColumn) + 1;
+        mergedConfig.splice(insertAt, 0, defaultCol);
+    });
 
     return {
         columnOrder: mergedConfig.map((column) => column.column),
