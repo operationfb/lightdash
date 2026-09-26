@@ -217,8 +217,9 @@ export class GitIntegrationService extends BaseService {
                 'User is not part of an organization.',
             );
         }
+        // KONTALA: no installation answers `enabled: false`, not a 404.
         const installationId =
-            await this.githubAppInstallationsModel.getInstallationId(
+            await this.githubAppInstallationsModel.findInstallationId(
                 user.organizationUuid,
             );
         return {
