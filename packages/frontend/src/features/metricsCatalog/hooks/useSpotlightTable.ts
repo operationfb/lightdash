@@ -1,6 +1,4 @@
 import {
-    DEFAULT_SPOTLIGHT_TABLE_COLUMN_CONFIG,
-    isApiError,
     type ApiError,
     type ApiGetSpotlightTableConfig,
     type ApiSuccessEmpty,
@@ -14,26 +12,18 @@ type UseSpotlightTableConfigOptions = {
     projectUuid: string | undefined;
 };
 
+// KONTALA: a project with no saved layout answers an empty columnConfig, which
+// convertTableColumnConfigToState turns into the default layout.
 const getSpotlightTableConfig = async ({
     projectUuid,
 }: {
     projectUuid: string;
 }) => {
-    try {
-        return await lightdashApi<ApiGetSpotlightTableConfig['results']>({
-            url: `/projects/${projectUuid}/spotlight/table/config`,
-            method: 'GET',
-            body: undefined,
-        });
-    } catch (e) {
-        if (isApiError(e) && e.error.statusCode === 404) {
-            return {
-                columnConfig: DEFAULT_SPOTLIGHT_TABLE_COLUMN_CONFIG,
-            };
-        }
-
-        throw e;
-    }
+    return lightdashApi<ApiGetSpotlightTableConfig['results']>({
+        url: `/projects/${projectUuid}/spotlight/table/config`,
+        method: 'GET',
+        body: undefined,
+    });
 };
 
 export const useSpotlightTableConfig = ({

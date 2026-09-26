@@ -1,6 +1,5 @@
 import {
     ApiErrorPayload,
-    NotFoundError,
     type ApiGetSpotlightTableConfig,
     type ApiSuccessEmpty,
     type SpotlightTableConfig,
@@ -60,7 +59,9 @@ export class SpotlightController extends BaseController {
     }
 
     /**
-     * Get spotlight table configuration
+     * Get spotlight table configuration. A project without a saved
+     * configuration answers an empty columnConfig; clients show every column
+     * the configuration leaves out with its default settings.
      * @summary Get spotlight table config
      */
     @Middlewares([allowApiKeyAuthentication, isAuthenticated])

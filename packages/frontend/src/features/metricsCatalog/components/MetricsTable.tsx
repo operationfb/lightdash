@@ -295,9 +295,14 @@ export const MetricsTable: FC<MetricsTableProps> = ({
     );
 
     // Only fetch saved config on initial load
-    const { data: spotlightConfig } = useSpotlightTableConfig({
-        projectUuid,
-    });
+    const { data: spotlightConfig, isError: isSpotlightConfigError } =
+        useSpotlightTableConfig({
+            projectUuid,
+        });
+    // KONTALA: a layout that fails to load (an older server's 404 when none is
+    // saved, say) shows the default columns rather than none.
+    const loadedSpotlightConfig =
+        isSpotlightConfigError && !spotlightConfig ? null : spotlightConfig;
 
     const columnVisibilityWithPermissions = useMemo(
         () => ({
@@ -544,10 +549,10 @@ export const MetricsTable: FC<MetricsTableProps> = ({
 
     // Initialize Redux state from API config whenever we load it via the API
     useEffect(() => {
-        if (spotlightConfig) {
-            dispatch(setColumnConfig(spotlightConfig));
+        if (loadedSpotlightConfig !== undefined) {
+            dispatch(setColumnConfig(loadedSpotlightConfig));
         }
-    }, [dispatch, spotlightConfig]);
+    }, [dispatch, loadedSpotlightConfig]);
 
     useEffect(
         function handleRefetchOnViewChange() {

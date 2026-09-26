@@ -1,7 +1,6 @@
 import { subject } from '@casl/ability';
 import {
     ForbiddenError,
-    NotFoundError,
     type Account,
     type SpotlightTableConfig,
 } from '@lightdash/common';
@@ -66,7 +65,7 @@ export class SpotlightService extends BaseService {
     async getSpotlightTableConfig(
         account: Account,
         projectUuid: string,
-    ): Promise<SpotlightTableConfig> {
+    ): Promise<Pick<SpotlightTableConfig, 'columnConfig'>> {
         const projectSummary = await this.projectModel.getSummary(projectUuid);
         const auditedAbility = this.createAuditedAbility(account);
         if (
@@ -90,13 +89,9 @@ export class SpotlightService extends BaseService {
                 projectUuid,
             );
 
-        if (!tableConfig) {
-            throw new NotFoundError(
-                `Table config not found for project ${projectUuid}`,
-            );
-        }
-
-        return tableConfig;
+        // KONTALA: nothing saved answers an empty columnConfig, not a 404.
+        // Clients show every column the config leaves out with its default.
+        return { columnConfig: tableConfig?.columnConfig ?? [] };
     }
 
     async resetSpotlightTableConfig(
