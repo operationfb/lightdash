@@ -78,6 +78,45 @@ describe('LicenseAwareQueryClient', () => {
         expect(mockApi).not.toHaveBeenCalled();
     });
 
+    it('keeps refused queries out of the console', async () => {
+        const { result } = renderHook(useEnterpriseQueries, {
+            wrapper: createWrapper(withHealth(false)),
+        });
+
+        await waitFor(() => {
+            Object.values(result.current).forEach((query) =>
+                expect(query.isError).toBe(true),
+            );
+        });
+        expect(console.error).not.toHaveBeenCalledWith(
+            result.current.settings.error,
+        );
+    });
+
+    it('still logs other failed queries', async () => {
+        const failure = {
+            status: 'error',
+            error: {
+                name: 'NotFoundError',
+                statusCode: 404,
+                message: 'Not found',
+                data: {},
+            },
+        };
+        const { result } = renderHook(
+            () =>
+                useQuery({
+                    queryKey: ['projects'],
+                    queryFn: () => Promise.reject(failure),
+                    retry: false,
+                }),
+            { wrapper: createWrapper(withHealth(false)) },
+        );
+
+        await waitFor(() => expect(result.current.isError).toBe(true));
+        expect(console.error).toHaveBeenCalledWith(failure);
+    });
+
     it('does not run a refused query again for components mounted later', async () => {
         const queryClient = withHealth(false);
         const wrapper = createWrapper(queryClient);

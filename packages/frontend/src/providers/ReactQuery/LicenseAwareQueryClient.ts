@@ -3,6 +3,7 @@ import {
     hashQueryKey,
     QueryClient,
     type DefaultedQueryObserverOptions,
+    type Logger,
     type QueryKey,
     type QueryObserverOptions,
 } from '@tanstack/react-query';
@@ -19,6 +20,8 @@ const ENTERPRISE_QUERY_KEYS: ReadonlySet<unknown> = new Set([
 
 const HEALTH_QUERY_HASH = hashQueryKey(['health']);
 
+const refusals = new WeakSet<ApiError>();
+
 // The server's own answer, so callers take the path they already take for it.
 const refuseEnterpriseQuery = (): Promise<never> => {
     const refusal: ApiError = {
@@ -30,8 +33,18 @@ const refuseEnterpriseQuery = (): Promise<never> => {
             data: {},
         },
     };
+    refusals.add(refusal);
     return Promise.reject(refusal);
 };
+
+// React Query logs every failed query in development; a refusal is expected.
+const withoutRefusals = (logger: Logger): Logger => ({
+    log: (...args) => logger.log(...args),
+    warn: (...args) => logger.warn(...args),
+    error: (...args) => {
+        if (!refusals.has(args[0])) logger.error(...args);
+    },
+});
 
 /**
  * KONTALA: fails the Enterprise-only queries without sending them once health
@@ -78,6 +91,11 @@ export class LicenseAwareQueryClient extends QueryClient {
             // Refused once, not again for every component that mounts it.
             retryOnMount: false,
         };
+    }
+
+    // Every query and mutation is built with the logger returned here.
+    override getLogger(): Logger {
+        return withoutRefusals(super.getLogger());
     }
 
     private isRefused(queryKey: QueryKey | undefined): boolean {
