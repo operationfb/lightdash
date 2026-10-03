@@ -43,6 +43,9 @@ export const warehouseValueValidators: Record<
         project: hasNoWhiteSpaces('Project'),
         location: hasNoWhiteSpaces('Location'),
         executionProject: hasNoWhiteSpaces('Execution project'),
+        impersonateServiceAccount: hasNoWhiteSpaces(
+            'Impersonate service account',
+        ),
     },
     [WarehouseTypes.DATABRICKS]: {
         database: hasNoWhiteSpaces('Schema'),
@@ -181,6 +184,9 @@ export const createWarehouseValueValidators: Record<
         project: required('Project', hasNoWhiteSpaces),
         location: hasNoWhiteSpaces('Location'),
         executionProject: hasNoWhiteSpaces('Execution project'),
+        impersonateServiceAccount: hasNoWhiteSpaces(
+            'Impersonate service account',
+        ),
     },
     [WarehouseTypes.DATABRICKS]: {
         database: required('Schema', hasNoWhiteSpaces),

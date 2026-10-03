@@ -101,6 +101,9 @@ export type CreateBigqueryCredentials = {
     dataTimezone?: string;
     executionProject?: string;
     accessUrl?: string;
+    // A service account email: queries run as that account, through the
+    // credentials above, which need iam.serviceAccounts.getAccessToken on it.
+    impersonateServiceAccount?: string;
 };
 export const sensitiveCredentialsFieldNames = [
     'user',

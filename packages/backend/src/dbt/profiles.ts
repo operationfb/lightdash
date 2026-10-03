@@ -46,6 +46,9 @@ const credentialsTarget = (
                     maximum_bytes_billed:
                         credentials.maximumBytesBilled || undefined, // form allows empty string, converting to undefined here
                     execution_project: credentials.executionProject,
+                    impersonate_service_account:
+                        credentials.impersonateServiceAccount?.trim() ||
+                        undefined,
                 },
                 environment: {},
             };

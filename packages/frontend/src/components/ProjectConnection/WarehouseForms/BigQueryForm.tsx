@@ -306,6 +306,9 @@ const BigQueryForm: FC<{
     const executionProjectField = form.getInputProps(
         'warehouse.executionProject',
     );
+    const impersonateServiceAccountField = form.getInputProps(
+        'warehouse.impersonateServiceAccount',
+    );
     const accessUrlField = form.getInputProps('warehouse.accessUrl');
     if (form.values.warehouse?.type !== WarehouseTypes.BIGQUERY) {
         throw new Error('Bigquery form is not used for this warehouse type');
@@ -826,6 +829,35 @@ const BigQueryForm: FC<{
                                     {...executionProjectField}
                                     onChange={onChangeFactory(
                                         executionProjectField.onChange,
+                                    )}
+                                    disabled={disabled}
+                                />
+                                <TextInput
+                                    name="warehouse.impersonateServiceAccount"
+                                    label="Impersonate service account"
+                                    placeholder="e.g. name@project.iam.gserviceaccount.com"
+                                    description={
+                                        <p>
+                                            Run queries as this service account.
+                                            The credentials above need
+                                            permission to impersonate it, which
+                                            the Service Account Token Creator
+                                            role gives. You can see more details
+                                            in{' '}
+                                            <Anchor
+                                                inherit
+                                                target="_blank"
+                                                href="https://docs.cloud.google.com/iam/docs/service-account-impersonation"
+                                                rel="noreferrer"
+                                            >
+                                                Google Cloud documentation
+                                            </Anchor>
+                                            .
+                                        </p>
+                                    }
+                                    {...impersonateServiceAccountField}
+                                    onChange={onChangeFactory(
+                                        impersonateServiceAccountField.onChange,
                                     )}
                                     disabled={disabled}
                                 />

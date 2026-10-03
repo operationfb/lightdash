@@ -10,6 +10,7 @@ import {
     Job,
     QueryResultsOptions,
     QueryRowsResponse,
+    type BigQueryOptions,
 } from '@google-cloud/bigquery';
 import bigquery from '@google-cloud/bigquery/build/src/types';
 import {
@@ -58,6 +59,7 @@ import {
     processPromisesInBatches,
 } from '../utils/processPromisesInBatches';
 import { normalizeUnicode } from '../utils/sql';
+import { getBigqueryImpersonatedClient } from './bigqueryImpersonation';
 import WarehouseBaseClient from './WarehouseBaseClient';
 import WarehouseBaseSqlBuilder from './WarehouseBaseSqlBuilder';
 
@@ -430,6 +432,23 @@ const getGoogleOauthTokenError = (
     };
 };
 
+// Who the client queries as: the account the connection impersonates, when it
+// names one, and otherwise the connection's own credentials.
+const getBigqueryAuthOptions = (
+    credentials: CreateBigqueryCredentials,
+): Pick<BigQueryOptions, 'authClient' | 'credentials'> => {
+    const impersonated = getBigqueryImpersonatedClient(credentials);
+    if (impersonated) {
+        return { authClient: impersonated };
+    }
+    if (credentials.authenticationType === BigqueryAuthenticationType.ADC) {
+        // Support ADC via workforce identity federation / external_account configuration.
+        // In this case we should rely on ADC at runtime and not pass explicit credentials.
+        return {};
+    }
+    return { credentials: credentials.keyfileContents };
+};
+
 export class BigqueryWarehouseClient extends WarehouseBaseClient<CreateBigqueryCredentials> {
     private static readonly MAX_LABELS = 64;
 
@@ -445,13 +464,7 @@ export class BigqueryWarehouseClient extends WarehouseBaseClient<CreateBigqueryC
                 maxRetries: credentials.retries,
                 apiEndpoint: credentials.accessUrl || undefined,
 
-                ...(credentials.authenticationType ===
-                BigqueryAuthenticationType.ADC
-                    ? {
-                          // Support ADC via workforce identity federation / external_account configuration.
-                          // In this case we should rely on ADC at runtime and not pass explicit credentials.
-                      }
-                    : { credentials: credentials.keyfileContents }),
+                ...getBigqueryAuthOptions(credentials),
             });
         } catch (e: unknown) {
             throw new WarehouseConnectionError(
