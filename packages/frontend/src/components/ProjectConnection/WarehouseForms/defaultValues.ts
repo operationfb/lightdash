@@ -35,6 +35,7 @@ export const BigQueryDefaultValues: CreateBigqueryCredentials = {
     // @ts-expect-error we need to set it as empty string to avoid overwritting saved value
     keyfileContents: '', // Not needed for sso, we will load the refresh token from the user in the backend
     executionProject: '',
+    impersonateServiceAccount: '',
     timeoutSeconds: 300,
     priority: 'interactive',
     retries: 3,

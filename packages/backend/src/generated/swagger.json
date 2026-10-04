@@ -31855,6 +31855,9 @@
                     },
                     "executionProject": {
                         "type": "string"
+                    },
+                    "impersonateServiceAccount": {
+                        "type": "string"
                     }
                 },
                 "required": ["type", "project", "dataset"],
@@ -32841,6 +32844,9 @@
             },
             "CreateBigqueryCredentials": {
                 "properties": {
+                    "impersonateServiceAccount": {
+                        "type": "string"
+                    },
                     "accessUrl": {
                         "type": "string"
                     },

@@ -31653,6 +31653,13 @@ const models: TsoaRoute.Models = {
                             { dataType: 'undefined' },
                         ],
                     },
+                    impersonateServiceAccount: {
+                        dataType: 'union',
+                        subSchemas: [
+                            { dataType: 'string' },
+                            { dataType: 'undefined' },
+                        ],
+                    },
                 },
                 validators: {},
             },
@@ -32748,6 +32755,7 @@ const models: TsoaRoute.Models = {
         type: {
             dataType: 'nestedObjectLiteral',
             nestedProperties: {
+                impersonateServiceAccount: { dataType: 'string' },
                 accessUrl: { dataType: 'string' },
                 executionProject: { dataType: 'string' },
                 dataTimezone: { dataType: 'string' },

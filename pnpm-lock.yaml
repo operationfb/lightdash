@@ -1886,6 +1886,9 @@ importers:
       '@lightdash/common':
         specifier: workspace:*
         version: link:../common
+      google-auth-library:
+        specifier: 10.7.0
+        version: 10.7.0(supports-color@9.1.0)
       node-fetch:
         specifier: 2.7.0
         version: 2.7.0(encoding@0.1.13)

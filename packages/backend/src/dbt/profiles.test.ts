@@ -29,6 +29,43 @@ const targetFor = (credentials: CreateWarehouseCredentials) => {
     return parsed[LIGHTDASH_PROFILE_NAME].outputs[LIGHTDASH_TARGET_NAME];
 };
 
+describe('a BigQuery profile acts as the account its connection names', () => {
+    const adc: CreateWarehouseCredentials = {
+        type: WarehouseTypes.BIGQUERY,
+        project: 'acme-analytics',
+        dataset: 'kontala_acme',
+        authenticationType: BigqueryAuthenticationType.ADC,
+        keyfileContents: {},
+        timeoutSeconds: undefined,
+        priority: undefined,
+        retries: undefined,
+        location: 'EU',
+        maximumBytesBilled: undefined,
+    };
+
+    it('names the account for dbt to impersonate', () => {
+        expect(
+            targetFor({
+                ...adc,
+                impersonateServiceAccount:
+                    'kt-acme@kontala-byo-eu.iam.gserviceaccount.com',
+            }),
+        ).toMatchObject({
+            method: 'oauth',
+            impersonate_service_account:
+                'kt-acme@kontala-byo-eu.iam.gserviceaccount.com',
+        });
+    });
+
+    it('impersonates nobody when the connection names no account', () => {
+        for (const impersonateServiceAccount of [undefined, '', ' ']) {
+            expect(
+                targetFor({ ...adc, impersonateServiceAccount }),
+            ).not.toHaveProperty('impersonate_service_account');
+        }
+    });
+});
+
 describe('a dbt source compiles against its own warehouse location', () => {
     it('writes the location into a BigQuery profile', () => {
         expect(

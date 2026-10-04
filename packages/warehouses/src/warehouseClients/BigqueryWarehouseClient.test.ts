@@ -17,6 +17,9 @@ import {
     type CreateBigqueryCredentials,
     type WarehouseNestedColumnShape,
 } from '@lightdash/common';
+import { GoogleAuth, type AuthClient } from 'google-auth-library';
+import { createServer, type Server } from 'http';
+import type { AddressInfo } from 'net';
 import type { Mock, MockInstance } from 'vitest';
 import {
     BigquerySqlBuilder,
@@ -179,6 +182,84 @@ describe('BigqueryWarehouseClient', () => {
                 'myStringColumn',
             ),
         ).toBeUndefined();
+    });
+});
+
+describe('BigqueryWarehouseClient with impersonateServiceAccount', () => {
+    const ACCOUNT = 'kt-acme@kontala-byo-eu.iam.gserviceaccount.com';
+    let server: Server;
+    let endpoint: string;
+    let requests: Array<{ path?: string; authorization?: string }>;
+    let getClient: MockInstance<GoogleAuth['getClient']>;
+
+    beforeEach(async () => {
+        requests = [];
+        server = createServer((req, res) => {
+            requests.push({
+                path: req.url,
+                authorization: req.headers.authorization,
+            });
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ datasets: [] }));
+        });
+        await new Promise<void>((resolve) => {
+            server.listen(0, '127.0.0.1', resolve);
+        });
+        endpoint = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+
+        // The connection's own credentials, as GoogleAuth would find them,
+        // and the token IAM Credentials gives them for the account. The
+        // GoogleAuth the BigQuery client wraps its auth client in resolves
+        // as it would.
+        const resolve = GoogleAuth.prototype.getClient;
+        getClient = vi
+            .spyOn(GoogleAuth.prototype, 'getClient')
+            .mockImplementation(async function resolveSource(this: GoogleAuth) {
+                if (this.cachedCredential) {
+                    return resolve.call(this);
+                }
+                return {
+                    getAccessToken: async () => ({
+                        token: 'the connection itself',
+                    }),
+                    request: async () => ({
+                        data: {
+                            accessToken: 'as the account',
+                            expireTime: new Date(
+                                Date.now() + 3600_000,
+                            ).toISOString(),
+                        },
+                    }),
+                } as unknown as AuthClient;
+            });
+    });
+
+    afterEach(async () => {
+        getClient.mockRestore();
+        await new Promise((resolve) => {
+            server.close(resolve);
+        });
+    });
+
+    it('sends its requests as the account, in the execution project', async () => {
+        const warehouse = new BigqueryWarehouseClient({
+            ...credentials,
+            authenticationType: BigqueryAuthenticationType.ADC,
+            executionProject: 'acme-analytics',
+            accessUrl: endpoint,
+            impersonateServiceAccount: ACCOUNT,
+        });
+
+        await warehouse.client.getDatasets();
+
+        expect(requests).toEqual([
+            {
+                path: expect.stringMatching(
+                    /^\/bigquery\/v2\/projects\/acme-analytics\/datasets/,
+                ),
+                authorization: 'Bearer as the account',
+            },
+        ]);
     });
 });
 
