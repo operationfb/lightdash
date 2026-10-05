@@ -74,6 +74,23 @@ const renderWithMantine = (component: React.ReactElement) => {
     return render(<MantineProvider env="test">{component}</MantineProvider>);
 };
 
+const renderBarCell = (value: number, minMax: { min: number; max: number }) =>
+    renderWithMantine(
+        getFormattedValueCell(
+            createMockCellContext({
+                columnId: 'revenue',
+                value: { raw: value, formatted: `${value}` },
+                minMaxMap: { revenue: minMax },
+                columnProperties: { revenue: { displayStyle: 'bar' } },
+            }),
+        ) as React.ReactElement,
+    );
+
+// Bars are the only elements with a border-radius. Read their width exactly:
+// a style*="width: 100%" match also hits every bar's "max-width: 100%".
+const getBar = (container: HTMLElement) =>
+    container.querySelector<HTMLElement>('div[style*="border-radius"]');
+
 describe('JSON cell inspection', () => {
     test('detects objects and arrays without parsing strings', () => {
         expect(getJsonCellValue({ foo: 'bar' })).toEqual({ foo: 'bar' });
@@ -534,74 +551,55 @@ describe('getFormattedValueCell - Bar Chart Display', () => {
     });
 
     test('should calculate bar width percentage correctly', () => {
+        // Bars grow from zero, so the width is value / max whatever the min
         const testCases = [
-            { value: 0, min: 0, max: 100, expected: 0 },
-            { value: 50, min: 0, max: 100, expected: 50 },
-            { value: 100, min: 0, max: 100, expected: 100 },
-            { value: 25, min: 0, max: 100, expected: 25 },
-            { value: 150, min: 100, max: 200, expected: 50 }, // Offset range
-            { value: 75, min: 50, max: 100, expected: 50 }, // Offset range
+            { value: 50, min: 0, max: 100, expected: '50%' },
+            { value: 100, min: 0, max: 100, expected: '100%' },
+            { value: 25, min: 0, max: 100, expected: '25%' },
+            { value: 150, min: 100, max: 200, expected: '75%' },
+            { value: 75, min: 50, max: 100, expected: '75%' },
         ];
 
         testCases.forEach(({ value, min, max, expected }) => {
-            // Skip zero since it doesn't render a bar
-            if (value === 0) return;
+            const { container } = renderBarCell(value, { min, max });
 
-            const context = createMockCellContext({
-                columnId: 'revenue',
-                value: {
-                    raw: value,
-                    formatted: `$${value}`,
-                },
-                minMaxMap: {
-                    revenue: { min, max },
-                },
-                columnProperties: {
-                    revenue: { displayStyle: 'bar' },
-                },
-            });
-
-            const result = getFormattedValueCell(context);
-            const { container } = renderWithMantine(
-                result as React.ReactElement,
-            );
-
-            const barElement = container.querySelector(
-                `div[style*="width: ${expected}%"]`,
-            );
-            expect(barElement).toBeTruthy();
-            const style = barElement?.getAttribute('style') || '';
-            expect(style).toContain(`width: ${expected}%`);
-            // Should have background color
-            expect(style).toContain('background');
+            const style = getBar(container)?.style;
+            expect(style?.width).toBe(expected);
+            expect(style?.background).toBeTruthy();
         });
     });
 
-    test('should handle edge case when range is zero', () => {
-        const context = createMockCellContext({
-            columnId: 'revenue',
-            value: {
-                raw: 50,
-                formatted: '$50',
-            },
-            minMaxMap: {
-                revenue: { min: 50, max: 50 }, // Same min and max
-            },
-            columnProperties: {
-                revenue: { displayStyle: 'bar' },
-            },
-        });
+    test('anchors positive-only bars at zero, not at the column minimum', () => {
+        // The smallest value is half the largest, so it is a half-width bar,
+        // not a min-width sliver
+        const { container } = renderBarCell(10, { min: 10, max: 20 });
 
-        const result = getFormattedValueCell(context);
-        const { container } = renderWithMantine(result as React.ReactElement);
+        expect(getBar(container)?.style.width).toBe('50%');
+    });
 
-        const barElement = container.querySelector('div[style*="width: 0%"]');
-        // Should render with 0% width when range is zero
-        expect(barElement).toBeTruthy();
-        const style = barElement?.getAttribute('style') || '';
-        expect(style).toContain('width: 0%');
-        // Should have background color
-        expect(style).toContain('background');
+    test('keeps close values proportional instead of spreading them to 0% and 100%', () => {
+        const { container: smaller } = renderBarCell(50, { min: 50, max: 60 });
+        const { container: larger } = renderBarCell(60, { min: 50, max: 60 });
+
+        expect(parseFloat(getBar(smaller)?.style.width ?? '')).toBeCloseTo(
+            (50 / 60) * 100,
+        );
+        expect(getBar(larger)?.style.width).toBe('100%');
+    });
+
+    test('draws an all-equal positive column at full width, not as slivers', () => {
+        // e.g. four rows of 1 click each
+        const { container } = renderBarCell(1, { min: 1, max: 1 });
+
+        expect(getBar(container)?.style.width).toBe('100%');
+    });
+
+    test('draws an all-equal negative column at full width from the right edge', () => {
+        const { container } = renderBarCell(-1, { min: -1, max: -1 });
+
+        const style = getBar(container)?.style;
+        expect(style?.width).toBe('100%');
+        expect(style?.right).toBe('0%');
     });
 
     test('should render bar with minimum width for very small values', () => {
@@ -636,6 +634,8 @@ describe('getFormattedValueCell - Bar Chart Display', () => {
         // Should have the default color (#5470c6)
         const style = barElement?.getAttribute('style') || '';
         expect(style).toContain('background');
+        // Floored so the smallest positive value is still visible
+        expect(getBar(container)?.style.minWidth).toBeTruthy();
     });
 
     test('reserves a constant label gutter using the widest label in the column (PROD-8457)', () => {
