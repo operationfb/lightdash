@@ -11,6 +11,7 @@ import { MantineProvider } from '@mantine/core';
 import { type CellContext } from '@tanstack/react-table';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, test } from 'vitest';
+import styles from './TableCellBar.module.css';
 import {
     formatCellContent,
     formatResultsTableCell,
@@ -90,6 +91,10 @@ const renderBarCell = (value: number, minMax: { min: number; max: number }) =>
 // a style*="width: 100%" match also hits every bar's "max-width: 100%".
 const getBar = (container: HTMLElement) =>
     container.querySelector<HTMLElement>('div[style*="border-radius"]');
+
+// Bar cells also hold an aria-hidden copy of the column's widest label
+const getVisibleLabel = (text: string) =>
+    screen.getByText(text, { ignore: '[aria-hidden="true"]' });
 
 describe('JSON cell inspection', () => {
     test('detects objects and arrays without parsing strings', () => {
@@ -185,7 +190,7 @@ describe('getFormattedValueCell - Bar Chart Display', () => {
         expect(barElement).toBeTruthy();
 
         // Should display the formatted value
-        expect(screen.getByText('$75')).toBeInTheDocument();
+        expect(getVisibleLabel('$75')).toBeInTheDocument();
 
         // Bar width should be 75% (75 out of 100)
         const style = barElement?.getAttribute('style') || '';
@@ -229,7 +234,7 @@ describe('getFormattedValueCell - Bar Chart Display', () => {
         expect(zeroLine).toBeTruthy();
 
         // Should still display the formatted value
-        expect(screen.getByText('-$25')).toBeInTheDocument();
+        expect(getVisibleLabel('-$25')).toBeInTheDocument();
     });
 
     test('renders a right-growing diverging bar anchored at zero for positive values (PROD-8704)', () => {
@@ -323,7 +328,7 @@ describe('getFormattedValueCell - Bar Chart Display', () => {
         const zeroLine = container.querySelector('div[style*="left: 50%"]');
         expect(zeroLine).toBeTruthy();
 
-        expect(screen.getByText('$0')).toBeInTheDocument();
+        expect(getVisibleLabel('$0')).toBeInTheDocument();
     });
 
     test('all-negative column: bars grow left from the right edge (PROD-8704)', () => {
@@ -470,7 +475,7 @@ describe('getFormattedValueCell - Bar Chart Display', () => {
         expect(barElement).toBeFalsy();
 
         // Should still display the formatted value
-        expect(screen.getByText('$0')).toBeInTheDocument();
+        expect(getVisibleLabel('$0')).toBeInTheDocument();
     });
 
     test('should not render bar when displayStyle is text', () => {
@@ -661,19 +666,16 @@ describe('getFormattedValueCell - Bar Chart Display', () => {
         const result = getFormattedValueCell(context);
         renderWithMantine(result as React.ReactElement);
 
-        // The visible label is this row's own value
-        expect(screen.getByText('998')).toBeInTheDocument();
+        // The visible label is this row's own value, laid over the gutter
+        expect(screen.getByText('998')).toHaveClass(styles.label);
 
         // An invisible sizer reserves space for the column's widest label
         const sizer = screen.getByText('1,700');
-        expect(sizer).toBeInTheDocument();
-        expect(sizer.getAttribute('style') || '').toContain(
-            'visibility: hidden',
-        );
+        expect(sizer).toHaveClass(styles.reservedLabel);
         expect(sizer).toHaveAttribute('aria-hidden', 'true');
     });
 
-    test('does not duplicate the label when this row is the widest', () => {
+    test('reserves the gutter the same way when this row is the widest', () => {
         const context = createMockCellContext({
             columnId: 'revenue',
             value: {
@@ -694,8 +696,13 @@ describe('getFormattedValueCell - Bar Chart Display', () => {
         const result = getFormattedValueCell(context);
         renderWithMantine(result as React.ReactElement);
 
-        // No invisible sizer needed, so the label appears exactly once
-        expect(screen.getAllByText('1,700')).toHaveLength(1);
+        // The sizer, not the visible label, sets the gutter here too, so the
+        // widest row's track matches every other row's
+        const [sizer, label] = screen.getAllByText('1,700');
+        expect(sizer).toHaveClass(styles.reservedLabel);
+        expect(sizer).toHaveAttribute('aria-hidden', 'true');
+        expect(label).toHaveClass(styles.label);
+        expect(label).not.toHaveAttribute('aria-hidden');
     });
 });
 

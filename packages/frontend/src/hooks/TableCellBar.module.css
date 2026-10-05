@@ -1,0 +1,19 @@
+/* Sized by the column's widest label alone, so every row keeps one bar track */
+.labelGutter {
+    display: grid;
+    position: relative;
+    white-space: nowrap;
+}
+
+/* Tabular figures make it at least as wide as any label of the same format */
+.reservedLabel {
+    font-variant-numeric: tabular-nums;
+    visibility: hidden;
+}
+
+/* Proportional figures: Inter's tabular minus sign would stand apart */
+.label {
+    position: absolute;
+    top: 0;
+    right: 0;
+}

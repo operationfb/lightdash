@@ -1,5 +1,6 @@
 import { Box, Text } from '@mantine/core';
 import { type ReactNode } from 'react';
+import styles from './TableCellBar.module.css';
 
 type TableCellBarProps = {
     value: number;
@@ -141,33 +142,13 @@ export const TableCellBar = ({
             }}
         >
             {bar}
-            {/* Label gutter: when this row isn't the widest, an invisible
-                sizer holds the column's widest label so the gutter width stays
-                constant across every row. The visible label is right-aligned. */}
-            <Box display="grid">
-                {maxLabel !== formatted && (
-                    <Text
-                        span
-                        aria-hidden
-                        fz="xs"
-                        style={{
-                            gridArea: '1 / 1',
-                            visibility: 'hidden',
-                            whiteSpace: 'nowrap',
-                        }}
-                    >
-                        {maxLabel}
-                    </Text>
-                )}
-                <Text
-                    span
-                    fz="xs"
-                    style={{
-                        gridArea: '1 / 1',
-                        justifySelf: 'end',
-                        whiteSpace: 'nowrap',
-                    }}
-                >
+            {/* Label gutter: an invisible copy of the column's widest label
+                sizes it on every row, and this row's label is laid over it */}
+            <Box className={styles.labelGutter}>
+                <Text span aria-hidden fz="xs" className={styles.reservedLabel}>
+                    {maxLabel}
+                </Text>
+                <Text span fz="xs" className={styles.label}>
                     {formatted}
                 </Text>
             </Box>

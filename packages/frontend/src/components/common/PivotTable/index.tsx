@@ -59,6 +59,7 @@ import React, {
     useState,
     type FC,
 } from 'react';
+import { getBarLabelMaxMap } from '../../../hooks/barLabelMaxMap';
 import {
     findMatchingSubtotal,
     getGroupingValuesAndSubtotalKey,
@@ -698,6 +699,16 @@ const PivotTable: FC<PivotTableProps> = ({
         return visibility;
     }, [data.retrofitData.pivotColumnInfo]);
 
+    const barLabelMaxMap = useMemo(
+        () =>
+            Object.values(columnProperties).some(
+                (properties) => properties.displayStyle === 'bar',
+            )
+                ? getBarLabelMaxMap(data.retrofitData.allCombinedData)
+                : undefined,
+        [columnProperties, data.retrofitData.allCombinedData],
+    );
+
     const table = useReactTable({
         data: data.retrofitData.allCombinedData,
         columns: columns,
@@ -725,6 +736,7 @@ const PivotTable: FC<PivotTableProps> = ({
         meta: {
             columnProperties,
             minMaxMap,
+            barLabelMaxMap,
         },
     });
 

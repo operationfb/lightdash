@@ -7,6 +7,7 @@ import {
     type GroupingState,
 } from '@tanstack/react-table';
 import React, { useEffect, useMemo, useState, type FC } from 'react';
+import { getBarLabelMaxMap } from '../../../hooks/barLabelMaxMap';
 import {
     DEFAULT_PAGE_SIZE,
     FROZEN_COLUMN_BACKGROUND,
@@ -177,25 +178,10 @@ export const TableProvider: FC<React.PropsWithChildren<ProviderProps>> = ({
         return data.slice(start, end);
     }, [data, paginationState]);
 
-    // Widest formatted label per column. "Bars in cells" reserves a label
-    // gutter this wide so every row's bar is sized against the same remaining
-    // track — otherwise wider labels (more digits) shrink the bar (PROD-8457).
-    const barLabelMaxMap = useMemo(() => {
-        if (!minMaxMap) return undefined;
-        const result: Record<string, string> = {};
-        for (const row of data) {
-            for (const columnId of Object.keys(row)) {
-                const formatted = row[columnId]?.value?.formatted;
-                if (
-                    typeof formatted === 'string' &&
-                    formatted.length > (result[columnId]?.length ?? 0)
-                ) {
-                    result[columnId] = formatted;
-                }
-            }
-        }
-        return result;
-    }, [data, minMaxMap]);
+    const barLabelMaxMap = useMemo(
+        () => (minMaxMap ? getBarLabelMaxMap(data) : undefined),
+        [data, minMaxMap],
+    );
 
     const table = useReactTable({
         data: isInfiniteScrollEnabled ? data : pageRows,
