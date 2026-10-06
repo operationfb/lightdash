@@ -155,6 +155,15 @@ const useMapChartConfig = (
     const [fieldConfig, setFieldConfigState] = useState<
         Record<string, MapFieldConfig>
     >(initialConfig?.fieldConfig ?? {});
+    // KONTALA: a map's dark mode colours have no control of their own: they
+    // come from the saved config, such as a chart published as code, and are
+    // kept as they came so an edit to anything else does not drop them.
+    const [darkModeColorRange] = useState<string[] | undefined>(
+        initialConfig?.darkModeColorRange,
+    );
+    const [darkModeNoDataColor] = useState<string | undefined>(
+        initialConfig?.darkModeNoDataColor,
+    );
 
     // Auto-fill latitude/longitude fields when switching to scatter mode
     useEffect(() => {
@@ -238,6 +247,8 @@ const useMapChartConfig = (
             dataLayerOpacity,
             colorOverrides,
             fieldConfig,
+            ...(darkModeColorRange ? { darkModeColorRange } : {}),
+            ...(darkModeNoDataColor ? { darkModeNoDataColor } : {}),
         };
     }, [
         mapType,
@@ -266,6 +277,8 @@ const useMapChartConfig = (
         dataLayerOpacity,
         colorOverrides,
         fieldConfig,
+        darkModeColorRange,
+        darkModeNoDataColor,
     ]);
 
     const defaultConfig: MapChart = useMemo(() => {

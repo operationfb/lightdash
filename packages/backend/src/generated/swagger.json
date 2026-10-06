@@ -5054,6 +5054,10 @@
                         "$ref": "#/components/schemas/Record_string.MapFieldConfig_",
                         "description": "Field-specific configuration for tooltips"
                     },
+                    "darkModeNoDataColor": {
+                        "type": "string",
+                        "description": "Color for regions with no data in dark mode (hex code; derived from noDataColor when undefined)"
+                    },
                     "noDataColor": {
                         "type": "string",
                         "description": "Color for regions with no data (hex code)"
@@ -5165,6 +5169,13 @@
                     "colorOverrides": {
                         "$ref": "#/components/schemas/Record_string.string_",
                         "description": "Per-value color overrides for categorical color fields"
+                    },
+                    "darkModeColorRange": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "description": "Array of colors for the value gradient in dark mode (derived from colorRange when undefined)"
                     },
                     "colorRange": {
                         "items": {

@@ -1957,6 +1957,17 @@
                     "description": "URL to custom GeoJSON file",
                     "type": "string"
                 },
+                "darkModeColorRange": {
+                    "description": "Array of colors for the value gradient in dark mode (derived from colorRange when undefined)",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "darkModeNoDataColor": {
+                    "description": "Color for regions with no data in dark mode (hex code; derived from noDataColor when undefined)",
+                    "type": "string"
+                },
                 "darkModeTileBackground": {
                     "$ref": "#/$defs/MapTileBackground",
                     "description": "Map tile background style for dark mode (uses dark default when undefined)"
