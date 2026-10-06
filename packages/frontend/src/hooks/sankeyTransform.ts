@@ -329,3 +329,24 @@ export const transformSankeyData = (
 
     return { ...build, hasCycle };
 };
+
+/**
+ * The series data for a Sankey's nodes: each by its id, wearing the colour
+ * `colorOverrides` gives the label it shows, where it gives one. A node with
+ * no override keeps its column's colour from the series' levels, and a link
+ * takes the colour of the node it leaves. Only the map's own keys count, so a
+ * node labelled like an inherited property, `constructor`, gets no colour.
+ */
+export const sankeyNodeData = (
+    nodes: SankeySeriesDataPoint['nodes'],
+    colorOverrides: Record<string, string> | undefined,
+): { name: string; itemStyle?: { color: string } }[] =>
+    nodes.map((node) => {
+        const color =
+            colorOverrides && Object.hasOwn(colorOverrides, node.label)
+                ? colorOverrides[node.label]
+                : undefined;
+        return typeof color === 'string' && color !== ''
+            ? { name: node.name, itemStyle: { color } }
+            : { name: node.name };
+    });

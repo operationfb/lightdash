@@ -3168,6 +3168,10 @@
         },
         "SankeyChart": {
             "properties": {
+                "colorOverrides": {
+                    "$ref": "#/$defs/Record_string.string_",
+                    "description": "Node colours by the label a node shows, overriding the colour of its\ncolumn; a link takes the colour of the node it leaves"
+                },
                 "metricFieldId": {
                     "description": "Field ID for the link value metric",
                     "type": "string"

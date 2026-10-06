@@ -4992,6 +4992,7 @@ const models: TsoaRoute.Models = {
         type: {
             dataType: 'nestedObjectLiteral',
             nestedProperties: {
+                colorOverrides: { ref: 'Record_string.string_' },
                 nodeLayout: { ref: 'SankeyNodeLayout' },
                 orient: {
                     dataType: 'union',

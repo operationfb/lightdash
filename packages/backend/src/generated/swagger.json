@@ -5237,6 +5237,10 @@
             },
             "SankeyChart": {
                 "properties": {
+                    "colorOverrides": {
+                        "$ref": "#/components/schemas/Record_string.string_",
+                        "description": "Node colours by the label a node shows, overriding the colour of its\ncolumn; a link takes the colour of the node it leaves"
+                    },
                     "nodeLayout": {
                         "$ref": "#/components/schemas/SankeyNodeLayout",
                         "description": "How nodes are laid out across steps"

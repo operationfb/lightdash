@@ -76,6 +76,10 @@ const useSankeyChartConfig: SankeyChartConfigFn = (
     const [nodeLayout, setNodeLayout] = useState<
         NonNullable<SankeyChart['nodeLayout']>
     >(sankeyChartConfig?.nodeLayout ?? 'multi-step');
+    // Node colours by label have no control of their own: they come from the
+    // saved config, such as a chart published as code, and are kept as they
+    // came so an edit to anything else does not drop them.
+    const colorOverrides = sankeyChartConfig?.colorOverrides;
 
     const dimensionIds = useMemo(() => Object.keys(dimensions), [dimensions]);
     const numericFieldIds = useMemo(
@@ -172,6 +176,7 @@ const useSankeyChartConfig: SankeyChartConfigFn = (
             nodeAlign,
             orient,
             nodeLayout,
+            ...(colorOverrides ? { colorOverrides } : {}),
         }),
         [
             sourceFieldId,
@@ -180,6 +185,7 @@ const useSankeyChartConfig: SankeyChartConfigFn = (
             nodeAlign,
             orient,
             nodeLayout,
+            colorOverrides,
         ],
     );
 

@@ -1,6 +1,6 @@
 import { type ResultRow } from '@lightdash/common';
 import { describe, expect, it } from 'vitest';
-import { transformSankeyData } from './sankeyTransform';
+import { sankeyNodeData, transformSankeyData } from './sankeyTransform';
 
 const cell = (formatted: string, raw: unknown = formatted) => ({
     value: { raw, formatted },
@@ -140,5 +140,40 @@ describe('transformSankeyData', () => {
         });
 
         expect(data.hasCycle).toBe(true);
+    });
+});
+
+describe('sankeyNodeData', () => {
+    const nodes = [
+        { name: 'source:Email', label: 'Email' },
+        { name: 'target:Email', label: 'Email' },
+        { name: '1 · Direct', label: '1 · Direct' },
+        { name: 'constructor', label: 'constructor' },
+    ];
+
+    it('gives every node of a label its colour, on either side', () => {
+        expect(
+            sankeyNodeData(nodes, {
+                Email: '#e87ba4',
+                '1 · Direct': '#8f8e88',
+            }),
+        ).toEqual([
+            { name: 'source:Email', itemStyle: { color: '#e87ba4' } },
+            { name: 'target:Email', itemStyle: { color: '#e87ba4' } },
+            { name: '1 · Direct', itemStyle: { color: '#8f8e88' } },
+            { name: 'constructor' },
+        ]);
+    });
+
+    it('leaves every node its column colour with no overrides', () => {
+        expect(sankeyNodeData(nodes, undefined)).toEqual(
+            nodes.map(({ name }) => ({ name })),
+        );
+    });
+
+    it('reads only the overrides own keys and skips an empty colour', () => {
+        expect(
+            sankeyNodeData(nodes, { Email: '' }).map((n) => n.itemStyle),
+        ).toEqual([undefined, undefined, undefined, undefined]);
     });
 });

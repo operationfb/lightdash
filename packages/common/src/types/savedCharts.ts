@@ -230,6 +230,11 @@ export type SankeyChart = {
     orient?: 'horizontal' | 'vertical';
     /** How nodes are laid out across steps */
     nodeLayout?: SankeyNodeLayout;
+    /**
+     * Node colours by the label a node shows, overriding the colour of its
+     * column; a link takes the colour of the node it leaves
+     */
+    colorOverrides?: Record<string, string>;
 };
 
 export enum MapChartLocation {

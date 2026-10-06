@@ -13,6 +13,7 @@ import { useCallback, useMemo } from 'react';
 import { isSankeyVisualizationConfig } from '../../components/LightdashVisualization/types';
 import { useVisualizationContext } from '../../components/LightdashVisualization/useVisualizationContext';
 import { sanitizeEchartsFontFamily } from '../../utils/sanitizeEchartsFontFamily';
+import { sankeyNodeData } from '../sankeyTransform';
 
 const useEchartsSankeyConfig = (isInDashboard?: boolean) => {
     const {
@@ -52,7 +53,7 @@ const useEchartsSankeyConfig = (isInDashboard?: boolean) => {
 
         const {
             data,
-            validConfig: { nodeAlign, orient },
+            validConfig: { nodeAlign, orient, colorOverrides },
         } = chartConfig;
 
         if (data.nodes.length === 0 || data.links.length === 0) return;
@@ -87,9 +88,7 @@ const useEchartsSankeyConfig = (isInDashboard?: boolean) => {
             nodeGap: 8,
             nodeWidth: 20,
             levels,
-            data: data.nodes.map((node) => ({
-                name: node.name,
-            })),
+            data: sankeyNodeData(data.nodes, colorOverrides),
             links: data.links.map((link) => ({
                 source: link.source,
                 target: link.target,
