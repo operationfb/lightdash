@@ -5241,6 +5241,21 @@ export class CoderService extends BaseService {
         // UPDATE here: promoted and upstream both resolve to this project's
         // DB rows, so a forced update writes an identical duplicate chart
         // version. Chart file changes are applied by the chart upload path.
+        //
+        // The same holds for a tile chart the promotion reads as updated,
+        // so none is written here. Its compare is not between two charts:
+        // the chart's latest version is stamped by the database's clock,
+        // last_version_updated_at by the backend's, both without a time
+        // zone, so a database clock or zone ahead of the backend's reads a
+        // row as newer than itself, and every tile chart was written again.
+        promotionChanges = {
+            ...promotionChanges,
+            charts: promotionChanges.charts.map((chartChange) =>
+                chartChange.action === PromotionAction.UPDATE
+                    ? { ...chartChange, action: PromotionAction.NO_CHANGES }
+                    : chartChange,
+            ),
+        };
 
         promotionChanges = await this.promoteService.getOrCreateDashboard(
             user,

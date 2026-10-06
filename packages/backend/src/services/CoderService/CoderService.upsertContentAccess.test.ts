@@ -1570,4 +1570,92 @@ describe('CoderService upsertDashboard tile chart versions', () => {
             }),
         ]);
     });
+
+    // The promotion reads a tile chart as updated whenever the database's
+    // clock or zone is ahead of the backend's: the chart's latest version
+    // and its last_version_updated_at are stamped by different clocks.
+    it.each([false, true])(
+        'does not re-version a tile chart the promotion reads as updated (force: %s)',
+        async (force) => {
+            const service = buildService();
+            const dashboard = { uuid: 'dashboard-uuid', name: 'Dashboard' };
+            const promoted = {
+                dashboard,
+                projectUuid: PROJECT_UUID,
+                space: { name: 'Space' },
+                spaceAccessContext: {
+                    organizationUuid: ORG_UUID,
+                    projectUuid: PROJECT_UUID,
+                    access: [],
+                },
+            };
+            vi.mocked(service.dashboardModel.find).mockResolvedValue([
+                dashboard as AnyType,
+            ]);
+            vi.mocked(service.dashboardModel.getByIdOrSlug).mockResolvedValue({
+                ...dashboard,
+                slug: 'dashboard',
+                spaceUuid: SPACE_UUID,
+                filters: { dimensions: [], metrics: [], tableCalculations: [] },
+            } as AnyType);
+            vi.mocked(
+                service.promoteService.getPromotedDashboard,
+            ).mockResolvedValue({
+                promotedDashboard: promoted,
+                upstreamDashboard: promoted,
+            } as AnyType);
+            vi.mocked(
+                service.promoteService.getPromotionDashboardChanges,
+            ).mockResolvedValue([
+                {
+                    dashboards: [
+                        { action: PromotionAction.UPDATE, data: dashboard },
+                    ],
+                    charts: [
+                        {
+                            action: PromotionAction.UPDATE,
+                            data: { uuid: 'chart-uuid' },
+                        },
+                    ],
+                    spaces: [],
+                },
+                [],
+            ] as AnyType);
+            const user = makeSessionUser([
+                { subject: 'ContentAsCode', action: 'create' },
+                {
+                    subject: 'Dashboard',
+                    action: 'update',
+                    conditions: { projectUuid: PROJECT_UUID },
+                },
+                {
+                    subject: 'Dashboard',
+                    action: 'promote',
+                    conditions: { projectUuid: PROJECT_UUID },
+                },
+            ]);
+
+            await expect(
+                service.upsertDashboard(
+                    user,
+                    PROJECT_UUID,
+                    dashboardAsCode.slug,
+                    dashboardAsCode,
+                    { force },
+                ),
+            ).resolves.toMatchObject({
+                dashboards: [{ action: PromotionAction.UPDATE }],
+                charts: [{ action: PromotionAction.NO_CHANGES }],
+            });
+            const upsertChartsChanges = vi.mocked(
+                service.promoteService.upsertCharts,
+            ).mock.calls[0][1] as AnyType;
+            expect(upsertChartsChanges.charts).toEqual([
+                expect.objectContaining({
+                    action: PromotionAction.NO_CHANGES,
+                    data: { uuid: 'chart-uuid' },
+                }),
+            ]);
+        },
+    );
 });
