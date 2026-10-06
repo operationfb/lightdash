@@ -13,6 +13,7 @@ import { useComputedColorScheme, useMantineTheme } from '@mantine/core';
 import { useMemo } from 'react';
 import { isMapVisualizationConfig } from '../../components/LightdashVisualization/types';
 import { useVisualizationContext } from '../../components/LightdashVisualization/useVisualizationContext';
+import { getWorldGeoJsonUrl } from '../../components/SimpleMap/world/world';
 import { type MapExtent } from '../../providers/Explorer/types';
 
 type Args = {
@@ -136,10 +137,14 @@ const getGeoJsonUrl = (
     switch (mapType) {
         case MapChartLocation.USA:
             return '/geojson/us-states.geojson';
+        // KONTALA: Natural Earth's 1:50m countries as a hashed, precompressed
+        // TopoJSON asset, 125 KB to download where upstream's
+        // public/geojson/countries.geojson is 13.5 MB served uncompressed,
+        // with Taiwan coded TW and France's overseas departments as countries
+        // of their own (SimpleMap/world/README.md).
         case MapChartLocation.WORLD:
-            return '/geojson/countries.geojson';
         default:
-            return '/geojson/countries.geojson';
+            return getWorldGeoJsonUrl();
     }
 };
 

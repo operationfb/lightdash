@@ -1027,11 +1027,16 @@ const SimpleMap: FC<SimpleMapProps> = memo(
                     mapConfig?.tooltipFields.find(
                         (f) => f.fieldId === mapConfig?.locationFieldId,
                     )?.label || 'Location';
+                // KONTALA: a region with no data is shown by its feature's
+                // name rather than by the value it was matched on, which is a
+                // code as often as not: Taiwan, not TW.
                 const noData = regionEntry
                     ? undefined
                     : {
                           locationLabel: locationFieldLabel,
-                          locationValue: rawPropertyValue.toString(),
+                          locationValue: String(
+                              feature.properties?.name || rawPropertyValue,
+                          ),
                       };
 
                 const tooltipHtml = getMapTooltipHtml({
