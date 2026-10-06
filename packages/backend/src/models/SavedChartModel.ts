@@ -1295,51 +1295,83 @@ export class SavedChartModel {
         tx?: Knex,
         expectedLocation?: SavedChartLocation,
     ): Promise<SavedChartDAO> {
-        const doWork = async (trx: Knex) => {
-            const chartQuery = this.getChartMutationQuery(
-                trx,
-                savedChartUuid,
-                expectedLocation,
-            ).select(['saved_query_id']);
-            if (expectedLocation) {
-                chartQuery.forUpdate();
-            }
-            const [savedChart] = await chartQuery;
-
-            if (!savedChart) {
-                if (expectedLocation) {
-                    throw new ConflictError(
-                        'Chart location changed. Reload the chart and try again.',
-                    );
-                }
-                throw new NotFoundError('Saved chart not found');
-            }
-
-            await createSavedChartVersion(trx, savedChart.saved_query_id, {
-                ...data,
-                updatedByUser: user,
-            });
-
-            await trx(SavedChartsTableName)
-                .update({
-                    last_version_chart_kind: getChartKind(
-                        data.chartConfig.type,
-                        data.chartConfig.config,
-                    ),
-                    last_version_updated_at: new Date(),
-                    last_version_updated_by_user_uuid: user?.userUuid,
-                })
-                .where('saved_query_uuid', savedChartUuid)
-                .whereNull('deleted_at');
-        };
-
         if (tx) {
-            await doWork(tx);
+            await this.createVersionInTransaction(
+                savedChartUuid,
+                data,
+                user,
+                tx,
+                expectedLocation,
+            );
         } else {
-            await this.database.transaction(async (trx) => doWork(trx));
+            await this.database.transaction(async (trx) =>
+                this.createVersionInTransaction(
+                    savedChartUuid,
+                    data,
+                    user,
+                    trx,
+                    expectedLocation,
+                ),
+            );
         }
 
         return this.get(savedChartUuid);
+    }
+
+    /**
+     * Writes a new version of a chart on the caller's transaction and reads
+     * nothing back, as updateInTransaction does.
+     *
+     * createVersion ends by reading the chart through the pool, not through
+     * the transaction it was handed, so a caller still inside that
+     * transaction holds one connection while it waits for another. Callers
+     * that run several such transactions at once, as promoting a dashboard's
+     * charts does, can then hold every connection in the pool and wait on
+     * each other until the acquire timeout. Inside a transaction, write with
+     * this and read the chart once the transaction has committed.
+     */
+    async createVersionInTransaction(
+        savedChartUuid: string,
+        data: CreateSavedChartVersion,
+        user: SessionUser | undefined,
+        trx: Knex,
+        expectedLocation?: SavedChartLocation,
+    ): Promise<void> {
+        const chartQuery = this.getChartMutationQuery(
+            trx,
+            savedChartUuid,
+            expectedLocation,
+        ).select(['saved_query_id']);
+        if (expectedLocation) {
+            chartQuery.forUpdate();
+        }
+        const [savedChart] = await chartQuery;
+
+        if (!savedChart) {
+            if (expectedLocation) {
+                throw new ConflictError(
+                    'Chart location changed. Reload the chart and try again.',
+                );
+            }
+            throw new NotFoundError('Saved chart not found');
+        }
+
+        await createSavedChartVersion(trx, savedChart.saved_query_id, {
+            ...data,
+            updatedByUser: user,
+        });
+
+        await trx(SavedChartsTableName)
+            .update({
+                last_version_chart_kind: getChartKind(
+                    data.chartConfig.type,
+                    data.chartConfig.config,
+                ),
+                last_version_updated_at: new Date(),
+                last_version_updated_by_user_uuid: user?.userUuid,
+            })
+            .where('saved_query_uuid', savedChartUuid)
+            .whereNull('deleted_at');
     }
 
     private getChartMutationQuery(

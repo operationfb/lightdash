@@ -5,7 +5,7 @@ import replace from '@rollup/plugin-replace';
 import svgr from '@svgr/rollup';
 import { readFileSync } from 'fs';
 import { rm } from 'fs/promises';
-import { resolve } from 'path';
+import { relative, resolve, sep } from 'path';
 import dts from 'rollup-plugin-dts';
 import esbuild from 'rollup-plugin-esbuild';
 import nodePolyfills from 'rollup-plugin-polyfill-node';
@@ -47,6 +47,47 @@ const stripSvgrQuery = () => ({
             return resolved ?? cleaned;
         }
         return null;
+    },
+});
+
+// KONTALA: `import url from '…?url'` is a vite convention too: the app build
+// emits the file as a hashed asset and the import is its URL. The SDK ships no
+// assets, and the instance it embeds serves them under its own build's hashes,
+// which the SDK cannot know, so a `?url` import is given the public file the
+// instance serves the same data as. Any other fails the build here rather
+// than the fetch at runtime.
+const SDK_URL_IMPORTS = new Map([
+    // The world map's countries (src/components/SimpleMap/world): the SDK
+    // reads upstream's public/geojson/countries.geojson, as it always has.
+    [
+        'src/components/SimpleMap/world/world-50m.topo.json',
+        '/geojson/countries.geojson',
+    ],
+]);
+
+const SDK_URL_PREFIX = '\0sdk-url:';
+
+const sdkUrlImports = () => ({
+    name: 'sdk-url-imports',
+    async resolveId(source, importer) {
+        if (!source.endsWith('?url')) return null;
+        const resolved = await this.resolve(
+            source.slice(0, -'?url'.length),
+            importer,
+            { skipSelf: true },
+        );
+        const file =
+            resolved && relative(__dirname, resolved.id).split(sep).join('/');
+        if (!file || !SDK_URL_IMPORTS.has(file)) {
+            this.error(
+                `${source}: no public file stands in for it in the SDK (SDK_URL_IMPORTS)`,
+            );
+        }
+        return `${SDK_URL_PREFIX}${SDK_URL_IMPORTS.get(file)}`;
+    },
+    load(id) {
+        if (!id.startsWith(SDK_URL_PREFIX)) return null;
+        return `export default ${JSON.stringify(id.slice(SDK_URL_PREFIX.length))};`;
     },
 });
 
@@ -120,6 +161,7 @@ const mainBuild = {
             },
         }),
         stripSvgrQuery(),
+        sdkUrlImports(),
         svgr({ exportType: 'default' }),
         // Some transitive deps (pegjs, ajv, others) reference Node built-ins
         // like fs/path/url. These code paths are dead in a browser bundle,

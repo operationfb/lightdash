@@ -4901,6 +4901,7 @@ const models: TsoaRoute.Models = {
             nestedProperties: {
                 saveMapExtent: { dataType: 'boolean' },
                 fieldConfig: { ref: 'Record_string.MapFieldConfig_' },
+                darkModeNoDataColor: { dataType: 'string' },
                 noDataColor: { dataType: 'string' },
                 backgroundColor: { dataType: 'string' },
                 darkModeTileBackground: { ref: 'MapTileBackground' },
@@ -4939,6 +4940,10 @@ const models: TsoaRoute.Models = {
                 defaultCenterLat: { dataType: 'double' },
                 defaultZoom: { dataType: 'double' },
                 colorOverrides: { ref: 'Record_string.string_' },
+                darkModeColorRange: {
+                    dataType: 'array',
+                    array: { dataType: 'string' },
+                },
                 colorRange: {
                     dataType: 'array',
                     array: { dataType: 'string' },

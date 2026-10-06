@@ -13,7 +13,9 @@ import { useComputedColorScheme, useMantineTheme } from '@mantine/core';
 import { useMemo } from 'react';
 import { isMapVisualizationConfig } from '../../components/LightdashVisualization/types';
 import { useVisualizationContext } from '../../components/LightdashVisualization/useVisualizationContext';
+import { getWorldGeoJsonUrl } from '../../components/SimpleMap/world/world';
 import { type MapExtent } from '../../providers/Explorer/types';
+import { getMapColors } from './mapColors';
 
 type Args = {
     isInDashboard: boolean;
@@ -95,6 +97,10 @@ export type LeafletMapConfig = {
     backgroundColor: string | null;
     // Color for regions with no matching data (area maps)
     noDataColor: string;
+    // KONTALA: area maps' borders, for the colour scheme (mapColors.ts)
+    borderColor: string;
+    noDataBorderColor: string;
+    hoverBorderColor: string;
     // Opacity for scatter and area map data layers (0.1 to 1)
     dataLayerOpacity: number;
     showLegend: boolean;
@@ -136,10 +142,14 @@ const getGeoJsonUrl = (
     switch (mapType) {
         case MapChartLocation.USA:
             return '/geojson/us-states.geojson';
+        // KONTALA: Natural Earth's 1:50m countries as a hashed, precompressed
+        // TopoJSON asset, 125 KB to download where upstream's
+        // public/geojson/countries.geojson is 13.5 MB served uncompressed,
+        // with Taiwan coded TW and France's overseas departments as countries
+        // of their own (SimpleMap/world/README.md).
         case MapChartLocation.WORLD:
-            return '/geojson/countries.geojson';
         default:
-            return '/geojson/countries.geojson';
+            return getWorldGeoJsonUrl();
     }
 };
 
@@ -243,6 +253,7 @@ const useLeafletMapConfig = ({
             geoJsonPropertyKey: configGeoJsonPropertyKey,
             valueFieldId,
             colorRange,
+            darkModeColorRange,
             defaultZoom,
             defaultCenterLat,
             defaultCenterLon,
@@ -255,11 +266,31 @@ const useLeafletMapConfig = ({
             darkModeTileBackground,
             backgroundColor,
             noDataColor,
+            darkModeNoDataColor,
             dataLayerOpacity,
             showLegend,
             colorOverrides: configColorOverrides,
             fieldConfig,
         } = chartConfig.validConfig || {};
+
+        // KONTALA: the configured colours in light mode, and in dark mode
+        // the dark ones or the light ones made to read on a dark surface.
+        const mapColors = getMapColors(
+            {
+                colorRange: colorRange || [
+                    theme.colors.blue[1],
+                    theme.colors.blue[3],
+                    theme.colors.blue[5],
+                    theme.colors.blue[7],
+                    theme.colors.blue[9],
+                ],
+                darkModeColorRange,
+                noDataColor,
+                darkModeNoDataColor,
+                backgroundColor,
+            },
+            colorScheme,
+        );
 
         // Helper to check if a field is a lat/lon field (should be excluded from tooltips)
         const isLatLonField = (fieldId: string): boolean => {
@@ -583,14 +614,10 @@ const useLeafletMapConfig = ({
             extent,
             hasSavedExtent,
             colors: {
-                primary: colorRange?.[0] || theme.colors.blue[6],
-                scale: colorRange || [
-                    theme.colors.blue[1],
-                    theme.colors.blue[3],
-                    theme.colors.blue[5],
-                    theme.colors.blue[7],
-                    theme.colors.blue[9],
-                ],
+                primary: colorRange
+                    ? mapColors.colorRange[0]
+                    : theme.colors.blue[6],
+                scale: mapColors.colorRange,
             },
             minBubbleSize: minBubbleSize ?? 2,
             maxBubbleSize: maxBubbleSize ?? 8,
@@ -623,7 +650,10 @@ const useLeafletMapConfig = ({
                     ? (darkModeTileBackground ?? MapTileBackground.DARK)
                     : (tileBackground ?? MapTileBackground.OPENSTREETMAP),
             backgroundColor: backgroundColor ?? null,
-            noDataColor: noDataColor ?? '#f3f3f3',
+            noDataColor: mapColors.noDataColor,
+            borderColor: mapColors.borderColor,
+            noDataBorderColor: mapColors.noDataBorderColor,
+            hoverBorderColor: mapColors.hoverBorderColor,
             dataLayerOpacity: dataLayerOpacity ?? 0.7,
             showLegend: showLegend ?? false,
             valueRange,

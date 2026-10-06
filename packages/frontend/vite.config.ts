@@ -56,7 +56,11 @@ export default defineConfig({
         buildHashPlugin(),
         pruneZodLocalesPlugin(),
         compression({
-            include: [/\.(js)$/, /\.(css)$/],
+            // KONTALA: and the JSON among the hashed assets, which is the
+            // world map's TopoJSON (components/SimpleMap/world). Only under
+            // assets/, which the server serves precompressed; public/'s JSON
+            // is served as it is, so siblings there would be dead weight.
+            include: [/\.(js)$/, /\.(css)$/, /^assets\/[^/]+\.json$/],
             // KONTALA: brotli beside gzip. It is noticeably smaller for this
             // bundle and every current browser accepts it; the server prefers
             // it when offered (App.ts, expressStaticGzip). gzip keeps the

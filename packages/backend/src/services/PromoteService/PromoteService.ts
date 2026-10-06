@@ -875,6 +875,12 @@ export class PromoteService extends BaseService {
                     { projectUuid: changeChart.projectUuid },
                 );
 
+                // Every chart's transaction runs at once, so nothing in it may
+                // wait for a second pool connection: createVersion would, as
+                // it reads the chart back through the pool, and a dashboard
+                // with as many charts to update as the pool has connections
+                // then held them all, each waiting on the others until the
+                // acquire timeout. The chart is read below, once committed.
                 await this.savedChartModel.transaction(async (transaction) => {
                     if (currentChart.slug !== changeChart.slug) {
                         await this.savedChartModel.renameSlug(
@@ -898,7 +904,7 @@ export class PromoteService extends BaseService {
                         },
                         transaction,
                     );
-                    await this.savedChartModel.createVersion(
+                    await this.savedChartModel.createVersionInTransaction(
                         changeChart.uuid,
                         chartData,
                         user,

@@ -167,7 +167,7 @@ const MapTooltipContent: FC<MapTooltipContentProps> = ({
                 <div
                     style={{
                         fontSize: 14,
-                        color: '#868e96',
+                        color: 'var(--mantine-color-dimmed)',
                         fontStyle: 'italic',
                     }}
                 >
@@ -191,7 +191,7 @@ const MapTooltipContent: FC<MapTooltipContentProps> = ({
                 <div
                     style={{
                         fontSize: 12,
-                        color: '#868e96',
+                        color: 'var(--mantine-color-dimmed)',
                         marginTop: 8,
                     }}
                 >
@@ -223,7 +223,7 @@ const getMapTooltipHtml = ({
             noData.locationLabel,
         )}:</strong> ${escapeHtml(
             noData.locationValue,
-        )}</div><div style="font-size:14px;color:#868e96;font-style:italic">No data</div></div>`;
+        )}</div><div style="font-size:14px;color:var(--mantine-color-dimmed);font-style:italic">No data</div></div>`;
     }
 
     const rows = tooltipFields
@@ -239,7 +239,7 @@ const getMapTooltipHtml = ({
         .join('');
     const coords =
         lat !== undefined && lon !== undefined
-            ? `<div style="font-size:12px;color:#868e96;margin-top:8px">Lat: ${lat.toFixed(
+            ? `<div style="font-size:12px;color:var(--mantine-color-dimmed);margin-top:8px">Lat: ${lat.toFixed(
                   4,
               )}, Lon: ${lon.toFixed(4)}</div>`
             : '';
@@ -779,6 +779,8 @@ const SimpleMap: FC<SimpleMapProps> = memo(
         // Force re-creating the GeoJSON layer when join key, tooltip fields, or
         // region data change so bound tooltips/popup content stays in sync.
         // Note: Don't include mapConfig itself as it's a new object each render
+        // KONTALA: and the border colours, which the hover handlers bound to
+        // each feature restore, so a change of colour scheme rebinds them.
         useEffect(() => {
             if (
                 !geoJsonData ||
@@ -795,6 +797,9 @@ const SimpleMap: FC<SimpleMapProps> = memo(
             mapConfig?.regionData,
             mapConfig?.tooltipFields,
             mapConfig?.isLatLong,
+            mapConfig?.borderColor,
+            mapConfig?.noDataBorderColor,
+            mapConfig?.hoverBorderColor,
         ]);
 
         // Get location type from visualization config
@@ -948,12 +953,14 @@ const SimpleMap: FC<SimpleMapProps> = memo(
 
         const choroplethStyle = useCallback(
             (feature: any): L.PathOptions => {
+                // KONTALA: borders are hairlines in the colour of what the map
+                // is drawn on, for the colour scheme (mapColors.ts).
                 if (!feature?.properties || !mapConfig) {
                     return {
                         fillColor: noDataColor,
                         weight: 0.5,
                         opacity: 1,
-                        color: '#999',
+                        color: mapConfig?.noDataBorderColor ?? '#999',
                         fillOpacity: fillOpacityNoData,
                     };
                 }
@@ -985,7 +992,7 @@ const SimpleMap: FC<SimpleMapProps> = memo(
                         fillColor,
                         weight: 1,
                         opacity: 1,
-                        color: '#666',
+                        color: mapConfig.borderColor,
                         fillOpacity: fillOpacityWithData,
                     };
                 }
@@ -994,7 +1001,7 @@ const SimpleMap: FC<SimpleMapProps> = memo(
                     fillColor: noDataColor,
                     weight: 0.5,
                     opacity: 1,
-                    color: '#999',
+                    color: mapConfig.noDataBorderColor,
                     fillOpacity: fillOpacityNoData,
                 };
             },
@@ -1027,11 +1034,16 @@ const SimpleMap: FC<SimpleMapProps> = memo(
                     mapConfig?.tooltipFields.find(
                         (f) => f.fieldId === mapConfig?.locationFieldId,
                     )?.label || 'Location';
+                // KONTALA: a region with no data is shown by its feature's
+                // name rather than by the value it was matched on, which is a
+                // code as often as not: Taiwan, not TW.
                 const noData = regionEntry
                     ? undefined
                     : {
                           locationLabel: locationFieldLabel,
-                          locationValue: rawPropertyValue.toString(),
+                          locationValue: String(
+                              feature.properties?.name || rawPropertyValue,
+                          ),
                       };
 
                 const tooltipHtml = getMapTooltipHtml({
@@ -1043,10 +1055,7 @@ const SimpleMap: FC<SimpleMapProps> = memo(
                 if (layer instanceof L.Path) {
                     layer.bindTooltip(tooltipHtml, { sticky: true });
 
-                    // Determine the correct base and hover opacity for this region
-                    const baseOpacity = regionEntry
-                        ? fillOpacityWithData
-                        : fillOpacityNoData;
+                    // Determine the hover opacity for this region
                     const hoverOpacity = hasBaseMap ? 0.9 : 1;
 
                     const handleRegionClick = (e: L.LeafletMouseEvent) => {
@@ -1070,17 +1079,20 @@ const SimpleMap: FC<SimpleMapProps> = memo(
                     layer.on({
                         click: handleRegionClick,
                         contextmenu: handleRegionClick,
+                        // KONTALA: a hovered region is drawn round in the
+                        // scheme's text colour and above its neighbours,
+                        // whose borders would otherwise cover half of it,
+                        // and gets back the very style it was drawn with.
                         mouseover: () => {
                             layer.setStyle({
                                 weight: 2,
+                                color: mapConfig?.hoverBorderColor,
                                 fillOpacity: hoverOpacity,
                             });
+                            layer.bringToFront();
                         },
                         mouseout: () => {
-                            layer.setStyle({
-                                weight: 1,
-                                fillOpacity: baseOpacity,
-                            });
+                            layer.setStyle(choroplethStyle(feature));
                         },
                     });
                 }
@@ -1090,10 +1102,10 @@ const SimpleMap: FC<SimpleMapProps> = memo(
                 mapConfig?.geoJsonPropertyKey,
                 mapConfig?.tooltipFields,
                 mapConfig?.locationFieldId,
+                mapConfig?.hoverBorderColor,
                 handleMapContextMenu,
                 hasBaseMap,
-                fillOpacityWithData,
-                fillOpacityNoData,
+                choroplethStyle,
             ],
         );
 

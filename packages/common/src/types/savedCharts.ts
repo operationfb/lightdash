@@ -309,6 +309,8 @@ export type MapChart = {
     showLegend?: boolean;
     /** Array of colors for the value gradient */
     colorRange?: string[];
+    /** Array of colors for the value gradient in dark mode (derived from colorRange when undefined) */
+    darkModeColorRange?: string[];
     /** Per-value color overrides for categorical color fields */
     colorOverrides?: Record<string, string>;
     /** Default zoom level */
@@ -362,6 +364,8 @@ export type MapChart = {
     backgroundColor?: string;
     /** Color for regions with no data (hex code) */
     noDataColor?: string;
+    /** Color for regions with no data in dark mode (hex code; derived from noDataColor when undefined) */
+    darkModeNoDataColor?: string;
     /** Field-specific configuration for tooltips */
     fieldConfig?: Record<string, MapFieldConfig>;
     /** Save the current map zoom/position */

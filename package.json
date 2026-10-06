@@ -166,7 +166,7 @@
         ],
         "packages/frontend/src/**/*.(ts|tsx|json|css)": [
             "pnpm -F frontend run linter --fix",
-            "pnpm -F frontend run formatter"
+            "pnpm -F frontend run formatter --no-error-on-unmatched-pattern"
         ],
         "packages/backend/src/**/*.(ts|tsx)": [
             "pnpm -F backend run linter --fix",
