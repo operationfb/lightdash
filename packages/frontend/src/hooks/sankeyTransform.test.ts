@@ -1,6 +1,10 @@
 import { type ResultRow } from '@lightdash/common';
 import { describe, expect, it } from 'vitest';
-import { sankeyNodeData, transformSankeyData } from './sankeyTransform';
+import {
+    lastColumnLabels,
+    sankeyNodeData,
+    transformSankeyData,
+} from './sankeyTransform';
 
 const cell = (formatted: string, raw: unknown = formatted) => ({
     value: { raw, formatted },
@@ -175,5 +179,62 @@ describe('sankeyNodeData', () => {
         expect(
             sankeyNodeData(nodes, { Email: '' }).map((n) => n.itemStyle),
         ).toEqual([undefined, undefined, undefined, undefined]);
+    });
+});
+
+describe('lastColumnLabels', () => {
+    // A journey's steps: 2 · Email goes on to a third step, 2 · Direct ends
+    // there, and 3 · Email is the deepest layer.
+    const steps = transformSankeyData(
+        [
+            row('1 · Search', '2 · Email', 3),
+            row('1 · Search', '2 · Direct', 2),
+            row('2 · Email', '3 · Email', 1),
+        ],
+        FIELDS,
+        { nodeLayout: 'merged' },
+    );
+
+    it('is the deepest layer under left alignment', () => {
+        expect(lastColumnLabels(steps, 'left')).toEqual(['3 · Email']);
+    });
+
+    it('is every node no link leaves under justify and right', () => {
+        expect(lastColumnLabels(steps, 'justify').sort()).toEqual([
+            '2 · Direct',
+            '3 · Email',
+        ]);
+        expect(lastColumnLabels(steps, 'right').sort()).toEqual([
+            '2 · Direct',
+            '3 · Email',
+        ]);
+    });
+
+    it('is every target of a direct layout, by its label', () => {
+        const direct = transformSankeyData(
+            [row('Email', 'Search', 1), row('Search', 'Email', 2)],
+            FIELDS,
+            { nodeLayout: 'direct' },
+        );
+        expect(lastColumnLabels(direct, 'left').sort()).toEqual([
+            'Email',
+            'Search',
+        ]);
+    });
+
+    it('falls back to the nodes no link leaves for a cycle', () => {
+        const cycle = {
+            nodes: [
+                { name: 'A', label: 'A' },
+                { name: 'B', label: 'B' },
+                { name: 'C', label: 'C' },
+            ],
+            links: [
+                { source: 'A', target: 'B' },
+                { source: 'B', target: 'A' },
+                { source: 'A', target: 'C' },
+            ],
+        };
+        expect(lastColumnLabels(cycle as never, 'left')).toEqual(['C']);
     });
 });

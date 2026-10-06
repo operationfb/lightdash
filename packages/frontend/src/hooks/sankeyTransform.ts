@@ -350,3 +350,51 @@ export const sankeyNodeData = (
             ? { name: node.name, itemStyle: { color } }
             : { name: node.name };
     });
+
+/**
+ * The labels of the nodes a horizontal Sankey draws in its last column, whose
+ * labels sit to the right of their nodes, in the chart's right margin. ECharts
+ * puts each node at its longest path from a source; under `left` alignment
+ * that is where it stays, so the last column is the deepest layer, and under
+ * `justify` and `right` every node no link leaves moves to the last column. A
+ * graph with a cycle has no layers, and then it is every node no link leaves.
+ */
+export const lastColumnLabels = (
+    { nodes, links }: Pick<SankeySeriesDataPoint, 'nodes' | 'links'>,
+    nodeAlign: 'left' | 'right' | 'justify',
+): string[] => {
+    const outgoing = new Map<string, string[]>();
+    const indegree = new Map<string, number>(nodes.map((n) => [n.name, 0]));
+    for (const { source, target } of links) {
+        const targets = outgoing.get(source);
+        if (targets) targets.push(target);
+        else outgoing.set(source, [target]);
+        indegree.set(target, (indegree.get(target) ?? 0) + 1);
+    }
+    const sinks = nodes.filter((n) => !outgoing.has(n.name));
+    if (nodeAlign !== 'left') return sinks.map((n) => n.label);
+
+    const depth = new Map<string, number>();
+    let layer = nodes
+        .filter((n) => indegree.get(n.name) === 0)
+        .map((n) => n.name);
+    let level = 0;
+    while (layer.length > 0) {
+        const next: string[] = [];
+        for (const name of layer) {
+            depth.set(name, level);
+            for (const target of outgoing.get(name) ?? []) {
+                const remaining = (indegree.get(target) ?? 0) - 1;
+                indegree.set(target, remaining);
+                if (remaining === 0) next.push(target);
+            }
+        }
+        layer = next;
+        level += 1;
+    }
+    if (depth.size < nodes.length) return sinks.map((n) => n.label);
+    const deepest = Math.max(...depth.values());
+    return nodes
+        .filter((n) => depth.get(n.name) === deepest)
+        .map((n) => n.label);
+};

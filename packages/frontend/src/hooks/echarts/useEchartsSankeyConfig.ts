@@ -8,12 +8,22 @@ import {
     type TableCalculation,
 } from '@lightdash/common';
 import { useMantineTheme } from '@mantine/core';
-import { type EChartsOption, type SankeySeriesOption } from 'echarts';
+import {
+    format as echartsFormat,
+    type EChartsOption,
+    type SankeySeriesOption,
+} from 'echarts';
 import { useCallback, useMemo } from 'react';
 import { isSankeyVisualizationConfig } from '../../components/LightdashVisualization/types';
 import { useVisualizationContext } from '../../components/LightdashVisualization/useVisualizationContext';
 import { sanitizeEchartsFontFamily } from '../../utils/sanitizeEchartsFontFamily';
-import { sankeyNodeData } from '../sankeyTransform';
+import { lastColumnLabels, sankeyNodeData } from '../sankeyTransform';
+
+// ECharts' own label size and gap between a node and its label, which the
+// series keeps, and the widest a label grows before an ellipsis shortens it.
+const LABEL_FONT_SIZE = 12;
+const LABEL_DISTANCE = 5;
+const MAX_LABEL_WIDTH = 200;
 
 const useEchartsSankeyConfig = (isInDashboard?: boolean) => {
     const {
@@ -72,6 +82,27 @@ const useEchartsSankeyConfig = (isInDashboard?: boolean) => {
 
         const isVertical = (orient ?? 'horizontal') === 'vertical';
 
+        // A horizontal Sankey draws its last column's labels to the right of
+        // their nodes, in its right margin, so the margin is as wide as the
+        // widest of them, measured as ECharts lays them out: a fixed share of
+        // the width cut a label off on a narrow tile and left a wide one an
+        // empty strip.
+        const labelFont = `${LABEL_FONT_SIZE}px ${
+            sanitizeEchartsFontFamily(theme.other.chartFont) ?? 'sans-serif'
+        }`;
+        const rightLabelWidth = Math.min(
+            MAX_LABEL_WIDTH,
+            Math.ceil(
+                Math.max(
+                    0,
+                    ...lastColumnLabels(data, nodeAlign ?? 'justify').map(
+                        (label) =>
+                            echartsFormat.getTextRect(label, labelFont).width,
+                    ),
+                ),
+            ),
+        );
+
         return {
             type: 'sankey',
             layout: 'none',
@@ -84,7 +115,7 @@ const useEchartsSankeyConfig = (isInDashboard?: boolean) => {
             top: '2%',
             bottom: isVertical ? '14%' : '2%',
             left: '1%',
-            right: isVertical ? '1%' : '14%',
+            right: isVertical ? '1%' : rightLabelWidth + LABEL_DISTANCE + 8,
             nodeGap: 8,
             nodeWidth: 20,
             levels,
@@ -101,11 +132,21 @@ const useEchartsSankeyConfig = (isInDashboard?: boolean) => {
                 show: true,
                 color: theme.colors.foreground?.[0],
                 position: isVertical ? 'bottom' : 'right',
+                distance: LABEL_DISTANCE,
+                fontSize: LABEL_FONT_SIZE,
+                width: MAX_LABEL_WIDTH,
+                overflow: 'truncate',
                 formatter: (params: { name?: string }) =>
                     displayName(params.name ?? ''),
             },
         };
-    }, [chartConfig, theme.colors.foreground, colorPalette, displayName]);
+    }, [
+        chartConfig,
+        theme.colors.foreground,
+        theme.other.chartFont,
+        colorPalette,
+        displayName,
+    ]);
 
     const eChartsOptions: EChartsOption | undefined = useMemo(() => {
         if (!chartConfig || !sankeySeriesOption) return;
