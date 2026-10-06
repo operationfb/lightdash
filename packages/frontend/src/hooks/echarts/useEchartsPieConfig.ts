@@ -24,6 +24,7 @@ import { useMemo } from 'react';
 import { isPieVisualizationConfig } from '../../components/LightdashVisualization/types';
 import { useVisualizationContext } from '../../components/LightdashVisualization/useVisualizationContext';
 import { sanitizeEchartsFontFamily } from '../../utils/sanitizeEchartsFontFamily';
+import { formatPieOutsideLabel } from './pieLabels';
 import { useLegendDoubleClickTooltip } from './useLegendDoubleClickTooltip';
 export type PieSeriesDataPoint = NonNullable<
     PieSeriesOption['data']
@@ -146,16 +147,16 @@ const useEchartsPieConfig = (
                             if (valueLabel === 'hidden') return '';
 
                             // For outside labels, use rich text formatting
+                            // KONTALA: on two lines, so a label fits beside
+                            // a pie in a narrow tile (pieLabels.ts)
                             if (isOutside) {
-                                if (showValue && showPercentage) {
-                                    return `{name|${params.name}: }{value|${params.percent}% - ${meta.value.formatted}}`;
-                                } else if (showValue) {
-                                    return `{name|${params.name}: }{value|${meta.value.formatted}}`;
-                                } else if (showPercentage) {
-                                    return `{name|${params.name}: }{value|${params.percent}%}`;
-                                } else {
-                                    return `{name|${params.name}}`;
-                                }
+                                return formatPieOutsideLabel({
+                                    name: params.name,
+                                    percent: params.percent,
+                                    formattedValue: meta.value.formatted,
+                                    showValue,
+                                    showPercentage,
+                                });
                             }
 
                             // For inside labels, use plain formatting (no rich text)
