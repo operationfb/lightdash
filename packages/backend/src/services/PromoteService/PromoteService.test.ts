@@ -60,7 +60,7 @@ const savedChartModel = {
     get: vi.fn(async () => promotedChart.chart),
     find: vi.fn(async () => [existingUpstreamChart.chart]),
     create: vi.fn(async () => existingUpstreamChart.chart),
-    createVersion: vi.fn(async () => existingUpstreamChart.chart),
+    createVersionInTransaction: vi.fn(async () => undefined),
     updateInTransaction: vi.fn(async () => undefined),
     renameSlug: vi.fn(async () => undefined),
     transaction: vi.fn(
@@ -83,9 +83,9 @@ beforeEach(() => {
     savedChartModel.create
         .mockReset()
         .mockResolvedValue(existingUpstreamChart.chart);
-    savedChartModel.createVersion
+    savedChartModel.createVersionInTransaction
         .mockReset()
-        .mockResolvedValue(existingUpstreamChart.chart);
+        .mockResolvedValue(undefined);
     savedChartModel.updateInTransaction
         .mockReset()
         .mockResolvedValue(undefined);
@@ -1282,7 +1282,7 @@ describe('PromoteService promoting and mutating changes', () => {
             expect.objectContaining({ name: renamedChart.name }),
             chartTransaction,
         );
-        expect(savedChartModel.createVersion).toHaveBeenCalledWith(
+        expect(savedChartModel.createVersionInTransaction).toHaveBeenCalledWith(
             upstreamChart.uuid,
             expect.objectContaining({ slug: 'renamed-chart' }),
             user,
@@ -1327,7 +1327,9 @@ describe('PromoteService promoting and mutating changes', () => {
         );
 
         expect(savedChartModel.updateInTransaction).not.toHaveBeenCalled();
-        expect(savedChartModel.createVersion).not.toHaveBeenCalled();
+        expect(
+            savedChartModel.createVersionInTransaction,
+        ).not.toHaveBeenCalled();
     });
 
     test('can safely retry when version creation fails after a slug rename', async () => {
@@ -1359,7 +1361,7 @@ describe('PromoteService promoting and mutating changes', () => {
             upstreamChart,
         );
         (
-            savedChartModel.createVersion as import('vitest').Mock
+            savedChartModel.createVersionInTransaction as import('vitest').Mock
         ).mockRejectedValueOnce(new Error('version write failed'));
 
         await expect(service.upsertCharts(user, changes)).rejects.toThrow(
@@ -1371,7 +1373,9 @@ describe('PromoteService promoting and mutating changes', () => {
 
         expect(savedChartModel.transaction).toHaveBeenCalledTimes(2);
         expect(savedChartModel.renameSlug).toHaveBeenCalledTimes(2);
-        expect(savedChartModel.createVersion).toHaveBeenCalledTimes(2);
+        expect(
+            savedChartModel.createVersionInTransaction,
+        ).toHaveBeenCalledTimes(2);
     });
 
     test('create charts and update dashboard tile uuids if a new chart created', async () => {
