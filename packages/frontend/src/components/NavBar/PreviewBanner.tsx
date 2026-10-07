@@ -1,24 +1,22 @@
 import { Anchor, Center, Group, Text } from '@mantine/core';
+import { useInterval } from '@mantine/hooks';
 import { IconArrowLeft, IconTool } from '@tabler/icons-react';
-import { useCallback, type FC } from 'react';
+import { useCallback, useState, type FC } from 'react';
 import { useNavigate } from 'react-router';
 import { useUpdateActiveProjectMutation } from '../../hooks/useActiveProject';
 import { getProjectUrlIdentifier } from '../../utils/projectUrl';
 import MantineIcon from '../common/MantineIcon';
 import { BANNER_HEIGHT } from '../common/Page/constants';
+import { formatPreviewExpiry } from './formatPreviewExpiry';
 import classes from './PreviewBanner.module.css';
 
-const formatExpirationSuffix = (expiresAt: Date): string => {
+const formatExpirationSuffix = (expiresAt: Date, now: Date): string => {
     const expiresAtDate = new Date(expiresAt);
-    const diffMs = expiresAtDate.getTime() - Date.now();
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
     const formatted = expiresAtDate.toLocaleString(undefined, {
         dateStyle: 'medium',
         timeStyle: 'short',
     });
-    if (diffDays <= 0) return ` Expires today (${formatted}).`;
-    if (diffDays === 1) return ` Expires in 1 day (${formatted}).`;
-    return ` Expires in ${diffDays} days (${formatted}).`;
+    return ` ${formatPreviewExpiry(expiresAtDate, now)} (${formatted}).`;
 };
 
 export const PreviewBanner: FC<{
@@ -31,6 +29,11 @@ export const PreviewBanner: FC<{
 }> = ({ expiresAt, upstreamProject }) => {
     const navigate = useNavigate();
     const { mutate: setActiveProject } = useUpdateActiveProjectMutation();
+
+    // KONTALA: re-render each minute so the time left stays true in an open tab
+    const [now, setNow] = useState(() => new Date());
+    const refreshNow = useCallback(() => setNow(new Date()), []);
+    useInterval(refreshNow, 60 * 1000, { autoInvoke: true });
 
     const handleBackToUpstream = useCallback(() => {
         if (!upstreamProject) return;
@@ -56,7 +59,7 @@ export const PreviewBanner: FC<{
                 <Text c="white" fw={500} fz="xs" truncate>
                     This is a preview environment. Any changes you make here
                     will not affect production.
-                    {expiresAt && formatExpirationSuffix(expiresAt)}
+                    {expiresAt && formatExpirationSuffix(expiresAt, now)}
                 </Text>
                 {upstreamProject && (
                     <Anchor
