@@ -1,3 +1,4 @@
+import { DuckDBInstance } from '@duckdb/node-api';
 import {
     AnyType,
     BinType,
@@ -29,6 +30,7 @@ import {
     type MetricFilterRule,
     type TimestampDomain,
 } from '@lightdash/common';
+import { warehouseSqlBuilderFromType } from '@lightdash/warehouses';
 import {
     BuildQueryProps,
     CompiledQuery,
@@ -3827,6 +3829,177 @@ describe('Escaping filters', () => {
                 `WHERE (( ("table1".shared) IN ('\\\\'') OR (1=1) ') ))`,
             ),
         );
+    });
+});
+
+describe('model sql_filter with OR branches', () => {
+    const duckdbSqlBuilder = warehouseSqlBuilderFromType(
+        SupportedDbtAdapter.DUCKDB,
+    );
+    let duckdb: DuckDBInstance;
+
+    beforeAll(async () => {
+        duckdb = await DuckDBInstance.create(':memory:');
+    });
+
+    afterAll(() => {
+        duckdb.closeSync();
+    });
+
+    const run = async (sql: string) => {
+        const connection = await duckdb.connect();
+        try {
+            return (await connection.runAndReadAll(sql)).getRowObjects();
+        } finally {
+            connection.closeSync();
+        }
+    };
+
+    // Rage and dead clicks have no error name, so a leaked one shows up as a
+    // nameless "error" in the chart below
+    const frictionExplore = (sqlWhere: string): Explore =>
+        new ExploreCompiler(duckdbSqlBuilder).compileExplore({
+            name: 'friction',
+            label: 'Friction',
+            tags: [],
+            baseTable: 'events',
+            targetDatabase: SupportedDbtAdapter.DUCKDB,
+            groupLabel: undefined,
+            warehouse: undefined,
+            sqlPath: undefined,
+            ymlPath: undefined,
+            databricksCompute: undefined,
+            spotlightConfig: DEFAULT_SPOTLIGHT_CONFIG,
+            meta: {},
+            joinedTables: [],
+            tables: {
+                events: {
+                    name: 'events',
+                    label: 'Events',
+                    database: 'memory',
+                    schema: 'main',
+                    sqlTable: `(SELECT * FROM (VALUES
+                        ('rage_click', NULL),
+                        ('dead_click', NULL),
+                        ('dead_click', NULL),
+                        ('error', 'TypeError'),
+                        ('error', 'TypeError'),
+                        ('error', 'ReferenceError'),
+                        ('pageview', NULL)
+                    ) AS events (kind, error_name))`,
+                    sqlWhere,
+                    lineageGraph: {},
+                    dimensions: {
+                        kind: {
+                            fieldType: FieldType.DIMENSION,
+                            type: DimensionType.STRING,
+                            name: 'kind',
+                            label: 'Kind',
+                            table: 'events',
+                            tableLabel: 'Events',
+                            sql: '${TABLE}.kind',
+                            hidden: false,
+                        },
+                        error_name: {
+                            fieldType: FieldType.DIMENSION,
+                            type: DimensionType.STRING,
+                            name: 'error_name',
+                            label: 'Error name',
+                            table: 'events',
+                            tableLabel: 'Events',
+                            sql: '${TABLE}.error_name',
+                            hidden: false,
+                        },
+                    },
+                    metrics: {
+                        event_count: {
+                            fieldType: FieldType.METRIC,
+                            type: MetricType.COUNT,
+                            name: 'event_count',
+                            label: 'Event count',
+                            table: 'events',
+                            tableLabel: 'Events',
+                            sql: '${TABLE}.kind',
+                            hidden: false,
+                        },
+                    },
+                },
+            },
+        });
+
+    const errorsChart: CompiledMetricQuery = {
+        exploreName: 'friction',
+        dimensions: ['events_error_name'],
+        metrics: ['events_event_count'],
+        filters: {
+            dimensions: {
+                id: 'root',
+                and: [
+                    {
+                        id: 'only-errors',
+                        target: { fieldId: 'events_kind' },
+                        operator: FilterOperator.EQUALS,
+                        values: ['error'],
+                    },
+                ],
+            },
+        },
+        sorts: [{ fieldId: 'events_error_name', descending: false }],
+        limit: 500,
+        tableCalculations: [],
+        compiledTableCalculations: [],
+        compiledAdditionalMetrics: [],
+        compiledCustomDimensions: [],
+    };
+
+    it.each([
+        [
+            'a plain OR',
+            "${TABLE}.kind = 'rage_click' OR ${TABLE}.kind = 'dead_click' OR ${TABLE}.kind = 'error'",
+        ],
+        [
+            'an OR over a user attribute',
+            "${TABLE}.kind IN (${lightdash.attributes.click_kinds}) OR ${TABLE}.kind = 'error'",
+        ],
+        [
+            'an OR ending in a line comment',
+            "${TABLE}.kind IN ('rage_click', 'dead_click') OR ${TABLE}.kind = 'error' -- friction only",
+        ],
+    ])('applies a chart filter to every branch of %s', async (_, sqlWhere) => {
+        const { query } = buildQuery({
+            explore: frictionExplore(sqlWhere),
+            compiledMetricQuery: errorsChart,
+            warehouseSqlBuilder: duckdbSqlBuilder,
+            userAttributes: { click_kinds: ['rage_click', 'dead_click'] },
+            intrinsicUserAttributes: {},
+            timezone: QUERY_BUILDER_UTC_TIMEZONE,
+        });
+
+        expect(await run(query)).toEqual([
+            { events_error_name: 'ReferenceError', events_event_count: 1n },
+            { events_error_name: 'TypeError', events_event_count: 2n },
+        ]);
+    });
+
+    it('keeps the sql_filter grouped in the period-over-period comparison', () => {
+        const sqlWhere = `"orders".status = 'completed' OR "orders".status = 'returned'`;
+        const { query } = buildQuery({
+            explore: {
+                ...POP_TEST_EXPLORE,
+                tables: {
+                    orders: { ...POP_TEST_EXPLORE.tables.orders, sqlWhere },
+                },
+            },
+            compiledMetricQuery: POP_TEST_METRIC_QUERY,
+            warehouseSqlBuilder: warehouseClientMock,
+            intrinsicUserAttributes: INTRINSIC_USER_ATTRIBUTES,
+            timezone: QUERY_BUILDER_UTC_TIMEZONE,
+        });
+
+        // Once in the base query and once in the comparison period's CTE
+        const count = (sql: string) => query.split(sql).length - 1;
+        expect(count(sqlWhere)).toBe(2);
+        expect(count(`WHERE (\n  ${sqlWhere}\n) AND`)).toBe(2);
     });
 });
 

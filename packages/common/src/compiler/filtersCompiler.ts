@@ -1176,3 +1176,8 @@ export const renderFilterRuleSqlFromField = (
         timestampFilterContext,
     );
 };
+
+// A model's sql_filter, safe to AND with other filters: the parentheses keep its
+// ORs together and the line break stops a trailing `--` comment eating the `)`
+export const renderSqlFilterCondition = (sqlFilter: string): string =>
+    `(\n  ${sqlFilter}\n)`;
