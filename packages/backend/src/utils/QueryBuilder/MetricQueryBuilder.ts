@@ -60,6 +60,7 @@ import {
     QueryWarning,
     quoteFieldReference,
     renderFilterRuleSqlFromField,
+    renderSqlFilterCondition,
     renderTableCalculationFilterRuleSql,
     resolveTimestampFilterContext,
     snakeCaseName,
@@ -1344,11 +1345,14 @@ export class MetricQueryBuilder {
 
         const tableSqlWhereWithReplacedAttributes = tableCompiledSqlWhere
             ? [
-                  replaceUserAttributesAsStrings(
-                      tableCompiledSqlWhere,
-                      intrinsicUserAttributes,
-                      userAttributes,
-                      warehouseSqlBuilder,
+                  renderSqlFilterCondition(
+                      replaceUserAttributesAsStrings(
+                          tableCompiledSqlWhere,
+                          intrinsicUserAttributes,
+                          userAttributes,
+                          warehouseSqlBuilder,
+                          { noWrap: true },
+                      ),
                   ),
               ]
             : [];

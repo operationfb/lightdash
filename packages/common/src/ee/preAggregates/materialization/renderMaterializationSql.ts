@@ -2,6 +2,7 @@ import { ExploreCompiler } from '../../../compiler/exploreCompiler';
 import {
     DEFAULT_FILTER_CASE_SENSITIVE,
     renderFilterRuleSqlFromField,
+    renderSqlFilterCondition,
 } from '../../../compiler/filtersCompiler';
 import { getReservedParameterNames } from '../../../parameters/reservedParameters';
 import { ParameterError } from '../../../types/errors';
@@ -274,7 +275,9 @@ export const renderMaterializationSql = ({
 
     // Parity with MetricQueryBuilder: only the base table's sql_filter applies
     const whereClauses = [
-        ...(baseTable.sqlWhere ? [baseTable.sqlWhere] : []),
+        ...(baseTable.sqlWhere
+            ? [renderSqlFilterCondition(baseTable.sqlWhere)]
+            : []),
         ...(filterSqls.length > 0 ? [`(${filterSqls.join(' AND ')})`] : []),
     ];
 
