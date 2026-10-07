@@ -125,8 +125,74 @@ const formatComparisonValue = (
     }
 };
 
+// Number(null) is 0, so a NULL read as a number compares as zero: a
+// comparison field with no value showed +∞%, and an empty KPI -100%.
+// BigNumberDataModel's isNumeric already keeps both out.
 const isNumber = (i: ItemsMap[string] | undefined, value: any) =>
-    isNumericItem(i) && !(value instanceof Date) && !valueIsNaN(value);
+    isNumericItem(i) &&
+    value !== null &&
+    value !== undefined &&
+    !(value instanceof Date) &&
+    !valueIsNaN(value);
+
+export type BigNumberComparisonResult = {
+    /** The comparison, or why there is none: nothing to compare with
+     * (`undefined`), or a value that is no number (`n/a`) */
+    value: number | typeof UNDEFINED | typeof NOT_APPLICABLE;
+    /** The format the comparison is shown in */
+    format: ComparisonFormatTypes | undefined;
+};
+
+/**
+ * How a big number's value compares with the value it is set against, the
+ * comparison field's or the next row's. A percentage of nothing is no
+ * number - 0 against 0 read as NaN, and anything against 0 as +∞% - so
+ * against zero the comparison is the difference itself, as a raw comparison
+ * shows it.
+ */
+export const getBigNumberComparison = ({
+    item,
+    comparisonItem,
+    value,
+    comparisonValue,
+    format,
+}: {
+    item: ItemsMap[string] | undefined;
+    comparisonItem: ItemsMap[string] | undefined;
+    value: unknown;
+    comparisonValue: unknown;
+    format: ComparisonFormatTypes | undefined;
+}): BigNumberComparisonResult => {
+    if (comparisonValue === undefined || comparisonValue === null) {
+        return { value: UNDEFINED, format };
+    }
+    // For backwards compatibility with old table calculations without type
+    const isCalculationTypeUndefined =
+        item !== undefined &&
+        isTableCalculation(item) &&
+        item.type === undefined &&
+        value !== null &&
+        value !== undefined;
+    if (
+        !(isNumber(comparisonItem, comparisonValue) && isNumber(item, value)) &&
+        !isCalculationTypeUndefined
+    ) {
+        return { value: NOT_APPLICABLE, format };
+    }
+    const effectiveFormat =
+        format === ComparisonFormatTypes.PERCENTAGE &&
+        Number(comparisonValue) === 0
+            ? ComparisonFormatTypes.RAW
+            : format;
+    return {
+        value: calculateComparisonValue(
+            Number(value),
+            Number(comparisonValue),
+            effectiveFormat,
+        ),
+        format: effectiveFormat,
+    };
+};
 
 const getItemPriority = (item: ItemsMap[string]): number => {
     if (isField(item) && isMetric(item)) {
@@ -341,28 +407,24 @@ const useBigNumberConfig = (
         parameters,
     ]);
 
-    const unformattedValue = useMemo(() => {
-        // For backwards compatibility with old table calculations without type
-        const isCalculationTypeUndefined =
-            item && isTableCalculation(item) && item.type === undefined;
-        return (isNumber(comparisonItem, secondRowValueRaw) &&
-            isNumber(item, firstRowValueRaw)) ||
-            isCalculationTypeUndefined
-            ? calculateComparisonValue(
-                  Number(firstRowValueRaw),
-                  Number(secondRowValueRaw),
-                  comparisonFormat,
-              )
-            : secondRowValueRaw === undefined
-              ? UNDEFINED
-              : NOT_APPLICABLE;
-    }, [
-        item,
-        comparisonItem,
-        secondRowValueRaw,
-        firstRowValueRaw,
-        comparisonFormat,
-    ]);
+    const comparison = useMemo(
+        () =>
+            getBigNumberComparison({
+                item,
+                comparisonItem,
+                value: firstRowValueRaw,
+                comparisonValue: secondRowValueRaw,
+                format: comparisonFormat,
+            }),
+        [
+            item,
+            comparisonItem,
+            secondRowValueRaw,
+            firstRowValueRaw,
+            comparisonFormat,
+        ],
+    );
+    const unformattedValue = comparison.value;
 
     const comparisonDiff = useMemo(() => {
         return unformattedValue === UNDEFINED
@@ -382,7 +444,7 @@ const useBigNumberConfig = (
         return unformattedValue === NOT_APPLICABLE
             ? (secondRowValueFormatted ?? NOT_APPLICABLE)
             : formatComparisonValue(
-                  comparisonFormat,
+                  comparison.format,
                   comparisonDiff,
                   // Use the selected field's format so the comparison inherits
                   // the column's formatting, not the comparison field's
@@ -393,7 +455,7 @@ const useBigNumberConfig = (
                   resultsData?.resolvedTimezone,
               );
     }, [
-        comparisonFormat,
+        comparison.format,
         comparisonDiff,
         item,
         unformattedValue,
