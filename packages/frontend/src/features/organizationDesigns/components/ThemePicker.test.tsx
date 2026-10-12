@@ -4,8 +4,13 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { ThemePicker } from './ThemePicker';
 
+const mocks = vi.hoisted(() => ({ canAccessSettings: true }));
+
 vi.mock('../hooks/useOrganizationDesigns', () => ({
     useOrganizationDesigns: () => ({ data: [] }),
+}));
+vi.mock('../../../hooks/settings/useCanAccessSettings', () => ({
+    useCanAccessSettings: () => mocks.canAccessSettings,
 }));
 
 const renderPicker = (
@@ -20,6 +25,10 @@ const renderPicker = (
     );
 
 describe('ThemePicker compact', () => {
+    beforeEach(() => {
+        mocks.canAccessSettings = true;
+    });
+
     it('shows the saved theme name when it is missing from the list', () => {
         renderPicker({
             compact: true,
@@ -62,6 +71,24 @@ describe('ThemePicker compact', () => {
             screen.queryByText(
                 'No shared design assets - prompt any style you want',
             ),
+        ).not.toBeInTheDocument();
+    });
+
+    it('links to theme settings only for those who can reach Settings', () => {
+        renderPicker({ compact: true, opened: true });
+        expect(
+            screen.getByRole('menuitem', { name: 'Manage themes' }),
+        ).toBeInTheDocument();
+    });
+
+    it('hides the theme settings link from everyone else', () => {
+        mocks.canAccessSettings = false;
+        renderPicker({ compact: true, opened: true });
+        expect(
+            screen.getByRole('menuitem', { name: /^No theme/ }),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByRole('menuitem', { name: 'Manage themes' }),
         ).not.toBeInTheDocument();
     });
 });

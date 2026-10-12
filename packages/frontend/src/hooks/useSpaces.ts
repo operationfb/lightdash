@@ -17,6 +17,7 @@ import {
 import { useNavigate } from 'react-router';
 import { lightdashApi } from '../api';
 import useApp from '../providers/App/useApp';
+import { useCanAccessSettings } from './settings/useCanAccessSettings';
 import useToaster from './toaster/useToaster';
 import { invalidateContent } from './useContent';
 import { useAccount } from './user/useAccount';
@@ -102,7 +103,10 @@ export const useSpaceDeleteMutation = (projectUuid: string) => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const { health } = useApp();
-    const isSoftDeleteEnabled = health.data?.softDelete.enabled ?? false;
+    // KONTALA: recently deleted lives in Settings.
+    const canAccessSettings = useCanAccessSettings();
+    const canGoToRecentlyDeleted =
+        (health.data?.softDelete.enabled ?? false) && canAccessSettings;
 
     return useMutation<null, ApiError, string>(
         (spaceUuid) => deleteQuery(projectUuid, spaceUuid),
@@ -113,7 +117,7 @@ export const useSpaceDeleteMutation = (projectUuid: string) => {
                 await queryClient.invalidateQueries(['deletedContent']);
                 showToastSuccess({
                     title: `Success! Space was deleted.`,
-                    action: isSoftDeleteEnabled
+                    action: canGoToRecentlyDeleted
                         ? {
                               children: 'Go to recently deleted',
                               icon: IconArrowRight,

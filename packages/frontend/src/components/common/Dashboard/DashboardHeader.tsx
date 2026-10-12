@@ -84,6 +84,7 @@ import useDashboardPerformanceWarning from '../../../hooks/dashboard/useDashboar
 import { useFavoriteMutation } from '../../../hooks/favorites/useFavoriteMutation';
 import { useFavorites } from '../../../hooks/favorites/useFavorites';
 import { useDashboardPinningMutation } from '../../../hooks/pinning/useDashboardPinningMutation';
+import { useCanAccessSettings } from '../../../hooks/settings/useCanAccessSettings';
 import { useContentAuthoringEnabled } from '../../../hooks/useContentAuthoringEnabled';
 import {
     useUnverifyDashboardMutation,
@@ -349,6 +350,7 @@ const DashboardHeader = memo(
         );
 
         const { user, health } = useApp();
+        const canAccessSettings = useCanAccessSettings();
         const preAggregatesEnabled =
             health.data?.preAggregates.enabled ?? false;
         const userCanManageDashboard =
@@ -499,7 +501,7 @@ const DashboardHeader = memo(
                             </Badge>
                         </Tooltip>
                     )}
-                    {!!dashboard.draftsAwaitingReview && (
+                    {canAccessSettings && !!dashboard.draftsAwaitingReview && (
                         <Tooltip
                             label="Other people have unpublished changes on this dashboard. Review them and write them back to the repo."
                             maw={280}

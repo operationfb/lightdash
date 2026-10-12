@@ -13,6 +13,7 @@ import { useUncontrolled } from '@mantine/hooks';
 import { IconBrush, IconCheck, IconChevronDown } from '@tabler/icons-react';
 import { type FC } from 'react';
 import MantineIcon from '../../../components/common/MantineIcon';
+import { useCanAccessSettings } from '../../../hooks/settings/useCanAccessSettings';
 import { useOrganizationDesigns } from '../hooks/useOrganizationDesigns';
 import { ManageThemesMenuItem } from './ManageThemesMenuItem';
 import classes from './ThemePicker.module.css';
@@ -63,6 +64,7 @@ export const ThemePicker: FC<Props> = ({
         onChange: onOpenedChange,
     });
     const { data: themes = [] } = useOrganizationDesigns();
+    const canAccessSettings = useCanAccessSettings();
 
     const selected = value ? themes.find((t) => t.designUuid === value) : null;
     const label = selected?.name ?? fallbackLabel ?? LIGHTDASH_DEFAULT_LABEL;
@@ -254,8 +256,12 @@ export const ThemePicker: FC<Props> = ({
                         ),
                     )}
                 </ScrollArea.Autosize>
-                <Menu.Divider />
-                <ManageThemesMenuItem />
+                {canAccessSettings && (
+                    <>
+                        <Menu.Divider />
+                        <ManageThemesMenuItem />
+                    </>
+                )}
             </Menu.Dropdown>
         </Menu>
     );

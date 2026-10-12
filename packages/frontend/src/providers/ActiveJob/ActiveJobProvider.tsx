@@ -16,6 +16,7 @@ import {
     type SetStateAction,
 } from 'react';
 import { useNavigate } from 'react-router';
+import { useCanAccessSettings } from '../../hooks/settings/useCanAccessSettings';
 import useToaster from '../../hooks/toaster/useToaster';
 import {
     getJobCompletionToast,
@@ -32,6 +33,7 @@ const ActiveJobProvider: FC<React.PropsWithChildren<{}>> = ({ children }) => {
     const [isQuietJob, setIsQuietJob] = useState(false);
     const queryClient = useQueryClient();
     const navigate = useNavigate();
+    const canAccessSettings = useCanAccessSettings();
     const {
         showToastSuccess,
         showToastApiError,
@@ -75,16 +77,17 @@ const ActiveJobProvider: FC<React.PropsWithChildren<{}>> = ({ children }) => {
                         showToastWarning({
                             key: TOAST_KEY_FOR_REFRESH_JOB,
                             title: completionToast.title,
-                            action: job.projectUuid
-                                ? {
-                                      children: 'View errors',
-                                      icon: IconArrowRight,
-                                      onClick: () =>
-                                          navigate(
-                                              `/generalSettings/projectManagement/${job.projectUuid}/validator`,
-                                          ),
-                                  }
-                                : undefined,
+                            action:
+                                job.projectUuid && canAccessSettings
+                                    ? {
+                                          children: 'View errors',
+                                          icon: IconArrowRight,
+                                          onClick: () =>
+                                              navigate(
+                                                  `/generalSettings/projectManagement/${job.projectUuid}/validator`,
+                                              ),
+                                      }
+                                    : undefined,
                         });
                     } else {
                         showToastSuccess({
@@ -125,6 +128,7 @@ const ActiveJobProvider: FC<React.PropsWithChildren<{}>> = ({ children }) => {
             isJobsDrawerOpen,
             isQuietJob,
             navigate,
+            canAccessSettings,
         ],
     );
 

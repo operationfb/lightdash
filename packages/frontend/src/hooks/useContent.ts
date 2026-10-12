@@ -20,6 +20,7 @@ import {
 import { useNavigate } from 'react-router';
 import { lightdashApi } from '../api';
 import useApp from '../providers/App/useApp';
+import { useCanAccessSettings } from './settings/useCanAccessSettings';
 import useToaster from './toaster/useToaster';
 
 export type ContentArgs = {
@@ -157,7 +158,10 @@ export const useContentAction = (
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const { health } = useApp();
-    const isSoftDeleteEnabled = health.data?.softDelete.enabled ?? false;
+    // KONTALA: recently deleted lives in Settings.
+    const canAccessSettings = useCanAccessSettings();
+    const canGoToRecentlyDeleted =
+        (health.data?.softDelete.enabled ?? false) && canAccessSettings;
 
     return useMutation<ApiSuccessEmpty, ApiError, ApiContentActionBody>({
         mutationFn: (body) => {
@@ -206,7 +210,7 @@ export const useContentAction = (
                         title: `Successfully deleted ${contentTypeLabel(
                             item.contentType,
                         )}.`,
-                        action: isSoftDeleteEnabled
+                        action: canGoToRecentlyDeleted
                             ? {
                                   children: 'Go to recently deleted',
                                   icon: IconArrowRight,
@@ -248,7 +252,10 @@ export const useContentBulkAction = (
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const { health } = useApp();
-    const isSoftDeleteEnabled = health.data?.softDelete.enabled ?? false;
+    // KONTALA: recently deleted lives in Settings.
+    const canAccessSettings = useCanAccessSettings();
+    const canGoToRecentlyDeleted =
+        (health.data?.softDelete.enabled ?? false) && canAccessSettings;
 
     return useMutation<ApiSuccessEmpty, ApiError, ApiContentBulkActionBody>({
         mutationFn: (body) => {
@@ -295,7 +302,7 @@ export const useContentBulkAction = (
                         title: `Successfully deleted ${content.length} ${
                             content.length === 1 ? 'item' : 'items'
                         }.`,
-                        action: isSoftDeleteEnabled
+                        action: canGoToRecentlyDeleted
                             ? {
                                   children: 'Go to recently deleted',
                                   icon: IconArrowRight,

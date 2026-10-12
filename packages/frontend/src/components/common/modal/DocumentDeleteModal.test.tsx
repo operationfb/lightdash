@@ -15,10 +15,14 @@ const mocks = vi.hoisted(() => ({
     success: vi.fn(),
     error: vi.fn(),
     softDelete: { enabled: true, retentionDays: 14 as number | undefined },
+    canAccessSettings: false,
 }));
 vi.mock('../../../api', () => ({ lightdashApi: mocks.api }));
 vi.mock('../../../providers/App/useApp', () => ({
     default: () => ({ health: { data: { softDelete: mocks.softDelete } } }),
+}));
+vi.mock('../../../hooks/settings/useCanAccessSettings', () => ({
+    useCanAccessSettings: () => mocks.canAccessSettings,
 }));
 vi.mock('../../../hooks/toaster/useToaster', () => ({
     default: () => ({
@@ -70,7 +74,29 @@ describe('Document delete confirmation', () => {
         vi.clearAllMocks();
         mocks.api.mockResolvedValue(undefined);
         mocks.softDelete = { enabled: true, retentionDays: 14 };
+        mocks.canAccessSettings = false;
     });
+    it.each([
+        { canAccessSettings: true, offersRecentlyDeleted: true },
+        { canAccessSettings: false, offersRecentlyDeleted: false },
+    ])(
+        'links the success toast to recently deleted only when Settings are reachable ($canAccessSettings)',
+        async ({ canAccessSettings, offersRecentlyDeleted }) => {
+            mocks.canAccessSettings = canAccessSettings;
+            const { onConfirm } = renderModal();
+            fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+            await waitFor(() => expect(onConfirm).toHaveBeenCalledOnce());
+            expect(mocks.success).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    action: offersRecentlyDeleted
+                        ? expect.objectContaining({
+                              children: 'Go to recently deleted',
+                          })
+                        : undefined,
+                }),
+            );
+        },
+    );
     it('deletes the selected document and refreshes discovery, viewer and trash after success', async () => {
         const { onConfirm, client, keys } = renderModal();
         expect(

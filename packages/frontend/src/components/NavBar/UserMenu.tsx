@@ -8,6 +8,7 @@ import {
 } from '@tabler/icons-react';
 import { type FC } from 'react';
 import { Link } from 'react-router';
+import { useCanAccessSettings } from '../../hooks/settings/useCanAccessSettings';
 import { useActiveProjectUuid } from '../../hooks/useActiveProject';
 import useLogoutMutation from '../../hooks/user/useUserLogoutMutation';
 import { useServerFeatureFlag } from '../../hooks/useServerOrClientFeatureFlag';
@@ -22,6 +23,7 @@ const UserMenu: FC<{ withLabel?: boolean }> = ({ withLabel = false }) => {
     const menuProps = useNavBarMenuProps();
     const { user } = useApp();
     const { activeProjectUuid } = useActiveProjectUuid();
+    const canAccessSettings = useCanAccessSettings();
     const queryHistoryFlag = useServerFeatureFlag(FeatureFlags.QueryHistory);
     const { mutate: logout } = useLogoutMutation({
         onSuccess: () => {
@@ -50,7 +52,7 @@ const UserMenu: FC<{ withLabel?: boolean }> = ({ withLabel = false }) => {
             <Menu.Dropdown>
                 <ThemeSwitcherMenuItem />
 
-                {user.data?.isSetupComplete ? (
+                {user.data?.isSetupComplete && canAccessSettings ? (
                     <Menu.Item
                         role="menuitem"
                         component={Link}
@@ -62,6 +64,7 @@ const UserMenu: FC<{ withLabel?: boolean }> = ({ withLabel = false }) => {
                 ) : null}
 
                 {user.data?.isSetupComplete &&
+                canAccessSettings &&
                 user.data?.ability?.can('create', 'InviteLink') ? (
                     <Menu.Item
                         role="menuitem"

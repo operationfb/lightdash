@@ -13,6 +13,7 @@ import {
 import { type FC } from 'react';
 import { Link } from 'react-router';
 import useHealth from '../../hooks/health/useHealth';
+import { useCanAccessSettings } from '../../hooks/settings/useCanAccessSettings';
 import useApp from '../../providers/App/useApp';
 import SupportDrawerContent from '../../providers/SupportDrawer/SupportDrawerContent';
 import LargeMenuItem from '../common/LargeMenuItem';
@@ -23,12 +24,17 @@ const HelpMenu: FC<{ withLabel?: boolean }> = ({ withLabel = false }) => {
     const menuProps = useNavBarMenuProps();
     const health = useHealth();
     const { user } = useApp();
-    const canViewRoadmap = user.data?.ability.can(
-        'view',
-        subject('Roadmap', {
-            organizationUuid: user.data.organizationUuid,
-        }),
-    );
+    const canAccessSettings = useCanAccessSettings();
+    // The roadmap is a Settings page, registered only behind a valid licence.
+    const canViewRoadmap =
+        canAccessSettings &&
+        health.data?.license?.valid === true &&
+        user.data?.ability.can(
+            'view',
+            subject('Roadmap', {
+                organizationUuid: user.data.organizationUuid,
+            }),
+        );
     const isCloudCustomer = health.data?.mode === LightdashMode.CLOUD_BETA;
     const isDevelopment = health.data?.mode === LightdashMode.DEV;
     const isPylonEnabled = !!health.data?.pylon.appId;

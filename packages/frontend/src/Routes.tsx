@@ -11,6 +11,7 @@ import { NavBarLayout } from './components/NavBarLayout';
 import PrivateRoute from './components/PrivateRoute';
 import ProjectRoute from './components/ProjectRoute';
 import CreateProjectSettings from './components/Settings/CreateProjectSettings';
+import SettingsRoute from './components/SettingsRoute';
 import UserCompletionModal from './components/UserCompletionModal';
 import LegacyAppPreviewRedirect from './features/apps/LegacyAppPreviewRedirect';
 import LegacyChartTypeGalleryRedirect from './features/chartTypes/LegacyChartTypeGalleryRedirect';
@@ -1013,9 +1014,13 @@ const PRIVATE_ROUTES: RouteObject[] = [
                             );
                             return {
                                 Component: () => (
-                                    <TrackPage name={PageName.GENERAL_SETTINGS}>
-                                        <Settings />
-                                    </TrackPage>
+                                    <SettingsRoute>
+                                        <TrackPage
+                                            name={PageName.GENERAL_SETTINGS}
+                                        >
+                                            <Settings />
+                                        </TrackPage>
+                                    </SettingsRoute>
                                 ),
                             };
                         },

@@ -1,5 +1,6 @@
 import { Anchor, Text } from '@mantine/core';
 import { type FC } from 'react';
+import { useCanAccessSettings } from '../../../../hooks/settings/useCanAccessSettings';
 import { toBrowserPath } from '../../../../utils/url';
 import { SlackStates } from '../types';
 
@@ -8,6 +9,7 @@ type Props = {
 };
 
 export const SchedulerFormSlackError: FC<Props> = ({ slackState }) => {
+    const canAccessSettings = useCanAccessSettings();
     if (slackState === SlackStates.NO_SLACK) {
         return (
             <>
@@ -29,16 +31,25 @@ export const SchedulerFormSlackError: FC<Props> = ({ slackState }) => {
         return (
             <>
                 <Text pb="sm">Slack integration needs to be reinstalled</Text>
-                <Text>
-                    To create a slack scheduled delivery, you need to
-                    <Anchor
-                        href={toBrowserPath('/generalSettings/integrations')}
-                    >
-                        {' '}
-                        reinstall the Slack integration{' '}
-                    </Anchor>
-                    for your organization
-                </Text>
+                {canAccessSettings ? (
+                    <Text>
+                        To create a slack scheduled delivery, you need to
+                        <Anchor
+                            href={toBrowserPath(
+                                '/generalSettings/integrations',
+                            )}
+                        >
+                            {' '}
+                            reinstall the Slack integration{' '}
+                        </Anchor>
+                        for your organization
+                    </Text>
+                ) : (
+                    <Text>
+                        To create a slack scheduled delivery, an admin needs to
+                        reinstall the Slack integration for your organization
+                    </Text>
+                )}
             </>
         );
     }

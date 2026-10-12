@@ -8,11 +8,12 @@ import classes from './OmnibarTarget.module.css';
 
 type Props = {
     placeholder: string;
+    label: string;
     style: CSSProperties;
     onOpen: (e: MouseEvent<HTMLInputElement>) => void;
 };
 
-const OmnibarTarget: FC<Props> = ({ placeholder, style, onOpen }) => {
+const OmnibarTarget: FC<Props> = ({ placeholder, label, style, onOpen }) => {
     const os = useOs();
 
     return (
@@ -20,7 +21,7 @@ const OmnibarTarget: FC<Props> = ({ placeholder, style, onOpen }) => {
             px="xs"
             gap="xs"
             role="search"
-            aria-label="Search content and settings"
+            aria-label={label}
             onClick={onOpen}
             style={style}
             wrap="nowrap"

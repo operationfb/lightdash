@@ -1,6 +1,7 @@
 import { SearchItemType } from '@lightdash/common';
 import { useMemo } from 'react';
 import { searchSettingsNavigationItemsWithPath } from '../../../hooks/settings/filterSettingsNavigation';
+import { useCanAccessSettings } from '../../../hooks/settings/useCanAccessSettings';
 import { useSettingsContext } from '../../../hooks/settings/useSettingsContext';
 import { useSettingsNavigation } from '../../../hooks/settings/useSettingsNavigation';
 import { type SearchItem } from '../types/searchItem';
@@ -13,9 +14,10 @@ import { hasMinQueryLength } from './useSearch';
 export const useOmnibarSettingsItems = (query: string): SearchItem[] => {
     const context = useSettingsContext();
     const sections = useSettingsNavigation(context);
+    const canAccessSettings = useCanAccessSettings();
 
     return useMemo(() => {
-        if (!hasMinQueryLength(query)) {
+        if (!canAccessSettings || !hasMinQueryLength(query)) {
             return [];
         }
 
@@ -29,5 +31,5 @@ export const useOmnibarSettingsItems = (query: string): SearchItem[] => {
             contextLabel: path[path.length - 1],
             location: { pathname: item.to },
         }));
-    }, [sections, query]);
+    }, [canAccessSettings, sections, query]);
 };

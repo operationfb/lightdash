@@ -42,6 +42,7 @@ import { useLocation, useNavigate } from 'react-router';
 import MantineIcon from '../../../components/common/MantineIcon';
 import { AiAgentIcon } from '../../../ee/features/aiCopilot/components/AiAgentIcon';
 import { useAiAgentButtonVisibility } from '../../../ee/features/aiCopilot/hooks/useAiAgentsButtonVisibility';
+import { useCanAccessSettings } from '../../../hooks/settings/useCanAccessSettings';
 import { useProject } from '../../../hooks/useProject';
 import { useOptionalProjectRoute } from '../../../hooks/useProjectRoute';
 import { useRecentContent } from '../../../hooks/useRecentContent';
@@ -166,6 +167,10 @@ const Omnibar: FC<Props> = ({ projectUuid }) => {
                 projectUuid,
             }),
         ) ?? false;
+    const canAccessSettings = useCanAccessSettings();
+    const searchLabel = canAccessSettings
+        ? 'Search content and settings'
+        : 'Search content';
 
     const handleOmnibarOpenInputClick: MouseEventHandler<HTMLInputElement> = (
         e,
@@ -396,6 +401,7 @@ const Omnibar: FC<Props> = ({ projectUuid }) => {
                 {(style) => (
                     <OmnibarTarget
                         placeholder="Search"
+                        label={searchLabel}
                         style={style}
                         onOpen={handleOmnibarOpenInputClick}
                     />
@@ -409,7 +415,7 @@ const Omnibar: FC<Props> = ({ projectUuid }) => {
             <MantineBaseProvider withCssVariables={false}>
                 <Modal
                     fullScreen={compact}
-                    aria-label="Search content and settings"
+                    aria-label={searchLabel}
                     withCloseButton={false}
                     size={rem(960)}
                     closeOnClickOutside
@@ -438,7 +444,7 @@ const Omnibar: FC<Props> = ({ projectUuid }) => {
                                 />
                             )}
                             <TextInput
-                                aria-label="Search content and settings"
+                                aria-label={searchLabel}
                                 miw={0}
                                 variant="unstyled"
                                 size="md"
@@ -670,7 +676,7 @@ const Omnibar: FC<Props> = ({ projectUuid }) => {
                                         Run query
                                     </Button>
                                 )}
-                                {canManageProject && (
+                                {canManageProject && canAccessSettings && (
                                     <Button
                                         size="compact-xs"
                                         variant="subtle"

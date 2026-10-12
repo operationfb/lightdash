@@ -28,6 +28,7 @@ import { useEffect, useMemo, useRef, useState, type FC } from 'react';
 import CalendarRangePicker from '../../../components/common/DatePickers/CalendarRangePicker';
 import { type CalendarDateRange } from '../../../components/common/DatePickers/types';
 import MantineIcon from '../../../components/common/MantineIcon';
+import { useCanAccessSettings } from '../../../hooks/settings/useCanAccessSettings';
 import { useOrganizationUsers } from '../../../hooks/useOrganizationUsers';
 import { allSearchItemTypes } from '../types/searchItem';
 import { getDateFilterLabel } from '../utils/getDateFilterLabel';
@@ -124,6 +125,16 @@ const OmnibarFilters: FC<Props> = ({ filters, onSearchFilterChange }) => {
     const [isCreatedByExpanded, setIsCreatedByExpanded] = useState(false);
     const createdByInputRef = useRef<HTMLInputElement>(null);
     const { data: organizationUsers } = useOrganizationUsers();
+    const canAccessSettings = useCanAccessSettings();
+    const itemTypes = useMemo(
+        () =>
+            canAccessSettings
+                ? allSearchItemTypes
+                : allSearchItemTypes.filter(
+                      (type) => type !== SearchItemType.SETTINGS,
+                  ),
+        [canAccessSettings],
+    );
 
     useEffect(() => {
         if (isCreatedByExpanded) {
@@ -241,7 +252,7 @@ const OmnibarFilters: FC<Props> = ({ filters, onSearchFilterChange }) => {
                     >
                         Verified
                     </Menu.Item>
-                    {allSearchItemTypes.map((type) => (
+                    {itemTypes.map((type) => (
                         <Menu.Item
                             key={type}
                             leftSection={

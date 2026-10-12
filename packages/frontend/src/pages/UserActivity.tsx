@@ -31,6 +31,7 @@ import {
     useUserActivity,
 } from '../hooks/analytics/useUserActivity';
 import useHealth from '../hooks/health/useHealth';
+import { useCanAccessSettings } from '../hooks/settings/useCanAccessSettings';
 import { useProject } from '../hooks/useProject';
 import { useProjectUuid } from '../hooks/useProjectUuid';
 import useApp from '../providers/App/useApp';
@@ -208,6 +209,7 @@ const UserActivity: FC = () => {
     const projectUuid = useProjectUuid();
     const { data: project } = useProject(projectUuid);
     const { user: sessionUser } = useApp();
+    const canAccessSettings = useCanAccessSettings();
     const { data: health } = useHealth();
     const { mutateAsync: downloadCsv, isLoading: isDownloadingCsv } =
         useDownloadUserActivityCsv();
@@ -230,10 +232,14 @@ const UserActivity: FC = () => {
             <Group mt={10} mb={30} justify="space-between">
                 <PageBreadcrumbs
                     items={[
-                        {
-                            title: 'Usage analytics',
-                            to: `/generalSettings/projectManagement/${projectUuid}/usageAnalytics`,
-                        },
+                        ...(canAccessSettings
+                            ? [
+                                  {
+                                      title: 'Usage analytics',
+                                      to: `/generalSettings/projectManagement/${projectUuid}/usageAnalytics`,
+                                  },
+                              ]
+                            : []),
                         {
                             title: (
                                 <Group

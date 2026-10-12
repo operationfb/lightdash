@@ -16,6 +16,7 @@ import {
 } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { lightdashApi } from '../../../api';
+import { useCanAccessSettings } from '../../../hooks/settings/useCanAccessSettings';
 import useToaster from '../../../hooks/toaster/useToaster';
 import { invalidateContent } from '../../../hooks/useContent';
 import useApp from '../../../providers/App/useApp';
@@ -205,7 +206,10 @@ export const useDeleteSqlChartMutation = (
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const { health } = useApp();
-    const isSoftDeleteEnabled = health.data?.softDelete.enabled ?? false;
+    // KONTALA: recently deleted lives in Settings.
+    const canAccessSettings = useCanAccessSettings();
+    const canGoToRecentlyDeleted =
+        (health.data?.softDelete.enabled ?? false) && canAccessSettings;
     const { showToastSuccess, showToastApiError } = useToaster();
 
     return useMutation<{ savedSqlUuid: string }, ApiError>(
@@ -219,7 +223,7 @@ export const useDeleteSqlChartMutation = (
 
                 showToastSuccess({
                     title: `Success! SQL chart deleted`,
-                    action: isSoftDeleteEnabled
+                    action: canGoToRecentlyDeleted
                         ? {
                               children: 'Go to recently deleted',
                               icon: IconArrowRight,

@@ -20,6 +20,7 @@ import { lightdashApi } from '../api';
 import useEmbed from '../ee/providers/Embed/useEmbed';
 import useApp from '../providers/App/useApp';
 import { convertDateFilters } from '../utils/dateFilter';
+import { useCanAccessSettings } from './settings/useCanAccessSettings';
 import useToaster from './toaster/useToaster';
 import { invalidateContent } from './useContent';
 import { useOptionalProjectRoute } from './useProjectRoute';
@@ -248,7 +249,10 @@ export const useSavedQueryDeleteMutation = (projectUuid?: string) => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const { health } = useApp();
-    const isSoftDeleteEnabled = health.data?.softDelete.enabled ?? false;
+    // KONTALA: recently deleted lives in Settings.
+    const canAccessSettings = useCanAccessSettings();
+    const canGoToRecentlyDeleted =
+        (health.data?.softDelete.enabled ?? false) && canAccessSettings;
     const { showToastSuccess, showToastApiError } = useToaster();
     return useMutation<null, ApiError, string>(
         async (data) => {
@@ -267,7 +271,7 @@ export const useSavedQueryDeleteMutation = (projectUuid?: string) => {
 
                 showToastSuccess({
                     title: `Success! Chart was deleted.`,
-                    action: isSoftDeleteEnabled
+                    action: canGoToRecentlyDeleted
                         ? {
                               children: 'Go to recently deleted',
                               icon: IconArrowRight,
