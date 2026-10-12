@@ -120,3 +120,36 @@ describe('ContentTable row virtualization', () => {
         expect(warn).not.toHaveBeenCalled();
     });
 });
+
+describe('ContentTable column sizing', () => {
+    const FixedActionsTable: FC = () => {
+        const table = useContentTable({
+            columns: [
+                { accessorKey: 'name', header: 'Name', size: 300 },
+                { id: 'actions', header: '', size: 72, grow: false },
+            ],
+            data: rows,
+        });
+
+        return <ContentTable table={table} />;
+    };
+
+    test('keeps a grow: false column at its size and gives the slack to the others', () => {
+        const clientWidth = vi
+            .spyOn(HTMLElement.prototype, 'clientWidth', 'get')
+            .mockReturnValue(682);
+
+        render(<FixedActionsTable />, { wrapper: Providers });
+        const container = screen.getByRole('table').parentElement;
+
+        expect(
+            container?.style.getPropertyValue(
+                '--content-table-col-actions-size',
+            ),
+        ).toBe('72');
+        expect(
+            container?.style.getPropertyValue('--content-table-col-name-size'),
+        ).toBe('610');
+        clientWidth.mockRestore();
+    });
+});

@@ -115,8 +115,8 @@ const UserAttributesPanel: FC = () => {
                 id: 'actions',
                 header: '',
                 enableSorting: false,
-                size: 20,
-                maxSize: 20,
+                // xl padding on both sides of the sm action icon
+                size: 72,
                 grow: false,
                 Cell: ({ row }) => {
                     const attribute = row.original;

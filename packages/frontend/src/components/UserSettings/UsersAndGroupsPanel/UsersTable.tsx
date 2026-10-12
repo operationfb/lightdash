@@ -243,7 +243,7 @@ const UsersTable: FC = () => {
                 accessorKey: 'email',
                 header: 'User',
                 enableSorting: false,
-                size: isCompact ? 180 : 300,
+                size: isCompact ? 180 : 280,
                 Header: ({ column }) => (
                     <Group gap="two">
                         <MantineIcon icon={IconUserCircle} color="dimmed" />
@@ -400,7 +400,9 @@ const UsersTable: FC = () => {
                 id: 'actions',
                 header: '',
                 enableSorting: false,
-                size: isCompact ? 44 : 50,
+                // Cell padding on both sides of the 28px action icon
+                size: isCompact ? 60 : 76,
+                grow: false,
                 Cell: ({ row }) => {
                     const user = row.original;
                     const isCurrentUser =

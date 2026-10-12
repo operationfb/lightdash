@@ -32,8 +32,11 @@ import {
     memo,
     useCallback,
     useEffect,
+    useLayoutEffect,
     useMemo,
+    useState,
     type CSSProperties,
+    type RefObject,
 } from 'react';
 import MantineIcon from '../MantineIcon';
 import classes from './ContentTable.module.css';
@@ -42,7 +45,7 @@ import {
     type ContentTableMantineProps,
     type ContentTablePropFactory,
 } from './types';
-import { getLightdashColumnDef } from './utils';
+import { getGrownColumnSizes, getLightdashColumnDef } from './utils';
 
 const cx = (...classNames: Array<false | null | string | undefined>) =>
     classNames.filter(Boolean).join(' ');
@@ -131,12 +134,47 @@ const getColumnSizeVarName = (type: 'col' | 'header', id: string) =>
 const getColumnSizeVar = (type: 'col' | 'header', id: string) =>
     `calc(var(${getColumnSizeVarName(type, id)}) * 1px)`;
 
+// Only tables with a fixed (`grow: false`) column need the measured width:
+// otherwise the browser's own proportional distribution is what we want.
+const useFixedColumnsAvailableWidth = (
+    containerRef: RefObject<HTMLDivElement | null>,
+    hasFixedColumns: boolean,
+) => {
+    const [width, setWidth] = useState<number | null>(null);
+
+    useLayoutEffect(() => {
+        const node = containerRef.current;
+        if (!hasFixedColumns || !node) return undefined;
+
+        setWidth(node.clientWidth);
+        const observer = new ResizeObserver(() => setWidth(node.clientWidth));
+        observer.observe(node);
+        return () => observer.disconnect();
+    }, [containerRef, hasFixedColumns]);
+
+    return hasFixedColumns ? width : null;
+};
+
 const useColumnSizeVars = <TData extends RowData>(
     table: ContentTableInstance<TData>,
+    availableWidth: number | null,
 ) => {
     const columnSizing = table.getState().columnSizing;
-    const columnSizingInfo = table.getState().columnSizingInfo;
-    const headers = table.getFlatHeaders();
+    const columnSizes = getGrownColumnSizes(
+        table.getVisibleLeafColumns().map((column) => ({
+            id: column.id,
+            size: column.getSize(),
+            grow: getLightdashColumnDef(column)?.grow !== false,
+        })),
+        availableWidth,
+    );
+    const getHeaderWidth = (header: Header<TData, unknown>): number =>
+        header.subHeaders.length > 0
+            ? header.subHeaders.reduce(
+                  (sum, subHeader) => sum + getHeaderWidth(subHeader),
+                  0,
+              )
+            : (columnSizes[header.column.id] ?? header.getSize());
 
     const vars: ColumnSizeVars = {};
 
@@ -144,21 +182,11 @@ const useColumnSizeVars = <TData extends RowData>(
         vars[getColumnSizeVarName('col', columnId)] = size;
     }
 
-    for (const header of headers) {
-        vars[getColumnSizeVarName('header', header.id)] = header.getSize();
+    for (const header of table.getFlatHeaders()) {
+        vars[getColumnSizeVarName('header', header.id)] =
+            getHeaderWidth(header);
         vars[getColumnSizeVarName('col', header.column.id)] =
-            header.column.getSize();
-    }
-
-    if (columnSizingInfo.isResizingColumn) {
-        const resizingColumn = table.getColumn(
-            String(columnSizingInfo.isResizingColumn),
-        );
-
-        if (resizingColumn) {
-            vars[getColumnSizeVarName('col', resizingColumn.id)] =
-                resizingColumn.getSize();
-        }
+            columnSizes[header.column.id] ?? header.column.getSize();
     }
 
     return vars;
@@ -731,7 +759,14 @@ export const ContentTable = <TData extends RowData>({
     const globalFilterState = table.getState().globalFilter;
     const rowSelectionState = table.getState().rowSelection;
     const editingCellId = runtimeState.editingCell?.id ?? null;
-    const columnSizeVars = useColumnSizeVars(table);
+    const hasFixedColumns = visibleColumns.some(
+        (column) => getLightdashColumnDef(column)?.grow === false,
+    );
+    const availableWidth = useFixedColumnsAvailableWidth(
+        containerRef,
+        hasFixedColumns,
+    );
+    const columnSizeVars = useColumnSizeVars(table, availableWidth);
     const isResizingColumn = Boolean(
         table.getState().columnSizingInfo.isResizingColumn,
     );

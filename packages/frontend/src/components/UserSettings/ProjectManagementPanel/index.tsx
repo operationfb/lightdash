@@ -662,10 +662,10 @@ const ProjectManagementPanel: FC = () => {
                     </Tooltip>
 
                     <Divider
+                        className={classes.divider}
                         orientation="vertical"
                         w={1}
                         h={20}
-                        visibleFrom="sm"
                     />
 
                     <SegmentedControl
@@ -729,7 +729,12 @@ const ProjectManagementPanel: FC = () => {
                         ]}
                     />
 
-                    <Divider orientation="vertical" w={1} h={20} />
+                    <Divider
+                        className={classes.divider}
+                        orientation="vertical"
+                        w={1}
+                        h={20}
+                    />
 
                     {/* Warehouse filter */}
                     <Popover width={220} position="bottom-start">
@@ -926,31 +931,35 @@ const ProjectManagementPanel: FC = () => {
                     )}
                 </Group>
 
-                <Group gap="sm" wrap="nowrap" flex="0 0 auto">
-                    {hasActiveFilters && (
-                        <Tooltip label="Clear all filters">
-                            <ActionIcon size="sm" onClick={resetAllFilters}>
-                                <MantineIcon icon={IconTrash} />
-                            </ActionIcon>
-                        </Tooltip>
-                    )}
-                    {selectedProjects.length > 0 && (
-                        <>
-                            <Text size="sm" c="dimmed">
-                                {selectedProjects.length} selected
-                            </Text>
-                            <Button
-                                size="xs"
-                                color="red"
-                                variant="light"
-                                leftSection={<MantineIcon icon={IconTrash} />}
-                                onClick={handleDeleteInBulk}
-                            >
-                                Delete
-                            </Button>
-                        </>
-                    )}
-                </Group>
+                {(hasActiveFilters || selectedProjects.length > 0) && (
+                    <Group gap="sm" wrap="nowrap" flex="0 0 auto">
+                        {hasActiveFilters && (
+                            <Tooltip label="Clear all filters">
+                                <ActionIcon size="sm" onClick={resetAllFilters}>
+                                    <MantineIcon icon={IconTrash} />
+                                </ActionIcon>
+                            </Tooltip>
+                        )}
+                        {selectedProjects.length > 0 && (
+                            <>
+                                <Text size="sm" c="dimmed">
+                                    {selectedProjects.length} selected
+                                </Text>
+                                <Button
+                                    size="xs"
+                                    color="red"
+                                    variant="light"
+                                    leftSection={
+                                        <MantineIcon icon={IconTrash} />
+                                    }
+                                    onClick={handleDeleteInBulk}
+                                >
+                                    Delete
+                                </Button>
+                            </>
+                        )}
+                    </Group>
+                )}
             </Group>
         ),
     });
