@@ -4,7 +4,6 @@ import { IconPin } from '@tabler/icons-react';
 import { type FC } from 'react';
 import usePinnedItemsContext from '../../providers/PinnedItems/usePinnedItemsContext';
 import MantineIcon from '../common/MantineIcon';
-import MantineLinkButton from '../common/MantineLinkButton';
 import ResourceView from '../common/ResourceView';
 import { ResourceViewType } from '../common/ResourceView/types';
 
@@ -87,14 +86,6 @@ const PinnedItemsPanel: FC<Props> = ({ pinnedItems, isEnabled }) => {
                         relevant content.
                     </Text>
                 </Group>
-                <MantineLinkButton
-                    href="https://docs.lightdash.com/guides/pinning/"
-                    target="_blank"
-                    variant="subtle"
-                    size="compact-sm"
-                >
-                    View docs
-                </MantineLinkButton>
             </Group>
         </Card>
     ) : null;

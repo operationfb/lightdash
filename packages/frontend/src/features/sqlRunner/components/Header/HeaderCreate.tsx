@@ -138,8 +138,8 @@ export const HeaderCreate: FC = () => {
 
         if (!hasGithubIntegration) {
             return [
-                'Github integration is not enabled on this instance, click here to see more details ',
-                'https://docs.lightdash.com/self-host/customize-deployment/environment-variables#github-integration',
+                'Github integration is not enabled on this instance',
+                undefined,
             ];
         }
         if (!hasGithubEnabled) {

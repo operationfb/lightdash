@@ -134,7 +134,9 @@ describe('SchedulerDataFormatSection - app formats', () => {
 
             expect(screen.getByRole('radio', { name: 'Image' })).toBeDisabled();
             expect(
-                screen.getByRole('link', { name: 'headless browser' }),
+                screen.getByText(
+                    'You must enable the headless browser to send images',
+                ),
             ).toBeInTheDocument();
         },
     );

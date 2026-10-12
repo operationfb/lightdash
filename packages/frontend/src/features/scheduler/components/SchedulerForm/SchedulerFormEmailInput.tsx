@@ -1,5 +1,5 @@
 import { validateEmail } from '@lightdash/common';
-import { Anchor, Box, Group, HoverCard, TagsInput, Text } from '@mantine/core';
+import { Box, Group, HoverCard, TagsInput, Text } from '@mantine/core';
 import { IconMail } from '@tabler/icons-react';
 import { useState, type FC } from 'react';
 import MantineIcon from '../../../../components/common/MantineIcon';
@@ -68,16 +68,8 @@ export const SchedulerFormEmailInput: FC<Props> = ({
                     </Text>
                     <Text fz="xs">
                         To create an email scheduled delivery, you need to add
-                        <Anchor
-                            fz="xs"
-                            fw={500}
-                            target="_blank"
-                            href="https://docs.lightdash.com/self-host/customize-deployment/configure-smtp-for-lightdash-email-notifications"
-                        >
-                            {' '}
-                            SMTP environment variables{' '}
-                        </Anchor>
-                        to your Kontala Analytics instance
+                        SMTP environment variables to your Kontala Analytics
+                        instance
                     </Text>
                 </HoverCard.Dropdown>
             </HoverCard>

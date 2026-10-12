@@ -249,24 +249,6 @@ export default class EmailClient {
             contextKey: 'logoSrc',
             hostPath: '/lightdash-logo.png',
         },
-        {
-            filename: 'twitter.png',
-            cid: 'twitter-logo',
-            contextKey: 'twitterSrc',
-            hostPath: '/twitter.png',
-        },
-        {
-            filename: 'github.png',
-            cid: 'github-logo',
-            contextKey: 'githubSrc',
-            hostPath: '/github.png',
-        },
-        {
-            filename: 'linkedin.png',
-            cid: 'linkedin-logo',
-            contextKey: 'linkedinSrc',
-            hostPath: '/linkedin.png',
-        },
     ] as const;
 
     /**
@@ -669,7 +651,7 @@ export default class EmailClient {
             case InviteLinkPurpose.Member:
                 return this.sendEmail({
                     to: invite.email,
-                    subject: `You've been invited to join Lightdash`,
+                    subject: `You've been invited to join Kontala Analytics`,
                     template: 'invitation',
                     context: {
                         orgName: userThatInvited.organizationName,
@@ -677,7 +659,7 @@ export default class EmailClient {
                         host: this.lightdashConfig.siteUrl,
                         expirationLabel,
                     },
-                    text: `Your teammates at ${userThatInvited.organizationName} are using Lightdash to discover and share data insights. Click on the link below within the next ${expirationLabel} to join your team and start exploring your data! ${inviteUrl}`,
+                    text: `Your teammates at ${userThatInvited.organizationName} are using Kontala Analytics to discover and share data insights. Click on the link below within the next ${expirationLabel} to join your team and start exploring your data! ${inviteUrl}`,
                 });
             case InviteLinkPurpose.Setup: {
                 const inviterName =
@@ -686,7 +668,7 @@ export default class EmailClient {
                     'A teammate';
                 return this.sendEmail({
                     to: invite.email,
-                    subject: `${inviterName} needs your help setting up Lightdash for ${userThatInvited.organizationName}`,
+                    subject: `${inviterName} needs your help setting up Kontala Analytics for ${userThatInvited.organizationName}`,
                     template: 'setupInvitation',
                     context: {
                         inviterName,
@@ -695,7 +677,7 @@ export default class EmailClient {
                         host: this.lightdashConfig.siteUrl,
                         expirationLabel,
                     },
-                    text: `${inviterName} is setting up Lightdash for ${userThatInvited.organizationName} and needs someone with data-warehouse access to connect their data. Lightdash is the Agentic BI platform for modern data teams — build and manage analytics straight from the tools you already use, with AI handling the busywork. Built on dbt. Loved by developers. Actually used by businesses. Accept the invite and we'll take you straight to connecting ${userThatInvited.organizationName}'s data warehouse — the last step before your team can start asking questions of their data. This link is valid for the next ${expirationLabel}. ${inviteUrl}`,
+                    text: `${inviterName} is setting up Kontala Analytics for ${userThatInvited.organizationName} and needs someone with data-warehouse access to connect their data. Accept the invite and we'll take you straight to connecting ${userThatInvited.organizationName}'s data warehouse — the last step before your team can start asking questions of their data. This link is valid for the next ${expirationLabel}. ${inviteUrl}`,
                 });
             }
             default:
@@ -1073,7 +1055,7 @@ export default class EmailClient {
     }): Promise<void> {
         const subject = 'Verify your email address';
         const text = `
-        Verify your email address by entering the following passcode in Lightdash: ${passcode}
+        Verify your email address by entering the following passcode in Kontala Analytics: ${passcode}
             `;
         return this.sendEmail({
             to: recipient,
@@ -1098,7 +1080,7 @@ export default class EmailClient {
         domain: string;
     }): Promise<void> {
         const subject = `Verify your domain ${domain}`;
-        const text = `Verify that your organization owns ${domain} by entering the following passcode in Lightdash: ${passcode}`;
+        const text = `Verify that your organization owns ${domain} by entering the following passcode in Kontala Analytics: ${passcode}`;
         return this.sendEmail({
             to: recipient,
             subject,
@@ -1238,7 +1220,7 @@ export default class EmailClient {
 
         return this.sendEmail({
             bcc: recipients,
-            subject: `[Lightdash] ${
+            subject: `[Kontala Analytics] ${
                 subjectMap[payload.type]
             } - ${projectContext}`,
             template: templateMap[payload.type],

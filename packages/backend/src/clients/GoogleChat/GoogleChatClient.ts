@@ -118,7 +118,7 @@ export class GoogleChatClient {
 
         const buttons: AnyType[] = [
             {
-                text: 'Open in Lightdash',
+                text: 'Open in Kontala Analytics',
                 onClick: {
                     openLink: { url: ctaUrl },
                 },
@@ -201,7 +201,7 @@ export class GoogleChatClient {
                         },
                     },
                     {
-                        text: 'Open in Lightdash',
+                        text: 'Open in Kontala Analytics',
                         onClick: {
                             openLink: { url: ctaUrl },
                         },
@@ -351,7 +351,7 @@ export class GoogleChatClient {
             buttonList: {
                 buttons: [
                     {
-                        text: 'Open in Lightdash',
+                        text: 'Open in Kontala Analytics',
                         onClick: {
                             openLink: { url: ctaUrl },
                         },

@@ -95,7 +95,7 @@ export const useUnlinkGithubUserMutation = () => {
                 showToastSuccess({
                     title: 'GitHub account unlinked',
                     subtitle:
-                        'Write-backs will be authored by the Lightdash bot again.',
+                        'Write-backs will be authored by the Kontala Analytics bot again.',
                 });
             },
             onError: ({ error }) => {

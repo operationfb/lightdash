@@ -1,4 +1,4 @@
-import { Alert, Anchor, Stack, Text } from '@mantine/core';
+import { Alert, Code, Stack, Text } from '@mantine/core';
 import { IconExclamationCircle } from '@tabler/icons-react';
 import { type FC } from 'react';
 import MantineIcon from '../../common/MantineIcon';
@@ -15,17 +15,10 @@ const DbtNoneForm: FC<{ disabled: boolean }> = ({ disabled }) => {
             >
                 <Text c="orange" fz="sm">
                     This project is deployed using the CLI. To refresh native
-                    YAML and edit source files in Lightdash, select GitHub above
-                    and choose Native Lightdash YAML. You can also deploy with{' '}
-                    <Anchor
-                        href="https://docs.lightdash.com/guides/cli/how-to-use-lightdash-deploy"
-                        target="_blank"
-                        rel="noreferrer"
-                        fz="sm"
-                    >
-                        lightdash deploy
-                    </Anchor>{' '}
-                    or automate deployments with a GitHub action.
+                    YAML and edit source files in Kontala Analytics, select
+                    GitHub above and choose Native Kontala Analytics YAML. You
+                    can also deploy with <Code>lightdash deploy</Code> or
+                    automate deployments with a GitHub action.
                 </Text>
             </Alert>
 
@@ -39,17 +32,6 @@ const DbtNoneForm: FC<{ disabled: boolean }> = ({ disabled }) => {
                 description={
                     <Text fz="sm">
                         This will hide the refresh button from the explore page.
-                        Read more about your{' '}
-                        <Anchor
-                            href={
-                                'https://docs.lightdash.com/references/dbt-projects'
-                            }
-                            target="_blank"
-                            rel="noreferrer"
-                            fz="sm"
-                        >
-                            options for refreshing dbt here
-                        </Anchor>
                     </Text>
                 }
             />

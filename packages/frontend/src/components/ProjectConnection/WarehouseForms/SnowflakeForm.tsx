@@ -638,7 +638,6 @@ const SnowflakeForm: FC<{
                                             type: 'checkbox',
                                         },
                                     )}
-                                    documentationUrl="https://docs.lightdash.com/get-started/setup-lightdash/connect-project#warehouse"
                                     label="Always use this warehouse"
                                     onLabel="Yes"
                                     offLabel="No"
@@ -726,8 +725,9 @@ const SnowflakeForm: FC<{
                                             label="Snowflake URL override"
                                             description={
                                                 <>
-                                                    Usually Lightdash would
-                                                    connect to a default url:
+                                                    Usually Kontala Analytics
+                                                    would connect to a default
+                                                    url:
                                                     account.snowflakecomputing.com.
                                                     If you'd like to override
                                                     this (e.g. for the dbt
@@ -750,7 +750,7 @@ const SnowflakeForm: FC<{
                                         <BooleanSwitch
                                             name="warehouse.disableTimestampConversion"
                                             label="Disable timestamp conversion to UTC"
-                                            description="When disabled, Lightdash will skip converting timestamps to UTC. This can improve performance but requires your data to already be in UTC format."
+                                            description="When disabled, Kontala Analytics will skip converting timestamps to UTC. This can improve performance but requires your data to already be in UTC format."
                                             onLabel="Yes"
                                             offLabel="No"
                                             disabled={disabled}

@@ -14,7 +14,6 @@ import { SettingsCard } from '../../common/Settings/SettingsCard';
 import {
     SettingsPage,
     SettingsPageActions,
-    SettingsPageDocumentationLink,
 } from '../../common/Settings/SettingsPage';
 import { BrandAppearanceSettings } from './BrandAppearanceSettings';
 import { CreatePaletteModal } from './CreatePaletteModal';
@@ -130,7 +129,6 @@ const AppearanceSettingsPanel: FC = () => {
             description="Customize organization branding and the color palettes used in charts and visualizations."
             actions={
                 <SettingsPageActions>
-                    <SettingsPageDocumentationLink href="https://docs.lightdash.com/guides/customizing-the-appearance-of-your-project" />
                     {canManageColorPalette ? (
                         <Button
                             size="xs"

@@ -1746,7 +1746,7 @@ export const createRepository = async ({
             const response = await octokit.rest.repos.createInOrg({
                 org: owner,
                 name,
-                description: description || 'Lightdash dbt project',
+                description: description || 'Kontala Analytics dbt project',
                 private: isPrivate,
                 auto_init: true, // Creates with README so it's not empty
             });
@@ -1756,7 +1756,7 @@ export const createRepository = async ({
             const response =
                 await octokit.rest.repos.createForAuthenticatedUser({
                     name,
-                    description: description || 'Lightdash dbt project',
+                    description: description || 'Kontala Analytics dbt project',
                     private: isPrivate,
                     auto_init: true,
                 });

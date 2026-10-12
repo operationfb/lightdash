@@ -203,19 +203,7 @@ const GithubPersonalAccessTokenForm: FC<{ disabled: boolean }> = ({
                         {isDbtSource && (
                             <p>Required for private repositories</p>
                         )}
-                        <p>
-                            This is used to access your repo.
-                            <Anchor
-                                inherit
-                                target="_blank"
-                                href="https://docs.lightdash.com/get-started/setup-lightdash/connect-project#github"
-                                rel="noreferrer"
-                            >
-                                {' '}
-                                Click to open documentation
-                            </Anchor>
-                            .
-                        </p>
+                        <p>This is used to access your repo.</p>
                     </>
                 }
                 required={requireSecrets}
@@ -284,7 +272,7 @@ const GithubForm: FC<{ disabled: boolean }> = ({ disabled }) => {
                             { value: 'dbt', label: 'dbt' },
                             {
                                 value: 'lightdash',
-                                label: 'Native Lightdash YAML',
+                                label: 'Native Kontala Analytics YAML',
                             },
                         ]}
                         onChange={(value) => {

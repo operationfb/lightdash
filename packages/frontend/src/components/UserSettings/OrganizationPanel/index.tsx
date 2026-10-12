@@ -55,7 +55,7 @@ const OrganizationPanel: FC = () => {
                 <TextInput
                     label="Organization name"
                     required
-                    placeholder="Lightdash"
+                    placeholder="Kontala"
                     disabled={isLoading}
                     {...form.getInputProps('organizationName')}
                 />

@@ -46,22 +46,7 @@ export const DatabricksSchemaInput: FC<{
             name="warehouse.database"
             {...form.getInputProps('warehouse.database')}
             label="Schema"
-            description={
-                description ?? (
-                    <p>
-                        Check out for more details in{' '}
-                        <Anchor
-                            inherit
-                            target="_blank"
-                            href="https://docs.lightdash.com/get-started/setup-lightdash/connect-project/#database-1"
-                            rel="noreferrer"
-                        >
-                            given documentation
-                        </Anchor>
-                        .
-                    </p>
-                )
-            }
+            description={description}
             required
             disabled={disabled}
         />
@@ -213,20 +198,6 @@ const DatabricksForm: FC<{
                     name="warehouse.serverHostName"
                     {...form.getInputProps('warehouse.serverHostName')}
                     label="Server host name"
-                    description={
-                        <p>
-                            Check out for more details in{' '}
-                            <Anchor
-                                inherit
-                                target="_blank"
-                                href="https://docs.lightdash.com/get-started/setup-lightdash/connect-project#server-hostname"
-                                rel="noreferrer"
-                            >
-                                given documentation
-                            </Anchor>
-                            .
-                        </p>
-                    }
                     required
                     disabled={disabled}
                     placeholder="xxxx.gcp.databricks.com"
@@ -236,20 +207,6 @@ const DatabricksForm: FC<{
                     name="warehouse.httpPath"
                     {...form.getInputProps('warehouse.httpPath')}
                     label="HTTP Path"
-                    description={
-                        <p>
-                            Check out for more details in{' '}
-                            <Anchor
-                                inherit
-                                target="_blank"
-                                href="https://docs.lightdash.com/get-started/setup-lightdash/connect-project#http-path"
-                                rel="noreferrer"
-                            >
-                                given documentation
-                            </Anchor>
-                            .
-                        </p>
-                    }
                     required
                     disabled={disabled}
                     placeholder="/sql/protocolv1/o/xxxx/xxxx"
@@ -301,20 +258,6 @@ const DatabricksForm: FC<{
                         name="warehouse.personalAccessToken"
                         {...form.getInputProps('warehouse.personalAccessToken')}
                         label="Personal access token"
-                        description={
-                            <p>
-                                Check out for more details in{' '}
-                                <Anchor
-                                    inherit
-                                    target="_blank"
-                                    href="https://docs.lightdash.com/get-started/setup-lightdash/connect-project#personal-access-token"
-                                    rel="noreferrer"
-                                >
-                                    given documentation
-                                </Anchor>
-                                .
-                            </p>
-                        }
                         required={requireSecrets}
                         placeholder={
                             disabled || !requireSecrets

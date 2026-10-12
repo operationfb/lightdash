@@ -108,7 +108,7 @@ const commitAuthorFromUser = (user: {
 }): CommitAuthor => ({
     name:
         [user.firstName, user.lastName].filter(Boolean).join(' ') ||
-        'Lightdash user',
+        'Kontala Analytics user',
     email: user.email ?? null,
 });
 
@@ -134,7 +134,7 @@ const buildCommitMessage = (
     projectUrl: string,
 ): string => {
     const lines = [
-        `Update ${slug} from Lightdash`,
+        `Update ${slug} from Kontala Analytics`,
         '',
         `Project: ${projectUrl}`,
     ];
@@ -1515,9 +1515,9 @@ export class ContentAsCodeWritebackService extends BaseService {
                     user,
                     projectUuid,
                     row.branch,
-                    `Update ${label} \`${slug}\` from Lightdash`,
+                    `Update ${label} \`${slug}\` from Kontala Analytics`,
                     [
-                        `This ${label} was edited in Lightdash and is managed as code; this PR proposes the change back to the repo.`,
+                        `This ${label} was edited in Kontala Analytics and is managed as code; this PR proposes the change back to the repo.`,
                         ``,
                         `- Instance: ${this.lightdashConfig.siteUrl}`,
                         `- Content: ${contentUrl}`,

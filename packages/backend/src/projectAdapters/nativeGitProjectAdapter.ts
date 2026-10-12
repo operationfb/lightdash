@@ -166,7 +166,7 @@ export class NativeGitProjectAdapter implements ProjectAdapter {
         const models = await loadLightdashModels(this.dbtProjectDir);
         if (models.length === 0) {
             throw new ParseError(
-                'No native Lightdash models found. Add model YAML files under models/ or lightdash/models/ in the configured project subdirectory.',
+                'No native Kontala Analytics models found. Add model YAML files under models/ or lightdash/models/ in the configured project subdirectory.',
             );
         }
         const explores = await compileLightdashModels({

@@ -89,7 +89,7 @@ const SelectConnectMethod: FC<SelectConnectMethodProps> = ({
                                         color="black"
                                     />
                                 }
-                                description="Connect your warehouse, then let Lightdash finish your project setup"
+                                description="Connect your warehouse, then let Kontala Analytics finish your project setup"
                             >
                                 Set up with a coding agent
                             </OnboardingButton>
@@ -187,26 +187,6 @@ const SelectConnectMethod: FC<SelectConnectMethodProps> = ({
                     </Stack>
                 </Stack>
             </ProjectCreationCard>
-
-            <Button
-                component="a"
-                variant="subtle"
-                mx="auto"
-                w="fit-content"
-                target="_blank"
-                rel="noreferrer noopener"
-                href="https://docs.lightdash.com/get-started/setup-lightdash/get-project-lightdash-ready"
-                onClick={() => {
-                    track({
-                        name: EventName.DOCUMENTATION_BUTTON_CLICKED,
-                        properties: {
-                            action: 'getting_started',
-                        },
-                    });
-                }}
-            >
-                View docs
-            </Button>
         </OnboardingWrapper>
     );
 };

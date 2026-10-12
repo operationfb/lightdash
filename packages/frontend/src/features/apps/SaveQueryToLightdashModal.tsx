@@ -63,7 +63,7 @@ const SaveQueryToLightdashModal: FC<Props> = ({
         <MantineModal
             opened
             onClose={onClose}
-            title="Save to Lightdash"
+            title="Save to Kontala Analytics"
             icon={IconDeviceFloppy}
             size="sm"
             onConfirm={handleSave}

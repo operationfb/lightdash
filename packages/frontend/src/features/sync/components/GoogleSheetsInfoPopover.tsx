@@ -21,7 +21,7 @@ export const GoogleSheetsInfoPopover = () => {
 
             <HoverCard.Dropdown>
                 <Text fz="9px">
-                    Lightdash's use and transfer of information received from
+                    Kontala's use and transfer of information received from
                     Google APIs adhere to{' '}
                     <Anchor
                         target="_blank"

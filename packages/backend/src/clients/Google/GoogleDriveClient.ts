@@ -406,7 +406,7 @@ export class GoogleDriveClient {
             : [[]];
         const metadata: string[][] = [
             [
-                'The data in this Google Sheet has been automatically synced via Lightdash',
+                'The data in this Google Sheet has been automatically synced via Kontala Analytics',
             ],
             ['Update frequency:', updateFrequency],
             ['Time of last sync:', new Date().toLocaleString()],

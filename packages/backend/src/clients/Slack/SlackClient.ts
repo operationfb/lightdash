@@ -1062,7 +1062,7 @@ export class SlackClient {
             await webClient.chat
                 .postMessage({
                     channel: channelId,
-                    text: `This channel will now receive notifications for failed scheduled delivery jobs in Lightdash. Configuration completed${
+                    text: `This channel will now receive notifications for failed scheduled delivery jobs in Kontala Analytics. Configuration completed${
                         userFullName.trim().length ? ` by ${userFullName}` : ''
                     }. Stay informed on your job status here.`,
                     ...(appProfilePhotoUrl

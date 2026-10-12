@@ -33,11 +33,11 @@ const OnboardingPanel: FC<Props> = ({ projectUrlIdentifier, userName }) => {
     return (
         <Stack justify="flex-start" gap="xs" mt="4xl">
             <Title order={3}>
-                {`Welcome${userName ? ', ' + userName : ' to Lightdash'}! 👋`}
+                {`Welcome${userName ? ', ' + userName : ' to Kontala Analytics'}! 👋`}
             </Title>
             <Text c="ldGray.7">
                 You&apos;re ready to start exploring. Here&apos;s what you can
-                do with Lightdash:
+                do with Kontala Analytics:
             </Text>
             <Paper p="xl" mt="lg">
                 <Group justify="center">

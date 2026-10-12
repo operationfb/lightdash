@@ -5,10 +5,10 @@ import { modals } from '@mantine/modals';
 import {
     IconBook,
     IconHelp,
+    IconMail,
     IconMessages,
     IconRoad,
     IconSos,
-    IconUsers,
 } from '@tabler/icons-react';
 import { type FC } from 'react';
 import { Link } from 'react-router';
@@ -77,10 +77,10 @@ const HelpMenu: FC<{ withLabel?: boolean }> = ({ withLabel = false }) => {
             <Menu.Dropdown>
                 <LargeMenuItem
                     component="a"
-                    href="https://docs.lightdash.com/"
+                    href="https://www.kontala.com/docs/analytics"
                     target="_blank"
-                    title="Ask the docs"
-                    description="Chat with the Lightdash docs AI assistant"
+                    title="Documentation"
+                    description="Read the Kontala Analytics guides"
                     icon={IconBook}
                 />
 
@@ -111,11 +111,11 @@ const HelpMenu: FC<{ withLabel?: boolean }> = ({ withLabel = false }) => {
 
                 <LargeMenuItem
                     component="a"
-                    href="https://join.slack.com/t/lightdash-community/shared_invite/zt-2wgtavou8-VRhwXI%7EQbjCAHQs0WBac3w"
+                    href="https://www.kontala.com/docs/support/contact-us"
                     target="_blank"
-                    title="Join the Slack community"
-                    description="Get advice share best practices with other users."
-                    icon={IconUsers}
+                    title="Contact us"
+                    description="Talk to the Kontala team about setup, access or anything else"
+                    icon={IconMail}
                 />
 
                 {(isCloudCustomer || isDevelopment) && (
@@ -124,7 +124,7 @@ const HelpMenu: FC<{ withLabel?: boolean }> = ({ withLabel = false }) => {
                         onClick={() => {
                             modals.open({
                                 id: 'support-drawer',
-                                title: 'Share with Lightdash Support',
+                                title: 'Share with Kontala Support',
                                 size: 'lg',
                                 children: <SupportDrawerContent />,
                                 yOffset: 100,
@@ -132,7 +132,7 @@ const HelpMenu: FC<{ withLabel?: boolean }> = ({ withLabel = false }) => {
                             });
                         }}
                         title="Report an issue"
-                        description="Share a detailed report with Lightdash support"
+                        description="Share a detailed report with Kontala support"
                         icon={IconSos}
                     />
                 )}

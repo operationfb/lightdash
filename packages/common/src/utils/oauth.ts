@@ -330,7 +330,7 @@ const OAUTH_AUTHORIZE_TEMPLATE = `
                 </div>
 
                 <p class="oauth-message">
-                    <strong>{{client_name}}</strong> wants to access your Lightdash account
+                    <strong>{{client_name}}</strong> wants to access your Kontala Analytics account
                 </p>
 
                 <div class="oauth-account">
@@ -514,7 +514,7 @@ export const parseScopeString = (
  */
 export const getClientName = (clientId: string): string => {
     const clientNames: Record<string, string> = {
-        'lightdash-cli': 'Lightdash CLI tool',
+        'lightdash-cli': 'Kontala Analytics CLI tool',
     };
     return clientNames[clientId] || clientId;
 };
@@ -544,7 +544,7 @@ export const generateOAuthResponseHtml = (
 export const generateOAuthSuccessResponse = (
     title: string = 'Authentication Successful!',
     messages: string[] = [
-        'You have been successfully authenticated with Lightdash.',
+        'You have been successfully authenticated with Kontala Analytics.',
         'You can close this window and return to the CLI.',
     ],
 ): string => generateOAuthResponseHtml('success', title, messages, 'success');

@@ -57,7 +57,7 @@ const UsersAndGroupsPanel: FC = () => {
             actions={
                 <SettingsPageActions>
                     <SettingsPageDocumentationLink
-                        href="https://docs.lightdash.com/references/roles"
+                        href="https://www.kontala.com/docs/analytics/security-and-governance#roles"
                         label="Roles documentation"
                     />
                     {activeTab === 'users' && canInvite ? (

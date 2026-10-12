@@ -1,6 +1,5 @@
 import { DbtProjectType, type OrganizationProject } from '@lightdash/common';
 import {
-    Anchor,
     Box,
     Group,
     Loader,
@@ -33,34 +32,10 @@ import useTracking from '../providers/Tracking/useTracking';
 import { EventName } from '../types/Events';
 import classes from './OnboardingDbt.module.css';
 
-const DOCS_URL =
-    'https://docs.lightdash.com/get-started/setup-lightdash/get-project-lightdash-ready';
 const INTEGRATIONS_ROUTE = '/generalSettings/integrations';
 const GET_STARTED_ROUTE = '/get-started';
 const CLI_ROUTE_PARAM = 'cli';
 const DETECTION_POLL_INTERVAL_MS = 3000;
-
-const DocsLink: FC = () => {
-    const { track } = useTracking();
-    return (
-        <Anchor
-            href={DOCS_URL}
-            target="_blank"
-            rel="noreferrer noopener"
-            size="sm"
-            c="dimmed"
-            mx="auto"
-            onClick={() => {
-                track({
-                    name: EventName.DOCUMENTATION_BUTTON_CLICKED,
-                    properties: { action: 'getting_started' },
-                });
-            }}
-        >
-            View docs
-        </Anchor>
-    );
-};
 
 const DbtMethodPicker: FC = () => {
     const navigate = useNavigate();
@@ -128,8 +103,6 @@ const DbtMethodPicker: FC = () => {
                     </Paper>
                 ))}
             </Stack>
-
-            <DocsLink />
         </Box>
     );
 };
@@ -306,8 +279,6 @@ const DbtCliWaiting: FC = () => {
                     </Stack>
                 ))}
             </Paper>
-
-            <DocsLink />
         </Box>
     );
 };

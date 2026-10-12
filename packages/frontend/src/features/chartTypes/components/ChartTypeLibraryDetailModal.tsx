@@ -123,8 +123,8 @@ const ChartTypeLibraryDetailModal: FC<Props> = ({
                     actions: (
                         <Group gap="sm" wrap="nowrap">
                             <Text fz="xs" c="dimmed">
-                                Requires Lightdash v{item.minLightdashVersion}{' '}
-                                or later
+                                Requires Kontala Analytics v
+                                {item.minLightdashVersion} or later
                             </Text>
                             <Button disabled>Install</Button>
                         </Group>

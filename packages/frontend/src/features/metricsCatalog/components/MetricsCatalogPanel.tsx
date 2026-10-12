@@ -147,7 +147,7 @@ const LearnMorePopover: FC<{ buttonStyles?: ButtonProps['style'] }> = ({
                         <Button
                             component="a"
                             variant="default"
-                            href="https://docs.lightdash.com/guides/metrics-catalog/"
+                            href="https://www.kontala.com/docs/analytics/metrics#find-metrics-in-the-metrics-catalog"
                             target="_blank"
                             style={{ border: 'none', flexGrow: 1 }}
                         >

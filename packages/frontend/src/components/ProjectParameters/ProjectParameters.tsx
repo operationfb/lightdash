@@ -140,7 +140,7 @@ const ProjectParameters: FC<ProjectParametersProps> = ({ projectUuid }) => {
                             }
                         >
                             {parameter.source === 'config'
-                                ? 'Lightdash Config'
+                                ? 'Kontala Analytics Config'
                                 : `${parameter.modelName} Model`}
                         </Badge>
                     </Table.Td>

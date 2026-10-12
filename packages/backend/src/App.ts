@@ -859,7 +859,7 @@ export default class App {
             expressApp.get(
                 '/api/docs',
                 reDoc({
-                    title: 'Lightdash API Docs',
+                    title: 'Kontala Analytics API Docs',
                     specUrl: '/api/docs/openapi.json',
                 }),
             );

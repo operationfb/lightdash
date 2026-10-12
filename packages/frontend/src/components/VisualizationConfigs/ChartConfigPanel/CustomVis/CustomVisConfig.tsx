@@ -301,7 +301,7 @@ export const ConfigTabs: React.FC = memo(() => {
                             <Group gap={4} wrap="nowrap">
                                 <Config.Heading>Vega-Lite JSON</Config.Heading>
                                 <DocumentationHelpButton
-                                    href="https://docs.lightdash.com/references/custom-charts#custom-charts"
+                                    href="https://www.kontala.com/docs/analytics/explore-and-visualise#chart-types"
                                     // Block, so the anchor hugs the glyph and
                                     // the Group centres what is actually seen
                                     // rather than an inline text box.

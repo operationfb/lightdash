@@ -378,7 +378,7 @@ export const FormulaReferenceBar: FC<BarProps> = ({
                 <Group gap="sm" wrap="nowrap">
                     <Divider orientation="vertical" />
                     <Anchor
-                        href="https://docs.lightdash.com/guides/formula-table-calculations"
+                        href="https://www.kontala.com/docs/analytics/metrics#write-a-formula"
                         target="_blank"
                         rel="noreferrer"
                         size="xs"

@@ -437,7 +437,7 @@ const ShareSpaceModalContent: FC<ShareSpaceProps> = ({
                         <Text c="ldGray.7" fz="xs">
                             Learn more about space permissions in our{' '}
                             <Anchor
-                                href="https://docs.lightdash.com/references/workspace/spaces#managing-access-to-a-space"
+                                href="https://www.kontala.com/docs/analytics/share-and-export#spaces"
                                 target="_blank"
                                 rel="noreferrer"
                                 fz="xs"

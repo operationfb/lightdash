@@ -44,7 +44,7 @@ const LightdashAnalyticsPanel = ({
 
     return (
         <SettingsPage
-            title="Lightdash analytics"
+            title="Organization analytics"
             isBeta
             description="Explore your organization's AI usage and query activity."
         >

@@ -333,7 +333,7 @@ const Settings: FC = () => {
                         )}
 
                         <SettingsGridCard>
-                            <Title order={5}>Lightdash support access</Title>
+                            <Title order={5}>Kontala support access</Title>
                             <SupportImpersonationPanel />
                         </SettingsGridCard>
 
@@ -383,7 +383,7 @@ const Settings: FC = () => {
                                     deliveries — are shared.{' '}
                                     <Anchor
                                         inherit
-                                        href="https://docs.lightdash.com/guides/how-to-create-scheduled-deliveries"
+                                        href="https://www.kontala.com/docs/analytics/share-and-export#scheduled-deliveries-and-alerts"
                                         target="_blank"
                                         rel="noreferrer"
                                     >

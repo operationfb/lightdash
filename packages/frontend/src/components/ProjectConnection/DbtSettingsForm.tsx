@@ -4,7 +4,7 @@ import {
     DbtProjectTypeLabels,
     WarehouseTypes,
 } from '@lightdash/common';
-import { TextInput, Stack, Anchor, Select } from '@mantine/core';
+import { TextInput, Stack, Select } from '@mantine/core';
 import { useMemo, useState, type FC } from 'react';
 import useApp from '../../providers/App/useApp';
 import AzureDevOpsForm from './DbtForms/AzureDevOpsForm';
@@ -113,35 +113,6 @@ const DbtSettingsForm: FC<DbtSettingsFormProps> = ({
         }
     }, [type]);
 
-    const baseDocUrl =
-        'https://docs.lightdash.com/get-started/setup-lightdash/connect-project#';
-    const typeDocUrls = {
-        [DbtProjectType.GITHUB]: {
-            env: `environment-variables`,
-        },
-        [DbtProjectType.GITLAB]: {
-            env: `environment-variables-1`,
-        },
-        [DbtProjectType.AZURE_DEVOPS]: {
-            env: `environment-variables-2`,
-        },
-        [DbtProjectType.DBT]: {
-            env: `environment-variables-3`,
-        },
-        [DbtProjectType.BITBUCKET]: {
-            env: `environment-variables-3`,
-        },
-        [DbtProjectType.DBT_CLOUD_IDE]: {
-            env: `environment-variables`,
-        },
-        [DbtProjectType.NONE]: {
-            env: `environment-variables-3`,
-        },
-        [DbtProjectType.MANIFEST]: {
-            env: `environment-variables-3`,
-        },
-    };
-
     return (
         <div
             style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
@@ -178,9 +149,9 @@ const DbtSettingsForm: FC<DbtSettingsFormProps> = ({
                                     label="Target name"
                                     description={
                                         <p>
-                                            The name Lightdash gives the dbt
-                                            target it compiles with. Set it to
-                                            match the target your dbt code
+                                            The name Kontala Analytics gives the
+                                            dbt target it compiles with. Set it
+                                            to match the target your dbt code
                                             branches on. It does not change
                                             which database or schema your models
                                             are read from.
@@ -222,16 +193,6 @@ const DbtSettingsForm: FC<DbtSettingsFormProps> = ({
                                             <p>
                                                 Add dbt selectors to filter out
                                                 models from your dbt project.
-                                                You can see more details in{' '}
-                                                <Anchor
-                                                    inherit
-                                                    href="https://docs.lightdash.com/get-started/setup-lightdash/connect-project/#dbt-selector"
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                >
-                                                    our docs
-                                                </Anchor>
-                                                .
                                             </p>
                                         }
                                         disabled={disabled}
@@ -242,7 +203,6 @@ const DbtSettingsForm: FC<DbtSettingsFormProps> = ({
                                 <MultiKeyValuePairsInput
                                     name="dbt.environment"
                                     label="Environment variables"
-                                    documentationUrl={`${baseDocUrl}${typeDocUrls[type].env}`}
                                     disabled={disabled}
                                 />
                             </Stack>

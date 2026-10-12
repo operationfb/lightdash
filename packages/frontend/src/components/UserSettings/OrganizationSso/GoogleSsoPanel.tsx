@@ -151,7 +151,7 @@ const GoogleSsoPanel: FC = () => {
                             <Stack gap={2}>
                                 <Title order={5}>Google</Title>
                                 <Text c="dimmed" size="sm" maw={460}>
-                                    Single sign-on with Google using Lightdash's
+                                    Single sign-on with Google using Kontala's
                                     shared Google app — no credentials required.
                                     Users whose email matches the discovery
                                     whitelist see a "Sign in with Google"
@@ -189,7 +189,7 @@ const GoogleSsoPanel: FC = () => {
                         >
                             {hasOtherProviderEnabled
                                 ? "You've configured other SSO providers for your organization, so they take over sign-in for your domains and Google isn't shown. Set up Google here if you also want to offer it alongside them."
-                                : "Google sign-in is available by default using Lightdash's shared Google app. Set up a configuration here to restrict it to specific email domains or to disable password sign-in."}
+                                : "Google sign-in is available by default using Kontala's shared Google app. Set up a configuration here to restrict it to specific email domains or to disable password sign-in."}
                         </Callout>
                     )}
 

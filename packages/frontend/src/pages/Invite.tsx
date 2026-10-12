@@ -141,7 +141,7 @@ const PrivacyTermsFootnote: FC = () => (
         <br />
         our{' '}
         <Anchor
-            href="https://www.lightdash.com/privacy-policy"
+            href="https://www.kontala.com/privacy"
             target="_blank"
             fz="sm"
             fw={500}
@@ -150,7 +150,7 @@ const PrivacyTermsFootnote: FC = () => (
         </Anchor>{' '}
         and our{' '}
         <Anchor
-            href="https://www.lightdash.com/terms-of-service"
+            href="https://www.kontala.com/terms"
             target="_blank"
             fz="sm"
             fw={500}

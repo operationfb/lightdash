@@ -58,7 +58,7 @@ const DataAppConnectionsPanel: FC<Props> = ({ projectUuid }) => {
         </Button>
     );
     const dataWarning = (
-        <Callout variant="warning" title="Data leaves Lightdash">
+        <Callout variant="warning" title="Data leaves Kontala Analytics">
             Apps linked to a connection can send any data they can query to that
             connection&apos;s external host. Only add connections to hosts you
             trust with this project&apos;s data.

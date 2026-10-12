@@ -127,7 +127,7 @@ export const HomepageContentPanel: FC<Props> = ({
                                   size="compact-sm"
                                   variant="subtle"
                                   target="_blank"
-                                  href="https://docs.lightdash.com/get-started/exploring-data/intro"
+                                  href="https://www.kontala.com/docs/analytics/explores"
                               >
                                   Learn
                               </MantineLinkButton>

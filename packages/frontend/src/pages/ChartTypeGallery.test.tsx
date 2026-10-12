@@ -776,7 +776,7 @@ describe('ChartTypeGallery', () => {
             setData([makeDataAppViz({ registrySlug: 'radial-gauge' })]);
             renderPage();
 
-            expect(screen.getByText('Built by Lightdash')).toBeInTheDocument();
+            expect(screen.getByText('Built by Kontala')).toBeInTheDocument();
             expect(
                 screen.queryByLabelText('Edit Radial gauge'),
             ).not.toBeInTheDocument();

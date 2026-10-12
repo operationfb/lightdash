@@ -263,22 +263,13 @@ export const TooltipConfig: FC<Props> = ({ fields }) => {
                 <Config.Label>Custom</Config.Label>
                 <Tooltip
                     maw={350}
-                    label="Use this input to enhance chart tooltips with additional content. You can incorporate HTML code and include dynamic values using the format ${variable_name}.
-                                Click here to read more about this on our docs."
+                    label="Use this input to enhance chart tooltips with additional content. You can incorporate HTML code and include dynamic values using the format ${variable_name}."
                 >
                     <MantineIcon
-                        onClick={() => {
-                            window.open(
-                                'https://docs.lightdash.com/references/custom-tooltip',
-                                '_blank',
-                                'noopener,noreferrer',
-                            );
-                        }}
                         icon={IconHelpCircle}
                         size="md"
                         display="inline"
                         color="ldGray.5"
-                        className={styles.helpIcon}
                     />
                 </Tooltip>
                 <Switch

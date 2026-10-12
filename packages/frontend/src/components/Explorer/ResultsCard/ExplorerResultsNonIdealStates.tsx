@@ -18,7 +18,7 @@ import classes from './ExplorerResultsNonIdealStates.module.css';
 import { getQueryLoadingStateCopy } from './queryLoadingState';
 
 const ExploreDocumentationUrl =
-    'https://docs.lightdash.com/get-started/exploring-data/using-explores/';
+    'https://www.kontala.com/docs/analytics/explores';
 
 export const EmptyStateNoColumns = () => {
     return (

@@ -177,7 +177,7 @@ const ProjectSettings: FC<{ externalSourcesEnabled: boolean }> = ({
                         description="Manage who can access this project and what they can do."
                         actions={
                             <SettingsPageDocumentationLink
-                                href="https://docs.lightdash.com/references/roles"
+                                href="https://www.kontala.com/docs/analytics/security-and-governance#roles"
                                 label="Roles documentation"
                             />
                         }
@@ -313,9 +313,6 @@ const ProjectSettings: FC<{ externalSourcesEnabled: boolean }> = ({
                     <ProjectSettingsPage
                         title="Parameters"
                         description="Review reusable values defined for project queries and content."
-                        actions={
-                            <SettingsPageDocumentationLink href="https://docs.lightdash.com/guides/using-parameters#how-to-use-parameters" />
-                        }
                     >
                         <ProjectParameters projectUuid={projectUuid} />
                     </ProjectSettingsPage>
@@ -346,9 +343,6 @@ const ProjectSettings: FC<{ externalSourcesEnabled: boolean }> = ({
                     <ProjectSettingsPage
                         title="Project time zone"
                         description="Set the default time zone used by this project."
-                        actions={
-                            <SettingsPageDocumentationLink href="https://docs.lightdash.com/guides/developer/timezones" />
-                        }
                     >
                         <SettingsQueryTimezone projectUuid={projectUuid} />
                     </ProjectSettingsPage>
@@ -425,7 +419,7 @@ const ProjectSettings: FC<{ externalSourcesEnabled: boolean }> = ({
                           element: (
                               <ProjectSettingsPage
                                   title="Results caching"
-                                  description="Choose how long charts and dashboards in this project load from cached results before Lightdash queries the warehouse again."
+                                  description="Choose how long charts and dashboards in this project load from cached results before Kontala Analytics queries the warehouse again."
                               >
                                   <ProjectResultsCache
                                       projectUuid={projectUuid}
@@ -485,13 +479,7 @@ const ProjectSettings: FC<{ externalSourcesEnabled: boolean }> = ({
                           element: (
                               <ProjectSettingsPage
                                   title="CORS"
-                                  description="Control which external browser origins can call the Lightdash API."
-                                  actions={
-                                      <SettingsPageDocumentationLink
-                                          href="https://docs.lightdash.com/guides/embedding/how-to-embed-content#cors"
-                                          label="Embedding documentation"
-                                      />
-                                  }
+                                  description="Control which external browser origins can call the Kontala Analytics API."
                               >
                                   <SettingsGridCard>
                                       <Stack gap="xs">
@@ -501,8 +489,9 @@ const ProjectSettings: FC<{ externalSourcesEnabled: boolean }> = ({
                                           <Text c="dimmed" fz="xs">
                                               CORS controls which external
                                               browser origins can call the
-                                              Lightdash API. Add exact origins
-                                              like https://app.example.com or
+                                              Kontala Analytics API. Add exact
+                                              origins like
+                                              https://app.example.com or
                                               wildcard subdomains like
                                               *.example.com. Use regex only for
                                               advanced patterns.

@@ -622,7 +622,7 @@ export function useAppSdkBridge({
                 // "Export failed" with no diagnostic.
                 if (!health.data || !user.data) {
                     respondGsheet({
-                        error: 'Lightdash is still loading, try again shortly',
+                        error: 'Kontala Analytics is still loading, try again shortly',
                     });
                     return;
                 }

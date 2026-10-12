@@ -149,7 +149,7 @@ export const getMissingEnvironmentVariableHint = (
     }
 
     Logger.warn(
-        `dbt requested environment variables that Lightdash does not share with it: ${keys.join(
+        `dbt requested environment variables that Kontala Analytics does not share with it: ${keys.join(
             ', ',
         )}`,
     );

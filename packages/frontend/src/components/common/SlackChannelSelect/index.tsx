@@ -1,7 +1,6 @@
 import { SLACK_ID_REGEX } from '@lightdash/common';
 import {
     ActionIcon,
-    Anchor,
     Combobox,
     Loader,
     Pill,
@@ -339,14 +338,8 @@ export const SlackChannelSelect: FC<
             </Combobox>
             {includeGroups && (
                 <Text size="xs" c="dimmed">
-                    To add a private channel, first add the Lightdash
-                    integration to that channel and use the Channel ID.{' '}
-                    <Anchor
-                        href="https://docs.lightdash.com/references/integrations/slack-integration#using-lightdash-in-private-channels"
-                        target="_blank"
-                    >
-                        Learn more
-                    </Anchor>
+                    To add a private channel, first add the Kontala Analytics
+                    integration to that channel and use the Channel ID.
                 </Text>
             )}
         </Stack>

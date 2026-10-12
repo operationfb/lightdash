@@ -43,7 +43,7 @@ export class LightdashModelEditor {
         const model: unknown = this.doc.toJS();
         if (this.doc.errors.length > 0 || !validate(model)) {
             throw new ParseError(
-                `Invalid Lightdash model in ${this.filename}: ${this.doc.errors.map((error) => error.message).join('; ') || ajv.errorsText(validate.errors)}`,
+                `Invalid Kontala Analytics model in ${this.filename}: ${this.doc.errors.map((error) => error.message).join('; ') || ajv.errorsText(validate.errors)}`,
             );
         }
         return model;

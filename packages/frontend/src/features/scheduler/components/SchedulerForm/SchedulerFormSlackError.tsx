@@ -15,15 +15,8 @@ export const SchedulerFormSlackError: FC<Props> = ({ slackState }) => {
             <>
                 <Text pb="sm">No Slack integration found</Text>
                 <Text>
-                    To create a slack scheduled delivery, you need to
-                    <Anchor
-                        target="_blank"
-                        href="https://docs.lightdash.com/self-host/customize-deployment/configure-a-slack-app-for-lightdash"
-                    >
-                        {' '}
-                        setup Slack{' '}
-                    </Anchor>
-                    for your Kontala Analytics instance
+                    To create a slack scheduled delivery, you need to setup
+                    Slack for your Kontala Analytics instance
                 </Text>
             </>
         );

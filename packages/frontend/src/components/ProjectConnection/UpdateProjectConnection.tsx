@@ -6,7 +6,7 @@ import {
     type CreateWarehouseCredentials,
     type Project,
 } from '@lightdash/common';
-import { Alert, Anchor, Box, Button, Flex, Card } from '@mantine/core';
+import { Alert, Box, Button, Flex, Card } from '@mantine/core';
 import { IconExclamationCircle, IconExternalLink } from '@tabler/icons-react';
 import { type FC } from 'react';
 import {
@@ -148,18 +148,7 @@ const UpdateProjectConnection: FC<{
                         <MantineIcon icon={IconExclamationCircle} size="lg" />
                     }
                     title="Developer previews are temporary Kontala Analytics projects where settings cannot be changed."
-                >
-                    Read docs{' '}
-                    <Anchor
-                        inherit
-                        href="https://docs.lightdash.com/guides/cli/how-to-use-lightdash-preview"
-                        target="_blank"
-                        rel="noreferrer"
-                    >
-                        here
-                    </Anchor>{' '}
-                    to know more.
-                </Alert>
+                />
             )}
             <form onSubmit={form.onSubmit(handleSubmit, handleError)}>
                 <FormContainer>

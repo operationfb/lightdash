@@ -18,14 +18,17 @@ const BitBucketForm: FC<{ disabled: boolean }> = ({ disabled }) => {
         <>
             <Select
                 label="Semantic layer format"
-                description="Native Lightdash YAML uses Bitbucket Cloud (bitbucket.org)."
+                description="Native Kontala Analytics YAML uses Bitbucket Cloud (bitbucket.org)."
                 name="dbt.semanticLayer"
                 value={isNative ? 'lightdash' : 'dbt'}
                 allowDeselect={false}
                 disabled={disabled}
                 data={[
                     { value: 'dbt', label: 'dbt' },
-                    { value: 'lightdash', label: 'Native Lightdash YAML' },
+                    {
+                        value: 'lightdash',
+                        label: 'Native Kontala Analytics YAML',
+                    },
                 ]}
                 onChange={(value) => {
                     if (

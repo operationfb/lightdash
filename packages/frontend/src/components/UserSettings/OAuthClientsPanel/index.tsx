@@ -15,7 +15,7 @@ const OAuthClientsPanel: FC = () => {
     return (
         <SettingsPage
             title="OAuth applications"
-            description="Register applications that authenticate users through Lightdash."
+            description="Register applications that authenticate users through Kontala Analytics."
             actions={
                 <Button size="xs" onClick={() => setIsCreating(true)}>
                     Register new application

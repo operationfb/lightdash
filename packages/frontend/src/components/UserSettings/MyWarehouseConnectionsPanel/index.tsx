@@ -1,5 +1,5 @@
 import { type UserWarehouseCredentials } from '@lightdash/common';
-import { Anchor, Button, Text } from '@mantine/core';
+import { Button, Text } from '@mantine/core';
 import { IconDatabaseCog, IconPlus } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useUserWarehouseCredentials } from '../../../hooks/userWarehouseCredentials/useUserWarehouseCredentials';
@@ -24,17 +24,7 @@ export const MyWarehouseConnectionsPanel = () => {
     const personalConnectionsCallout = (
         <Text c="dimmed" fz="xs">
             These credentials are only used for projects that require user
-            credentials -{' '}
-            <Anchor
-                role="button"
-                href="https://docs.lightdash.com/references/personal-warehouse-connections"
-                target="_blank"
-                rel="noreferrer"
-                fz="xs"
-            >
-                learn more
-            </Anchor>
-            .
+            credentials.
         </Text>
     );
 

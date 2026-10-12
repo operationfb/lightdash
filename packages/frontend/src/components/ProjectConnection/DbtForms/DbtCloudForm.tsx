@@ -49,7 +49,7 @@ const DbtCloudForm: FC<{ disabled: boolean }> = ({ disabled }) => {
                 </p>
                 <p>
                     After your job finish you need to click the "refresh dbt"
-                    button in Lightdash to sync your project.
+                    button in Kontala Analytics to sync your project.
                 </p>
             </Alert>
             <PasswordInput
@@ -89,8 +89,8 @@ const DbtCloudForm: FC<{ disabled: boolean }> = ({ disabled }) => {
                     description={
                         <p>
                             Add this URL as a webhook in dbt Cloud (triggered on
-                            job completion) so Lightdash can build a preview
-                            when your dbt job finishes.
+                            job completion) so Kontala Analytics can build a
+                            preview when your dbt job finishes.
                             <DocumentationHelpButton href="https://docs.getdbt.com/docs/deploy/webhooks" />
                         </p>
                     }
@@ -115,8 +115,9 @@ const DbtCloudForm: FC<{ disabled: boolean }> = ({ disabled }) => {
                     <p>
                         Recommended if you use the dbt webhook above. Paste the
                         secret that dbt Cloud generated for the webhook so
-                        Lightdash can verify that incoming requests are genuine.
-                        Without it, webhook requests cannot be authenticated.
+                        Kontala Analytics can verify that incoming requests are
+                        genuine. Without it, webhook requests cannot be
+                        authenticated.
                         <DocumentationHelpButton href="https://docs.getdbt.com/docs/deploy/webhooks#validate-a-webhook" />
                     </p>
                 }

@@ -4,7 +4,6 @@ import { type FC } from 'react';
 import useApp from '../../providers/App/useApp';
 import LightdashLogo from '../../svgs/logo-icon.svg';
 import { SettingsGridCard } from '../common/Settings/SettingsCard';
-import DocumentationHelpButton from '../DocumentationHelpButton';
 import DbtSettingsForm from './DbtSettingsForm';
 import DbtSourcesPanel from './DbtSourcesPanel';
 import { useFormContext } from './formContext';
@@ -63,11 +62,6 @@ export const ProjectForm: FC<Props> = ({
                     {warehouse && getWarehouseIcon(warehouse)}
                     <Flex align="center" gap={2}>
                         <Title order={5}>Warehouse connection</Title>
-                        <DocumentationHelpButton
-                            href="https://docs.lightdash.com/get-started/setup-lightdash/connect-project#warehouse-connection"
-                            pos="relative"
-                            top="2px"
-                        />
                     </Flex>
 
                     {health.data?.staticIp && (
@@ -103,16 +97,13 @@ export const ProjectForm: FC<Props> = ({
                         <Avatar
                             size="md"
                             src={isNative ? LightdashLogo : DbtLogo}
-                            alt={isNative ? 'Lightdash icon' : 'dbt icon'}
+                            alt={
+                                isNative ? 'Kontala Analytics icon' : 'dbt icon'
+                            }
                         />
 
                         <Flex align="center" gap={2}>
                             <Title order={5}>Semantic layer connection</Title>
-                            <DocumentationHelpButton
-                                href="https://docs.lightdash.com/get-started/setup-lightdash/connect-project"
-                                pos="relative"
-                                top="2px"
-                            />
                         </Flex>
                     </div>
 

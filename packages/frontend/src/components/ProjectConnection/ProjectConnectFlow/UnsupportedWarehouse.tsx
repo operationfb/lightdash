@@ -1,8 +1,6 @@
 import { Anchor, Avatar, Button } from '@mantine/core';
 import { IconChevronLeft, IconExclamationCircle } from '@tabler/icons-react';
 import { type FC } from 'react';
-import useTracking from '../../../providers/Tracking/useTracking';
-import { EventName } from '../../../types/Events';
 import { EmptyState } from '../../common/EmptyState';
 import MantineIcon from '../../common/MantineIcon';
 import { ProjectCreationCard } from '../../common/Settings/SettingsCard';
@@ -13,8 +11,6 @@ interface UnsupportedWarehouseProps {
 }
 
 const UnsupportedWarehouse: FC<UnsupportedWarehouseProps> = ({ onBack }) => {
-    const { track } = useTracking();
-
     return (
         <OnboardingWrapper>
             <Button
@@ -56,30 +52,17 @@ const UnsupportedWarehouse: FC<UnsupportedWarehouseProps> = ({ onBack }) => {
                     }
                     description={
                         <>
-                            You can vote on your warehouse in our{' '}
                             <Anchor
-                                href="https://github.com/lightdash/lightdash/issues"
+                                href="https://www.kontala.com/docs/support/contact-us"
                                 target="_blank"
                                 rel="noreferrer noopener"
                             >
-                                GitHub issues
+                                Contact the Kontala team
                             </Anchor>{' '}
-                            or create a new issue if you can't see yours there.
+                            to ask about support for your warehouse.
                         </>
                     }
-                >
-                    <Button
-                        component="a"
-                        href="https://demo.lightdash.com/"
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        onClick={() => {
-                            track({ name: EventName.TRY_DEMO_CLICKED });
-                        }}
-                    >
-                        Try our demo project
-                    </Button>
-                </EmptyState>
+                />
             </ProjectCreationCard>
         </OnboardingWrapper>
     );

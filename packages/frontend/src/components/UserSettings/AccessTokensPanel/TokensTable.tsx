@@ -42,7 +42,6 @@ import Callout from '../../common/Callout';
 import { CopyActionIcon } from '../../common/CopyActionIcon';
 import MantineIcon from '../../common/MantineIcon';
 import MantineModal from '../../common/MantineModal';
-import DocumentationHelpButton from '../../DocumentationHelpButton';
 import { useExpireOptions } from './useExpireOptions';
 
 const TokenItem: FC<{
@@ -339,15 +338,9 @@ export const TokensTable = () => {
                     <Callout variant="info" title="What is a token UUID?">
                         <Text size="sm">
                             The UUID is a unique identifier for your token, used
-                            for token rotation via the CLI{' '}
-                            <DocumentationHelpButton
-                                href="https://docs.lightdash.com/references/personal_tokens#rotating-a-personal-access-token"
-                                tooltipProps={{
-                                    label: 'Learn about token rotation',
-                                }}
-                            />
-                            . This is <strong>not</strong> your Personal Access
-                            Token value.
+                            for token rotation via the CLI. This is{' '}
+                            <strong>not</strong> your Personal Access Token
+                            value.
                         </Text>
                     </Callout>
 
