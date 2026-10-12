@@ -49,6 +49,7 @@ import Logger from '../logging/logger';
 import type { EmailModel } from '../models/EmailModel';
 import type { OrganizationMemberProfileModel } from '../models/OrganizationMemberProfileModel';
 import type { ProjectModel } from '../models/ProjectModel/ProjectModel';
+import type { ProjectParametersModel } from '../models/ProjectParametersModel';
 import type { UserModel } from '../models/UserModel';
 import type { CoderService } from '../services/CoderService/CoderService';
 import {
@@ -66,6 +67,7 @@ import {
 import {
     compilePostedSemanticLayer,
     parsePostedModels,
+    postedProjectParameters,
 } from './kontala/semanticLayer';
 
 export const KONTALA_ADMIN_HEADER = 'x-kontala-admin-secret';
@@ -133,6 +135,7 @@ type KontalaRouterDependencies = {
     emailModel: EmailModel;
     organizationMemberProfileModel: OrganizationMemberProfileModel;
     projectModel: ProjectModel;
+    projectParametersModel: Pick<ProjectParametersModel, 'replace'>;
     projectService: ProjectServiceInterface;
     coderService: CoderServiceInterface;
 } & ManagedContentDependencies;
@@ -175,6 +178,7 @@ export const kontalaRouter = ({
     emailModel,
     organizationMemberProfileModel,
     projectModel,
+    projectParametersModel,
     projectService,
     coderService,
     spaceModel,
@@ -373,6 +377,7 @@ export const kontalaRouter = ({
                     project,
                     config: body.config,
                 });
+                const parameters = await postedProjectParameters(body.config);
 
                 const userUuid = await ensureDeployUser(
                     project.organizationUuid,
@@ -397,6 +402,13 @@ export const kontalaRouter = ({
                         // replace is both correct and the only way to converge.
                         complete: true,
                     });
+
+                // ⚠ REPLACED WHOLE, AS THE EXPLORES ARE. Kontala posts its
+                // whole config every time, so a parameter it stops declaring
+                // goes with the deploy that stops declaring it, and a deploy
+                // with no config leaves the project none - which is what a git
+                // project whose lightdash.config.yml declares none gets.
+                await projectParametersModel.replace(projectUuid, parameters);
 
                 Logger.info(
                     `kontala: deployed ${explores.length} explores to project ${projectUuid}`,

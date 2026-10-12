@@ -109,6 +109,23 @@ const projectConfigFrom = async (
         : loadLightdashProjectConfig(config);
 
 /**
+ * The project parameters a posted config declares, every one of them, or none
+ * where it declares none or no config was posted.
+ *
+ * KONTALA: dashboards read them as ${ld.parameters.<name>}, from any model, so
+ * one chip drives every tile of every explore that reads it - the Attribution
+ * dashboard's channel switches, read by the Attribution and Campaigns
+ * explores. Model parameters could not do that: each model's are its own, and
+ * a dashboard reading two models would show every switch twice. Read here, by
+ * the same loader that validates them against the config schema, so a
+ * malformed parameter refuses the deploy before anything is persisted.
+ */
+export const postedProjectParameters = async (
+    config: string | undefined,
+): Promise<Required<LightdashProjectConfig>['parameters']> =>
+    (await projectConfigFrom(config)).parameters ?? {};
+
+/**
  * Compile, or throw.
  *
  * ⚠ THE ADAPTER COMES FROM THE PROJECT, NOT FROM THE POSTED CONFIG. The CLI
