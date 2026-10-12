@@ -1097,19 +1097,19 @@ export const findMetricInflationWarnings = ({
     const warnings: QueryWarning[] = [];
     joinWithoutRelationship.forEach((table) => {
         warnings.push({
-            message: `Join **"${table}"** is missing a join relationship type. This can prevent data duplication in joins. [Read more](https://docs.lightdash.com/references/joins#sql-fanouts)`,
+            message: `Join **"${table}"** is missing a join relationship type. This can prevent data duplication in joins.`,
             tables: [table],
         });
     });
     tablesWithoutPrimaryKey.forEach((table) => {
         warnings.push({
-            message: `Table **"${table}"** is missing a primary key definition. This can prevent data duplication in joins. [Read more](https://docs.lightdash.com/references/tables#defining-primary-keys)`,
+            message: `Table **"${table}"** is missing a primary key definition. This can prevent data duplication in joins.`,
             tables: [table],
         });
     });
     metricsWithInflation.forEach((metric) => {
         warnings.push({
-            message: `Metric **"${metric.label}"** could be inflated due to join relationships. [Read more](https://docs.lightdash.com/references/joins#metric-inflation-in-sql-joins)`,
+            message: `Metric **"${metric.label}"** could be inflated due to join relationships.`,
             fields: [getItemId(metric)],
             tables: [metric.table],
         });
@@ -1167,7 +1167,7 @@ export const findUnnestCrossProductWarnings = ({
     const tableList = `${quoted.slice(0, -1).join(', ')} and ${quoted.at(-1)}`;
     return [
         {
-            message: `Repeated columns ${tableList} are unnested together, so each row pairs their elements and metrics can be inflated. [Read more](https://docs.lightdash.com/references/joins#sql-fanouts)`,
+            message: `Repeated columns ${tableList} are unnested together, so each row pairs their elements and metrics can be inflated.`,
             tables: independentTables,
         },
     ];

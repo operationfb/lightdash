@@ -1,6 +1,6 @@
 import { type WarehouseTypes } from '@lightdash/common';
-import { Button, Stack, Text, Tooltip } from '@mantine/core';
-import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
+import { Button, Stack, Text } from '@mantine/core';
+import { IconChevronLeft } from '@tabler/icons-react';
 import { type FC } from 'react';
 import useTracking from '../../../../providers/Tracking/useTracking';
 import { EventName } from '../../../../types/Events';
@@ -65,34 +65,6 @@ const ConnectManuallyStep1: FC<ConnectManuallyStep1Props> = ({
                     />
 
                     <Stack gap="xs">
-                        <Tooltip
-                            position="top"
-                            label={
-                                'Add the columns you want to explore to your .yml files in your dbt project. Click to view docs.'
-                            }
-                        >
-                            <Button
-                                component="a"
-                                variant="outline"
-                                href="https://docs.lightdash.com/guides/how-to-create-dimensions"
-                                target="_blank"
-                                rel="noreferrer noopener"
-                                rightSection={
-                                    <MantineIcon icon={IconChevronRight} />
-                                }
-                                onClick={() => {
-                                    track({
-                                        name: EventName.DOCUMENTATION_BUTTON_CLICKED,
-                                        properties: {
-                                            action: 'define_metrics',
-                                        },
-                                    });
-                                }}
-                            >
-                                Learn how to define them
-                            </Button>
-                        </Tooltip>
-
                         <Button
                             onClick={() => {
                                 track({

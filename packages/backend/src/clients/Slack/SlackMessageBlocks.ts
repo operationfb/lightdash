@@ -129,11 +129,11 @@ const unavailableSection = (message: string): KnownBlock => ({
 });
 
 const DOWNLOAD_UNAVAILABLE_MESSAGE =
-    'Download link unavailable for this delivery (the URL was too long or invalid). Open in Lightdash to download.';
+    'Download link unavailable for this delivery (the URL was too long or invalid). Open in Kontala Analytics to download.';
 const PREVIEW_UNAVAILABLE_MESSAGE =
-    'Chart preview unavailable (the image URL was too long or invalid). Open in Lightdash to view.';
+    'Chart preview unavailable (the image URL was too long or invalid). Open in Kontala Analytics to view.';
 const PREVIEW_REJECTED_MESSAGE =
-    'Chart preview unavailable. Open in Lightdash to view.';
+    'Chart preview unavailable. Open in Kontala Analytics to view.';
 
 const buildChartImageBlock = (
     image: SlackChartImage | undefined,
@@ -193,7 +193,7 @@ export const getChartAndDashboardBlocks = ({
               type: 'button',
               text: {
                   type: 'plain_text',
-                  text: 'Open in Lightdash',
+                  text: 'Open in Kontala Analytics',
                   emoji: true,
               },
               url: safeCtaUrl,
@@ -274,7 +274,7 @@ export const getChartCsvResultsBlocks = ({
               type: 'button',
               text: {
                   type: 'plain_text',
-                  text: 'Open in Lightdash',
+                  text: 'Open in Kontala Analytics',
                   emoji: true,
               },
               url: safeCtaUrl,
@@ -392,7 +392,7 @@ export const getChartThresholdAlertBlocks = ({
               type: 'button',
               text: {
                   type: 'plain_text',
-                  text: 'Open in Lightdash',
+                  text: 'Open in Kontala Analytics',
                   emoji: true,
               },
               url: safeCtaUrl,
@@ -666,7 +666,7 @@ export const getDashboardCsvResultsBlocks = ({
                 text: truncateText(
                     `:warning: ${sanitizeText(
                         displayName(csvUrl),
-                    )} — download unavailable. Open in Lightdash to access this result.`,
+                    )} — download unavailable. Open in Kontala Analytics to access this result.`,
                     SLACK_LIMITS.SECTION_TEXT,
                 ),
             },
@@ -704,7 +704,7 @@ export const getDashboardCsvResultsBlocks = ({
         const remaining = csvUrls.length - included;
         if (remaining > 0) {
             lines.push(
-                `\n+ ${remaining} more — open in Lightdash to access all downloads.`,
+                `\n+ ${remaining} more — open in Kontala Analytics to access all downloads.`,
             );
         }
         return {
@@ -719,7 +719,7 @@ export const getDashboardCsvResultsBlocks = ({
                           type: 'button',
                           text: {
                               type: 'plain_text',
-                              text: 'Open in Lightdash',
+                              text: 'Open in Kontala Analytics',
                               emoji: true,
                           },
                           url: safeCtaUrl,
@@ -768,7 +768,7 @@ export const getDashboardCsvResultsBlocks = ({
                           type: 'button',
                           text: {
                               type: 'plain_text',
-                              text: 'Open in Lightdash',
+                              text: 'Open in Kontala Analytics',
                               emoji: true,
                           },
                           url: safeCtaUrl,
@@ -820,7 +820,7 @@ const getExploreBlocks = (
                           type: 'button',
                           text: {
                               type: 'plain_text',
-                              text: 'Open in Lightdash',
+                              text: 'Open in Kontala Analytics',
                               emoji: true,
                           },
                           url: safeCtaUrl,
@@ -933,7 +933,7 @@ export const getNotificationChannelErrorBlocks = (
                           type: 'button',
                           text: {
                               type: 'plain_text',
-                              text: 'Open in Lightdash',
+                              text: 'Open in Kontala Analytics',
                               emoji: true,
                           },
                           url: safeResourceUrl,

@@ -336,8 +336,8 @@ const SnowflakeCliSsoPanel: FC<Props> = ({
                     title={`Connected as ${connectedCredentials.user} ✓`}
                 >
                     <Text size="sm">
-                        Choose where Lightdash should query, then deploy your
-                        project to finish.
+                        Choose where Kontala Analytics should query, then deploy
+                        your project to finish.
                     </Text>
                 </Alert>
                 <Select
@@ -375,7 +375,7 @@ const SnowflakeCliSsoPanel: FC<Props> = ({
                 />
                 <Select
                     label="Role"
-                    description="Controls what Lightdash can see. A read-only role is best."
+                    description="Controls what Kontala Analytics can see. A read-only role is best."
                     data={withCurrentValue(
                         (inventory?.roles ?? []).map((r) => r.name),
                         warehouseValues?.role,

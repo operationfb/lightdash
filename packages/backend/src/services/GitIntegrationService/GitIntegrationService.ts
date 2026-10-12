@@ -334,7 +334,7 @@ export class GitIntegrationService extends BaseService {
             : `Added ${customMetrics.length} custom metrics`;
 
         // TODO should we use the api to get the link to the PR ?
-        const prBody = `Created by Lightdash, this PR adds ${customMetrics.length} custom metrics to the dbt model
+        const prBody = `Created by Kontala Analytics, this PR adds ${customMetrics.length} custom metrics to the dbt model
             
 Triggered by user ${user.firstName} ${user.lastName} (${user.email})
 `;
@@ -1024,8 +1024,8 @@ Affected charts:
             args.type === 'customDimensions' &&
             args.fields.some(isCustomBinDimension);
         const replacementGuidance = containsCustomBins
-            ? '> ℹ️ **Existing saved charts keep their custom bin dimensions.** Lightdash does not automatically replace them with these YAML dimensions, so their current bin ordering remains unchanged. Use the new dimensions after refreshing the project, and define a separate numeric ordering dimension in your model when bin order matters.'
-            : `> ⚠️ **Note: Do not change the \`label\` or \`id\` of your ${typeName}s in this pull request.** Your ${typeName}s _will not be replaced_ with YAML ${typeName}s if you change the \`label\` or \`id\` of the ${typeName}s in this pull request. Lightdash requires the IDs and labels to match 1:1 in order to replace custom ${typeName}s with YAML ${typeName}s.`;
+            ? '> ℹ️ **Existing saved charts keep their custom bin dimensions.** Kontala Analytics does not automatically replace them with these YAML dimensions, so their current bin ordering remains unchanged. Use the new dimensions after refreshing the project, and define a separate numeric ordering dimension in your model when bin order matters.'
+            : `> ⚠️ **Note: Do not change the \`label\` or \`id\` of your ${typeName}s in this pull request.** Your ${typeName}s _will not be replaced_ with YAML ${typeName}s if you change the \`label\` or \`id\` of the ${typeName}s in this pull request. Kontala Analytics requires the IDs and labels to match 1:1 in order to replace custom ${typeName}s with YAML ${typeName}s.`;
         const eventProperties: WriteBackEvent['properties'] = {
             name: fieldsInfo,
             projectId: projectUuid,
@@ -1045,7 +1045,7 @@ Affected charts:
             } = await createPullRequest({
                 ...gitProps,
                 title: `Adds ${fieldsInfo}`,
-                body: `Created by Lightdash, this pull request adds ${fieldsInfo} to the ${gitProps.semanticLayer === 'lightdash' ? 'native Lightdash' : 'dbt'} model.
+                body: `Created by Kontala Analytics, this pull request adds ${fieldsInfo} to the ${gitProps.semanticLayer === 'lightdash' ? 'native Kontala Analytics' : 'dbt'} model.
 Triggered by user ${user.firstName} ${user.lastName} (${user.email})
 
 ${replacementGuidance}`,
@@ -1387,7 +1387,7 @@ ${sql}
             } = await createPullRequest({
                 ...gitProps,
                 title: `Creates \`${name}\` SQL and YML model`,
-                body: `Created by Lightdash, this pull request introduces a new SQL file and a corresponding Lightdash \`.yml\` configuration file.
+                body: `Created by Kontala Analytics, this pull request introduces a new SQL file and a corresponding Kontala Analytics \`.yml\` configuration file.
 
 Triggered by user ${user.firstName} ${user.lastName} (${user.email})
         `,
@@ -1682,7 +1682,7 @@ Triggered by user ${user.firstName} ${user.lastName} (${user.email})
 
 Triggered by user ${user.firstName} ${user.lastName} (${user.email})
 
-🤖 Created with Lightdash`;
+🤖 Created with Kontala Analytics`;
 
         const pullRequest = await createPullRequest({
             ...gitProps,
@@ -2269,7 +2269,7 @@ Triggered by user ${user.firstName} ${user.lastName} (${user.email})
 
 Triggered by user ${user.firstName} ${user.lastName} (${user.email})
 
-🤖 Created with Lightdash`;
+🤖 Created with Kontala Analytics`;
 
         const pullRequest = await createPullRequest({
             owner: creds.owner,

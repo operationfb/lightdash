@@ -29,7 +29,7 @@ export async function loadLightdashModel(
     const parsed = await readYaml(filePath);
     if (!validateModel(parsed)) {
         throw new ParseError(
-            `Invalid Lightdash model in ${filePath}: ${ajv.errorsText(validateModel.errors)}`,
+            `Invalid Kontala Analytics model in ${filePath}: ${ajv.errorsText(validateModel.errors)}`,
         );
     }
     return parsed;
@@ -116,7 +116,7 @@ export async function loadLightdashModels(
         const previousPath = names.get(model.name);
         if (previousPath !== undefined)
             throw new ParseError(
-                `Duplicate Lightdash model "${model.name}" in ${previousPath} and ${sourcePath}`,
+                `Duplicate Kontala Analytics model "${model.name}" in ${previousPath} and ${sourcePath}`,
             );
         names.set(model.name, sourcePath);
         models.push({ ...model, sourcePath });
@@ -152,7 +152,7 @@ export function parseLightdashModel(
     }
     if (!validateModel(parsed)) {
         throw new ParseError(
-            `Invalid Lightdash model in ${sourceName}: ${ajv.errorsText(validateModel.errors)}`,
+            `Invalid Kontala Analytics model in ${sourceName}: ${ajv.errorsText(validateModel.errors)}`,
         );
     }
     return parsed;

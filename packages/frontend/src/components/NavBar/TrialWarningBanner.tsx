@@ -37,8 +37,8 @@ export const TrialWarningBanner = ({ access }: Props) => {
                 truncate
             >
                 {isExpired
-                    ? 'Your Lightdash trial has expired and queries are disabled. Contact sales@lightdash.com to reactivate.'
-                    : 'Your Lightdash trial has expired. Contact sales@lightdash.com'}
+                    ? 'Your Kontala Analytics trial has expired and queries are disabled. Contact Kontala to reactivate.'
+                    : 'Your Kontala Analytics trial has expired. Contact Kontala'}
             </Text>
         </Center>
     );

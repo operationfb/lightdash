@@ -12,7 +12,7 @@ import {
     Stack,
     Text,
 } from '@mantine/core';
-import { IconBook, IconBrandGithub, IconInfoCircle } from '@tabler/icons-react';
+import { IconBook, IconInfoCircle } from '@tabler/icons-react';
 import { useState, type FC } from 'react';
 import useApp from '../providers/App/useApp';
 import {
@@ -97,7 +97,7 @@ const AboutFooter: FC<{ minimal?: boolean; maxWidth?: number }> = ({
 
                     {minimal ? (
                         <Anchor
-                            href="https://docs.lightdash.com/"
+                            href="https://www.kontala.com/docs/analytics"
                             target="_blank"
                         >
                             <ActionIcon color="ldGray.7" size="md">
@@ -110,7 +110,7 @@ const AboutFooter: FC<{ minimal?: boolean; maxWidth?: number }> = ({
                         </Anchor>
                     ) : (
                         <MantineLinkButton
-                            href="https://docs.lightdash.com/"
+                            href="https://www.kontala.com/docs/analytics"
                             target="_blank"
                             leftSection={
                                 <MantineIcon
@@ -194,24 +194,14 @@ const AboutFooter: FC<{ minimal?: boolean; maxWidth?: number }> = ({
                                 <Text c="blue">
                                     The version v
                                     {healthState.data?.latest.version} is now
-                                    available. Please follow the instructions in
-                                    the{' '}
-                                    <Anchor
-                                        href="https://docs.lightdash.com/self-host/update-lightdash"
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        underline="always"
-                                    >
-                                        How to update version
-                                    </Anchor>{' '}
-                                    documentation.
+                                    available.
                                 </Text>
                             </Alert>
                         )}
 
                         <Group gap="xs">
                             <MantineLinkButton
-                                href="https://docs.lightdash.com/"
+                                href="https://www.kontala.com/docs/analytics"
                                 target="_blank"
                                 variant="subtle"
                                 color="ldGray.7"
@@ -221,21 +211,6 @@ const AboutFooter: FC<{ minimal?: boolean; maxWidth?: number }> = ({
                                 }
                             >
                                 Documentation
-                            </MantineLinkButton>
-                            <MantineLinkButton
-                                href="https://github.com/lightdash/lightdash"
-                                target="_blank"
-                                variant="subtle"
-                                color="ldGray.7"
-                                size="compact-sm"
-                                leftSection={
-                                    <MantineIcon
-                                        icon={IconBrandGithub}
-                                        size="sm"
-                                    />
-                                }
-                            >
-                                GitHub
                             </MantineLinkButton>
                         </Group>
                     </Stack>

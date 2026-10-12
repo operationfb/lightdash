@@ -131,8 +131,8 @@ const ContentAsCodeModal: FC<ContentAsCodeModalProps> = ({
                         />
                     )}
                     <Text fz="sm" c="dimmed">
-                        This {formatLabel} is compatible with Lightdash content
-                        as code.
+                        This {formatLabel} is compatible with Kontala Analytics
+                        content as code.
                     </Text>
                     <Code block>{content}</Code>
                 </Stack>

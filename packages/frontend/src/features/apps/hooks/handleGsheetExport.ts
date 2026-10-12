@@ -72,7 +72,7 @@ export async function handleGsheetExport(
         !deps.health.auth.google.googleDriveApiKey
     ) {
         throw new Error(
-            'Google Sheets is not configured for this Lightdash instance',
+            'Google Sheets is not configured for this Kontala Analytics instance',
         );
     }
     if (

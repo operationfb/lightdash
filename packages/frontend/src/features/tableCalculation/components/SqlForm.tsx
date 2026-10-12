@@ -2,21 +2,11 @@ import type {
     ApiError,
     GeneratedFormulaTableCalculation,
 } from '@lightdash/common';
-import {
-    Alert,
-    Anchor,
-    Box,
-    Button,
-    Flex,
-    ScrollArea,
-    Text,
-    useMantineTheme,
-} from '@mantine/core';
+import { Box, Button, Flex, ScrollArea, useMantineTheme } from '@mantine/core';
 import { useLocalStorage } from '@mantine/hooks';
 import { IconAlertCircle, IconSparkles, IconWand } from '@tabler/icons-react';
 import { useCallback, type CSSProperties, type FC } from 'react';
 import AceEditor, { type IAceEditorProps } from 'react-ace';
-import MantineIcon from '../../../components/common/MantineIcon';
 import { SqlEditorActions } from '../../../components/SqlRunner/SqlEditorActions';
 import {
     AiSlot,
@@ -234,35 +224,8 @@ export const SqlForm: FC<Props> = ({
             </ScrollArea>
 
             <Box flex="0 0 auto">
-                {readOnly && !conversionState ? null : !isAmbientAiEnabled ? (
-                    <Alert
-                        radius={0}
-                        icon={<MantineIcon icon={IconSparkles} />}
-                        title={
-                            <Text fz="xs">
-                                Need inspiration?{' '}
-                                <Anchor
-                                    inherit
-                                    target="_blank"
-                                    href="https://docs.lightdash.com/guides/table-calculations/sql-templates"
-                                    rel="noreferrer"
-                                >
-                                    Check out our templates!
-                                </Anchor>
-                            </Text>
-                        }
-                        color="violet"
-                        styles={{
-                            root: {
-                                paddingBottom: theme.spacing.sm,
-                                paddingTop: theme.spacing.sm,
-                            },
-                            wrapper: {
-                                alignItems: 'center',
-                            },
-                        }}
-                    />
-                ) : (
+                {(readOnly && !conversionState) ||
+                !isAmbientAiEnabled ? null : (
                     <AiSlot
                         icon={slotIcon}
                         iconColor={slotIconColor}

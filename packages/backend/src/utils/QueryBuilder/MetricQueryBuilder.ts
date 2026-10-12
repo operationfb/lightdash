@@ -2903,7 +2903,7 @@ export class MetricQueryBuilder {
         // We can't handle deduplication for joins without relationship type
         joinWithoutRelationship.forEach((tableName) => {
             warnings.push({
-                message: `Join **"${tableName}"** is missing a join relationship type. This can prevent data duplication in joins. [Read more](https://docs.lightdash.com/references/joins#sql-fanouts)`,
+                message: `Join **"${tableName}"** is missing a join relationship type. This can prevent data duplication in joins.`,
                 tables: [tableName],
             });
             const metricsFromTable = [
@@ -2912,7 +2912,7 @@ export class MetricQueryBuilder {
             ].filter((metric) => metric.table === tableName);
             metricsFromTable.forEach((metric) => {
                 warnings.push({
-                    message: `Metric **"${metric.label}"** could be inflated due to missing join relationship type. [Read more](https://docs.lightdash.com/references/joins#sql-fanouts)`,
+                    message: `Metric **"${metric.label}"** could be inflated due to missing join relationship type.`,
                     fields: [getItemId(metric)],
                     tables: [metric.table],
                 });
@@ -2937,15 +2937,15 @@ export class MetricQueryBuilder {
                 // declare one, so its metrics only get the inflation notice.
                 if (!table?.nestedFrom) {
                     warnings.push({
-                        message: `Table **"${tableName}"** is missing a primary key definition. This can prevent data duplication in joins. [Read more](https://docs.lightdash.com/references/joins#sql-fanouts)`,
+                        message: `Table **"${tableName}"** is missing a primary key definition. This can prevent data duplication in joins.`,
                         tables: [tableName],
                     });
                 }
                 metricsFromTable.forEach((metric) => {
                     warnings.push({
                         message: table?.nestedFrom
-                            ? `Metric **"${metric.label}"** could be inflated by another unnested repeated column. [Read more](https://docs.lightdash.com/references/joins#sql-fanouts)`
-                            : `Metric **"${metric.label}"** could be inflated due to table missing primary key definition. [Read more](https://docs.lightdash.com/references/joins#sql-fanouts)`,
+                            ? `Metric **"${metric.label}"** could be inflated by another unnested repeated column.`
+                            : `Metric **"${metric.label}"** could be inflated due to table missing primary key definition.`,
                         fields: [getItemId(metric)],
                         tables: [metric.table],
                     });
@@ -2977,7 +2977,7 @@ export class MetricQueryBuilder {
                     }
                     // We don't support other scenarios yet
                     warnings.push({
-                        message: `Metric **"${metric.label}"** that references a joined table might have inflation. [Read more](https://docs.lightdash.com/references/joins#metric-inflation-in-sql-joins)`,
+                        message: `Metric **"${metric.label}"** that references a joined table might have inflation.`,
                         fields: [getItemId(metric)],
                         tables: [metric.table],
                     });

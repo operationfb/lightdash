@@ -896,7 +896,7 @@ describe('ProjectService', () => {
             expect(create).toHaveBeenCalledWith(
                 admin,
                 expect.objectContaining({
-                    name: 'Lightdash analytics',
+                    name: 'Organization analytics',
                     type: ProjectType.PREVIEW,
                     warehouseConnection: expect.objectContaining({
                         connectionType: DuckdbConnectionType.ANALYTICS,

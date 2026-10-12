@@ -86,7 +86,9 @@ describe('native GitHub connection form', () => {
                 }),
             );
             await user.click(
-                screen.getByRole('option', { name: 'Native Lightdash YAML' }),
+                screen.getByRole('option', {
+                    name: 'Native Kontala Analytics YAML',
+                }),
             );
             expect(
                 screen.queryByLabelText('Target name'),

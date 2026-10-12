@@ -15,7 +15,6 @@ import {
     type UnmetFilterRequirement,
 } from '@lightdash/common';
 import {
-    Anchor,
     Box,
     Checkbox,
     Code,
@@ -221,12 +220,7 @@ export const SchedulerDataFormatSection: FC<Props> = ({
                 )}
                 {isImageDisabled && (
                     <Text size="xs" c="dimmed">
-                        You must enable the
-                        <Anchor href="https://docs.lightdash.com/self-host/customize-deployment/enable-headless-browser-for-lightdash">
-                            {' '}
-                            headless browser{' '}
-                        </Anchor>
-                        to send images
+                        You must enable the headless browser to send images
                     </Text>
                 )}
 

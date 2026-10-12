@@ -158,19 +158,19 @@ const SupportDrawerContent: FC<SupportDrawerContentProps> = () => {
                 minRows={4}
             />
             <Checkbox
-                label="Allow Lightdash support access to your instance"
+                label="Allow Kontala support access to your instance"
                 checked={allowAccess}
                 onChange={(event) => setAllowAccess(event.target.checked)}
                 mt="xs"
             />
             <Text size="xs" c="dimmed">
-                By ticking this box, you agree to give Lightdash Support access
-                to your organization for 12 hours to investigate this issue.
+                By ticking this box, you agree to give Kontala Support access to
+                your organization for 12 hours to investigate this issue.
             </Text>
 
             <Text size="xs" c="dimmed">
-                We will also share your Lightdash logs and your recent network
-                requests to help us investigate this issue.
+                We will also share your Kontala Analytics logs and your recent
+                network requests to help us investigate this issue.
             </Text>
             <Button
                 mt="xs"

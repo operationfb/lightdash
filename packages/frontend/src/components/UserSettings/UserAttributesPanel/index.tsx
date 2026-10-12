@@ -2,7 +2,6 @@ import { subject } from '@casl/ability';
 import { FeatureFlags, type UserAttribute } from '@lightdash/common';
 import {
     ActionIcon,
-    Anchor,
     Box,
     Button,
     Group,
@@ -38,7 +37,6 @@ import MantineModal from '../../common/MantineModal';
 import {
     SettingsPage,
     SettingsPageActions,
-    SettingsPageDocumentationLink,
 } from '../../common/Settings/SettingsPage';
 import ForbiddenPanel from '../../ForbiddenPanel';
 import UserAttributeModal from './UserAttributeModal';
@@ -243,18 +241,7 @@ const UserAttributesPanel: FC = () => {
                 </Text>
             ) : (
                 <Text fz="sm" c="dimmed" ta="center" py="xl">
-                    There's no user attributes defined yet. <br /> To learn how
-                    to define user attributes, check out our{' '}
-                    <Anchor
-                        href="https://docs.lightdash.com/references/user-attributes"
-                        target="_blank"
-                        rel="noreferrer"
-                        fz="sm"
-                        fw="bold"
-                    >
-                        documentation
-                    </Anchor>
-                    .
+                    There's no user attributes defined yet.
                 </Text>
             ),
         state: {
@@ -286,7 +273,6 @@ const UserAttributesPanel: FC = () => {
             description="Define organization metadata used for data access and personalization."
             actions={
                 <SettingsPageActions>
-                    <SettingsPageDocumentationLink href="https://docs.lightdash.com/references/user-attributes" />
                     <Button
                         size="xs"
                         leftSection={<MantineIcon icon={IconPlus} />}

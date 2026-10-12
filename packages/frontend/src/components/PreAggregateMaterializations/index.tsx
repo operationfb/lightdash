@@ -5,7 +5,6 @@ import {
 } from '@lightdash/common';
 import {
     ActionIcon,
-    Anchor,
     Badge,
     Button,
     Group,
@@ -59,7 +58,6 @@ import { SettingsEmptyState } from '../common/Settings/SettingsEmptyState';
 import {
     SettingsPage,
     SettingsPageActions,
-    SettingsPageDocumentationLink,
 } from '../common/Settings/SettingsPage';
 import TruncatedText from '../common/TruncatedText';
 import MaterializationDetailDrawer from './MaterializationDetailDrawer';
@@ -699,7 +697,6 @@ const PreAggregateMaterializations: FC<Props> = ({ projectUuid }) => {
                 description="Overview of all pre-aggregate definitions and their current materialization status."
                 actions={
                     <SettingsPageActions>
-                        <SettingsPageDocumentationLink href="https://docs.lightdash.com/references/pre-aggregates" />
                         {managedMaterializations.length > 0 && (
                             <Button
                                 size="xs"
@@ -724,15 +721,7 @@ const PreAggregateMaterializations: FC<Props> = ({ projectUuid }) => {
                             Pre-aggregates aren't compatible with personal
                             warehouse connections. Materialized results are
                             shared across all viewers and may not match what
-                            each user would see querying the warehouse directly.{' '}
-                            <Anchor
-                                href="https://docs.lightdash.com/references/pre-aggregates/overview#personal-warehouse-connections"
-                                target="_blank"
-                                inherit
-                            >
-                                Learn more
-                            </Anchor>
-                            .
+                            each user would see querying the warehouse directly.
                         </Text>
                     </Callout>
                 )}

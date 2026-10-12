@@ -41,8 +41,9 @@ const GithubUserSettingsPanel: FC = () => {
             <Stack>
                 <Text c="dimmed" fz="xs">
                     Link your personal GitHub account so commits and pull
-                    requests created by Lightdash are authored as you. Without a
-                    linked account they are created by the Lightdash bot.
+                    requests created by Kontala Analytics are authored as you.
+                    Without a linked account they are created by the Kontala
+                    Analytics bot.
                 </Text>
 
                 {credential ? (

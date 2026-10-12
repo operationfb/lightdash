@@ -238,10 +238,7 @@ const SlackSettingsPanel: FC = () => {
                     <Text c="dimmed" fz="xs">
                         Sharing in Slack allows you to unfurl Kontala Analytics
                         URLs and schedule deliveries to specific people or
-                        channels within your Slack workspace.{' '}
-                        <Anchor href="https://docs.lightdash.com/references/slack-integration">
-                            View docs
-                        </Anchor>
+                        channels within your Slack workspace.
                     </Text>
                 </Stack>
 
@@ -287,7 +284,7 @@ const SlackSettingsPanel: FC = () => {
                                     flex={1}
                                     label="Profile photo URL"
                                     size="xs"
-                                    placeholder="https://lightdash.cloud/photo.jpg"
+                                    placeholder="https://example.com/photo.jpg"
                                     type="url"
                                     disabled={!organizationHasSlack}
                                     {...form.getInputProps(

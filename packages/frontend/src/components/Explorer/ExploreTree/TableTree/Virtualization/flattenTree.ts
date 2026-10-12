@@ -375,7 +375,7 @@ function flattenTable(
                 depth: baseDepth,
                 helpButton: !hasMetrics
                     ? {
-                          href: 'https://docs.lightdash.com/guides/how-to-create-metrics',
+                          href: 'https://www.kontala.com/docs/analytics/metrics',
                           tooltipText:
                               'No metrics defined in your dbt project. Click to view docs and learn how to add a metric to your project.',
                       }
@@ -428,7 +428,7 @@ function flattenTable(
                 color: LD_FIELD_COLORS.metric.color,
                 depth: baseDepth,
                 helpButton: {
-                    href: 'https://docs.lightdash.com/guides/how-to-create-metrics#-adding-custom-metrics-in-the-explore-view',
+                    href: 'https://www.kontala.com/docs/analytics/metrics#custom-metrics',
                     tooltipText:
                         'Add custom metrics by hovering over the dimension of your choice & selecting the three-dot Action Menu. Click to view docs.',
                 },

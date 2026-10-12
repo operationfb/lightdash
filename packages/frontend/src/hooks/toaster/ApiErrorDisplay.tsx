@@ -142,7 +142,7 @@ const CopyErrorIdButton = ({ value }: { value: string }) => (
 
 const openSupportModal = () =>
     modals.open({
-        title: 'Share with Lightdash Support',
+        title: 'Share with Kontala Support',
         size: 'lg',
         children: <SupportDrawerContent />,
         yOffset: 100,

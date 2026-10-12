@@ -196,7 +196,7 @@ export const useSettingsNavigation = (
                         keywords: ['impersonate', 'impersonation'],
                     },
                     {
-                        title: 'Lightdash support access',
+                        title: 'Kontala support access',
                         keywords: ['support', 'impersonate', 'impersonation'],
                     },
                     {
@@ -452,7 +452,7 @@ export const useSettingsNavigation = (
 
         if (canAccessAnalyticsSettings) {
             organizationItems.push({
-                label: 'Kontala Analytics analytics',
+                label: 'Organization analytics',
                 to: '/generalSettings/lightdashAnalytics',
                 icon: IconReportAnalytics,
                 isBeta: true,

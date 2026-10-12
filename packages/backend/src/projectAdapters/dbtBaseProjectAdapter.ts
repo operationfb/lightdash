@@ -228,7 +228,7 @@ export class DbtBaseProjectAdapter implements ProjectAdapter {
         // Type of the target warehouse
         if (!isSupportedDbtAdapter(manifest.metadata)) {
             throw new ParseError(
-                `Dbt project not supported. Lightdash does not support adapter ${manifest.metadata.adapter_type}`,
+                `Dbt project not supported. Kontala Analytics does not support adapter ${manifest.metadata.adapter_type}`,
                 {},
             );
         }
@@ -301,7 +301,7 @@ export class DbtBaseProjectAdapter implements ProjectAdapter {
             metricFlowTranslation.skippedCount > 0
         ) {
             Logger.info(
-                `Translated ${metricFlowTranslation.translatedCount} MetricFlow metric(s) into Lightdash metrics (skipped ${metricFlowTranslation.skippedCount} unsupported)`,
+                `Translated ${metricFlowTranslation.translatedCount} MetricFlow metric(s) into Kontala Analytics metrics (skipped ${metricFlowTranslation.skippedCount} unsupported)`,
             );
         }
         const validModels = metricFlowTranslation.models;

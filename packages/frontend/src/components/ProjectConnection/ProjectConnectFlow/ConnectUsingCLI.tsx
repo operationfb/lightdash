@@ -211,26 +211,6 @@ const ConnectUsingCLI: FC<ConnectUsingCliProps> = ({
                     </Stack>
                 </Stack>
             </ProjectCreationCard>
-
-            <Button
-                component="a"
-                variant="subtle"
-                mx="auto"
-                w="fit-content"
-                target="_blank"
-                rel="noreferrer noopener"
-                href="https://docs.lightdash.com/get-started/setup-lightdash/get-project-lightdash-ready"
-                onClick={() => {
-                    track({
-                        name: EventName.DOCUMENTATION_BUTTON_CLICKED,
-                        properties: {
-                            action: 'getting_started',
-                        },
-                    });
-                }}
-            >
-                View docs
-            </Button>
         </OnboardingWrapper>
     );
 };

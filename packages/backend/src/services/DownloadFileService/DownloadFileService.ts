@@ -44,7 +44,7 @@ export class DownloadFileService extends BaseService {
 
     private assertFileExists(file: DownloadFile) {
         if (!fs.existsSync(file.path)) {
-            const error = `This file ${file.path} doesn't exist on this server, this may be happening if you are running multiple containers or because files are not persisted. You can check out our docs to learn more on how to enable cloud storage: https://docs.lightdash.com/self-host/customize-deployment/configure-lightdash-to-use-external-object-storage`;
+            const error = `This file ${file.path} doesn't exist on this server, this may be happening if you are running multiple containers or because files are not persisted.`;
             throw new NotFoundError(error);
         }
     }

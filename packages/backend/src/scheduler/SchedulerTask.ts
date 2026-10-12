@@ -2173,7 +2173,7 @@ export default class SchedulerTask {
                 footerMarkdown: `This is a ${schedulerFooter} ${getHumanReadableCronExpression(
                     cron,
                     timezone || defaultSchedulerTimezone,
-                )} from Lightdash.\n${
+                )} from Kontala Analytics.\n${
                     showExpirationWarning
                         ? `Delivered files expire after *${slackExpirationDays}* days.`
                         : ''
@@ -2210,7 +2210,7 @@ export default class SchedulerTask {
 
                     const blocks = getChartThresholdAlertBlocks({
                         ...getBlocksArgs,
-                        footerMarkdown: `This is a ${thresholdFooter} sent by Lightdash. ${expiration}`,
+                        footerMarkdown: `This is a ${thresholdFooter} sent by Kontala Analytics. ${expiration}`,
                         image: slackImage,
                         thresholds,
                         includeLinks,
@@ -2582,7 +2582,7 @@ export default class SchedulerTask {
             const footer = `This is a ${schedulerFooter} ${getHumanReadableCronExpression(
                 cron,
                 timezone || defaultSchedulerTimezone,
-            )} from Lightdash.`;
+            )} from Kontala Analytics.`;
             const getBlocksArgs = {
                 title: name,
                 name: details.name,
@@ -3802,7 +3802,7 @@ export default class SchedulerTask {
                 )}`;
                 await this.emailClient.sendImageNotificationEmail(
                     recipient,
-                    `Lightdash Data Alert`,
+                    `Kontala Analytics Data Alert`,
                     name,
                     details.description || '',
                     thresholdMessage,
@@ -3814,7 +3814,7 @@ export default class SchedulerTask {
                     includeLinks,
                     pdfFile?.source,
                     undefined, // expiration days
-                    'This is a data alert sent by Lightdash',
+                    'This is a data alert sent by Kontala Analytics',
                     imageBuffer,
                     senderIdentity,
                     plainText,
@@ -7557,7 +7557,7 @@ export default class SchedulerTask {
             const footer = `This is a ${schedulerFooter} ${getHumanReadableCronExpression(
                 cron,
                 timezone || defaultSchedulerTimezone,
-            )} from Lightdash.`;
+            )} from Kontala Analytics.`;
             const getBlocksArgs = {
                 title: name,
                 name: details.name,

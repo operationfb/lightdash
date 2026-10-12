@@ -82,7 +82,7 @@ describe('native model loading and compilation', () => {
         await writeModel('models/a.yml');
         await writeModel('models/nested/b.yml');
         await expect(loadLightdashModels(projectDir)).rejects.toThrow(
-            'Duplicate Lightdash model "orders" in models/a.yml and models/nested/b.yml',
+            'Duplicate Kontala Analytics model "orders" in models/a.yml and models/nested/b.yml',
         );
     });
     it('rejects a models directory symlink that leaves the project', async () => {

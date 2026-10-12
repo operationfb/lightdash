@@ -261,7 +261,7 @@ export class InsufficientGitPermissionsError extends LightdashError {
 
 export class UnexpectedDatabaseError extends LightdashError {
     constructor(
-        message = 'Unexpected error in Lightdash database.',
+        message = 'Unexpected error in Kontala Analytics database.',
         data: { [key: string]: AnyType } = {},
     ) {
         super({
@@ -289,7 +289,7 @@ export class ParseError extends LightdashError {
 
 export class CompileError extends LightdashError {
     constructor(
-        message = 'Error compiling sql from Lightdash configuration',
+        message = 'Error compiling sql from Kontala Analytics configuration',
         data: Record<string, AnyType> = {},
     ) {
         super({
@@ -867,7 +867,7 @@ export class CustomSqlQueryForbiddenError extends LightdashError {
             name: 'CustomSqlQueryForbiddenError',
             statusCode: 403,
             data: {
-                documentationUrl: `https://docs.lightdash.com/references/custom-fields#custom-sql`,
+                documentationUrl: `https://www.kontala.com/docs/analytics/explore-and-visualise#custom-fields`,
             },
         });
     }

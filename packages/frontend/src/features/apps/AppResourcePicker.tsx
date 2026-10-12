@@ -623,7 +623,7 @@ const AddLinkButton: FC<{ onClick: () => void; disabled?: boolean }> = ({
     disabled,
 }) => (
     <Tooltip
-        label="Link live — run this chart by reference so the app updates when the chart changes in Lightdash."
+        label="Link live — run this chart by reference so the app updates when the chart changes in Kontala Analytics."
         w={260}
     >
         <UnstyledButton

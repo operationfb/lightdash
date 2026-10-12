@@ -88,7 +88,7 @@ const ExploreNavLink: React.FC<ExploreNavLinkProps> = ({
         rightSection = showNoDimensionsIcon ? (
             <Anchor
                 role="button"
-                href="https://docs.lightdash.com/guides/how-to-create-dimensions"
+                href="https://www.kontala.com/docs/analytics/dimensions"
                 target="_blank"
                 rel="noreferrer"
             >

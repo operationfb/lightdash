@@ -47,7 +47,6 @@ import useTracking from '../../../providers/Tracking/useTracking';
 import { EventName } from '../../../types/Events';
 import MantineIcon from '../../common/MantineIcon';
 import { NumberInput } from '../../common/NumberInput';
-import DocumentationHelpButton from '../../DocumentationHelpButton';
 import FormCollapseButton from '../FormCollapseButton';
 import { useFormContext } from '../formContext';
 import FormSection from '../Inputs/FormSection';
@@ -77,7 +76,6 @@ const bigQuerySchemaDescription = (
             you've set in your dbt <b>profiles.yml</b> file
         </Anchor>
         .
-        <DocumentationHelpButton href="https://docs.lightdash.com/get-started/setup-lightdash/connect-project#data-set" />
     </p>
 );
 
@@ -508,17 +506,7 @@ const BigQueryForm: FC<{
                                     label="Project"
                                     filter={projectOptionsFilter}
                                     description={
-                                        <p>
-                                            <Anchor
-                                                inherit
-                                                target="_blank"
-                                                href="https://docs.lightdash.com/get-started/setup-lightdash/connect-project#project"
-                                                rel="noreferrer"
-                                            >
-                                                This is the GCP project ID
-                                            </Anchor>
-                                            .
-                                        </p>
+                                        <p>This is the GCP project ID.</p>
                                     }
                                     placeholder={
                                         isLoadingProjects ||
@@ -604,17 +592,7 @@ const BigQueryForm: FC<{
                                     name="warehouse.project"
                                     label="Project"
                                     description={
-                                        <p>
-                                            <Anchor
-                                                inherit
-                                                target="_blank"
-                                                href="https://docs.lightdash.com/get-started/setup-lightdash/connect-project#project"
-                                                rel="noreferrer"
-                                            >
-                                                This is the GCP project ID
-                                            </Anchor>
-                                            .
-                                        </p>
+                                        <p>This is the GCP project ID.</p>
                                     }
                                     required
                                     {...form.getInputProps('warehouse.project')}
@@ -697,19 +675,7 @@ const BigQueryForm: FC<{
                                             : 'Choose file...'
                                     }
                                     description={
-                                        <p>
-                                            This is the JSON key file. You can
-                                            see{' '}
-                                            <Anchor
-                                                inherit
-                                                target="_blank"
-                                                href="https://docs.lightdash.com/get-started/setup-lightdash/connect-project#key-file"
-                                                rel="noreferrer"
-                                            >
-                                                how to create a key here
-                                            </Anchor>
-                                            .
-                                        </p>
+                                        <p>This is the JSON key file.</p>
                                     }
                                     required={requireSecrets}
                                     accept="application/json"

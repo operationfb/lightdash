@@ -10,7 +10,7 @@ export const SshStaticIpHint: FC = () => {
     if (!staticIp) return null;
     return (
         <Text fz="xs" c="dimmed">
-            Lightdash connects to this host from{' '}
+            Kontala Analytics connects to this host from{' '}
             <Text component="span" inherit fw={600}>
                 {staticIp}
             </Text>

@@ -59,8 +59,8 @@ const SelectWarehouse: FC<SelectWarehouseProps> = ({
                             ta="left"
                         >
                             You don't have permission to create new projects.
-                            Contact your Lightdash administrator to request
-                            project creation access or to have a project
+                            Contact your Kontala Analytics administrator to
+                            request project creation access or to have a project
                             assigned to you.
                         </Alert>
                     )}

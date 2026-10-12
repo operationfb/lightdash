@@ -862,7 +862,7 @@ export class ProjectService extends BaseService {
                         await this.createWithoutCompile(
                             user,
                             {
-                                name: 'Lightdash analytics',
+                                name: 'Organization analytics',
                                 type: ProjectType.PREVIEW,
                                 dbtConnection: { type: DbtProjectType.NONE },
                                 dbtVersion: DefaultSupportedDbtVersion,
@@ -9344,7 +9344,7 @@ export class ProjectService extends BaseService {
 
         if (preAggregateDefinition.preAggregateDefinition.table) {
             throw new ParameterError(
-                `Pre-aggregate "${preAggregateDefinitionName}" is external and is never materialized by Lightdash`,
+                `Pre-aggregate "${preAggregateDefinitionName}" is external and is never materialized by Kontala Analytics`,
             );
         }
 
@@ -12087,8 +12087,8 @@ export class ProjectService extends BaseService {
                 name: `${user.firstName} ${user.lastName}`,
                 email: user.email || '',
             },
-            label: `Lightdash - ${projectSummary.name}`,
-            description: 'Lightdash project',
+            label: `Kontala Analytics - ${projectSummary.name}`,
+            description: 'Kontala Analytics project',
             url: `${this.lightdashConfig.siteUrl}/projects/${projectUuid}/home`,
             dependsOn: uniq(
                 chartExposures.map(({ dependsOn }) => dependsOn).flat(),

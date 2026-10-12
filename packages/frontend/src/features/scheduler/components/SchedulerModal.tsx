@@ -216,13 +216,7 @@ const SchedulersModal: FC<
                                 </Stack>
                             </Group>
                             <Group gap="xs" wrap="nowrap">
-                                <DocumentationHelpButton
-                                    href={
-                                        isThresholdAlert
-                                            ? 'https://docs.lightdash.com/guides/how-to-create-alerts'
-                                            : 'https://docs.lightdash.com/guides/how-to-create-scheduled-deliveries'
-                                    }
-                                />
+                                <DocumentationHelpButton href="https://www.kontala.com/docs/analytics/share-and-export#scheduled-deliveries-and-alerts" />
                                 <Modal.CloseButton aria-label="Close scheduled deliveries" />
                             </Group>
                         </Group>

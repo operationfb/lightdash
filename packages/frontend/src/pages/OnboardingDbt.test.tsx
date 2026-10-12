@@ -74,7 +74,7 @@ describe('OnboardingDbt', () => {
         } as unknown as ReturnType<typeof useProject>);
     });
 
-    it('offers both setup paths and a docs link on the choice screen', async () => {
+    it('offers both setup paths on the choice screen', async () => {
         renderAt('/onboarding/dbt');
 
         expect(
@@ -87,8 +87,8 @@ describe('OnboardingDbt', () => {
             screen.getByText('Pull project from git repository'),
         ).toBeInTheDocument();
         expect(
-            screen.getByRole('link', { name: 'View docs' }),
-        ).toBeInTheDocument();
+            screen.queryByRole('link', { name: 'View docs' }),
+        ).not.toBeInTheDocument();
     });
 
     it('shows the CLI commands with the site url and version substituted', async () => {

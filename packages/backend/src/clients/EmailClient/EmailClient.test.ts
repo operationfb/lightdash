@@ -404,7 +404,7 @@ describe('EmailClient', () => {
                 expect.objectContaining({
                     to: 'expert@example.com',
                     subject:
-                        'Taylor Smith needs your help setting up Lightdash for Acme',
+                        'Taylor Smith needs your help setting up Kontala Analytics for Acme',
                     template: 'setupInvitation',
                     context: expect.objectContaining({
                         inviterName: 'Taylor Smith',

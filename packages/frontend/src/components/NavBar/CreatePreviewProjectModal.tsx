@@ -25,7 +25,6 @@ import {
     type ComboboxItemGroup,
 } from '@mantine/core';
 import {
-    IconExternalLink,
     IconHelpCircle,
     IconPlus,
     IconRefresh,
@@ -440,18 +439,6 @@ const CreatePreviewModal: FC<Props> = ({
                 >
                     {isPreviewCreating ? 'Creating preview' : 'Create preview'}
                 </Button>
-            }
-            leftActions={
-                <Anchor
-                    href="https://docs.lightdash.com/guides/cli/how-to-use-lightdash-preview/"
-                    target="_blank"
-                    fz="sm"
-                >
-                    <Group gap="xs" align="center">
-                        Learn more about preview projects{' '}
-                        <MantineIcon icon={IconExternalLink} />
-                    </Group>
-                </Anchor>
             }
         >
             <Stack gap="sm">

@@ -10,7 +10,6 @@ import {
     Tooltip,
 } from '@mantine/core';
 import {
-    IconBook,
     IconGripVertical,
     IconHierarchy3,
     IconInfoCircle,
@@ -193,17 +192,6 @@ const MetricsSidebar: FC<MetricsSidebarProps> = React.memo(
                                     canvas
                                 </Text>
                             )}
-                            <ActionIcon
-                                title="Documentation"
-                                aria-label="Documentation"
-                                component="a"
-                                href="https://docs.lightdash.com/guides/metrics-catalog/canvas"
-                                target="_blank"
-                                variant="transparent"
-                                size="xs"
-                            >
-                                <MantineIcon icon={IconBook} color="ldGray.5" />
-                            </ActionIcon>
                         </Group>
 
                         <TextInput

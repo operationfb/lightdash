@@ -163,7 +163,7 @@ const QueryRow: FC<{
                                                 icon={IconDeviceFloppy}
                                                 size={12}
                                             />
-                                            Save to Lightdash
+                                            Save to Kontala Analytics
                                         </Group>
                                     </Anchor>
                                 )}

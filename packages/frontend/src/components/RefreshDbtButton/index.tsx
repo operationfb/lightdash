@@ -1,10 +1,10 @@
 import { subject } from '@casl/ability';
 import { DbtProjectType, JobStatusType, ProjectType } from '@lightdash/common';
 import {
-    Anchor,
     Badge,
     Box,
     Button,
+    Code,
     Group,
     Menu,
     Popover,
@@ -42,7 +42,7 @@ const MODE_COPY: Record<
         description: 'Recompile explores from your dbt project',
         busy: 'Refreshing dbt',
         tooltip:
-            "If you've updated your YAML files, you can sync your changes to Lightdash by clicking this button.",
+            "If you've updated your YAML files, you can sync your changes to Kontala Analytics by clicking this button.",
     },
     'dbt-and-content': {
         label: 'Refresh dbt and sync content',
@@ -57,7 +57,8 @@ const NATIVE_MODE_COPY: typeof MODE_COPY = {
     dbt: {
         ...MODE_COPY.dbt,
         label: 'Refresh models',
-        description: 'Recompile explores from your native Lightdash YAML',
+        description:
+            'Recompile explores from your native Kontala Analytics YAML',
         busy: 'Refreshing models',
     },
     'dbt-and-content': {
@@ -65,7 +66,7 @@ const NATIVE_MODE_COPY: typeof MODE_COPY = {
         label: 'Refresh models and sync content',
         busy: 'Refreshing models and content',
         tooltip:
-            'Recompiles your native Lightdash models, then applies charts and dashboards as code from the repo.',
+            'Recompiles your native Kontala Analytics models, then applies charts and dashboards as code from the repo.',
     },
 };
 
@@ -170,40 +171,13 @@ const RefreshDbtButton: FC<{
                     <Text>
                         This project is deployed using the CLI.
                         <br />
-                        To keep your Lightdash project in sync with your source
-                        files,
-                        <br /> you need to either{' '}
-                        <Anchor
-                            href={
-                                'https://docs.lightdash.com/get-started/setup-lightdash/connect-project#2-import-a-dbt-project'
-                            }
-                            target="_blank"
-                            rel="noreferrer"
-                        >
-                            change your connection type
-                        </Anchor>
-                        , setup a{' '}
-                        <Anchor
-                            href={
-                                'https://docs.lightdash.com/guides/cli/how-to-use-lightdash-deploy#automatically-deploy-your-changes-to-lightdash-using-a-github-action'
-                            }
-                            target="_blank"
-                            rel="noreferrer"
-                        >
-                            GitHub action
-                        </Anchor>
+                        To keep your Kontala Analytics project in sync with your
+                        source files,
+                        <br /> you need to either change your connection type,
+                        setup a GitHub action
                         <br />
-                        or, run{' '}
-                        <Anchor
-                            href={
-                                'https://docs.lightdash.com/guides/cli/how-to-use-lightdash-deploy#lightdash-deploy-syncs-the-changes-in-your-dbt-project-to-lightdash'
-                            }
-                            target="_blank"
-                            rel="noreferrer"
-                        >
-                            lightdash deploy
-                        </Anchor>
-                        from your command line.
+                        or, run <Code>lightdash deploy</Code> from your command
+                        line.
                     </Text>
                 </Popover.Dropdown>
             </Popover>
@@ -321,7 +295,7 @@ const RefreshDbtButton: FC<{
             )}
             {data?.type === ProjectType.PREVIEW && (
                 <Tooltip
-                    label={`Developer previews are temporary Lightdash projects`}
+                    label={`Developer previews are temporary Kontala Analytics projects`}
                 >
                     <Badge color="yellow" size="lg">
                         Developer preview

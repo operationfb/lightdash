@@ -7,7 +7,6 @@ import {
     type MetricWithAssociatedTimeDimension,
 } from '@lightdash/common';
 import {
-    Anchor,
     Group,
     Loader,
     Paper,
@@ -254,16 +253,7 @@ export const MetricExploreComparison: FC<Props> = ({
                                             <Text span c="ldGray.7" fz="sm">
                                                 Only metrics with a time
                                                 dimension defined in the .yml
-                                                can be compared.{' '}
-                                                <Anchor
-                                                    inherit
-                                                    c="ldGray.9"
-                                                    fw={500}
-                                                    target="_blank"
-                                                    href="https://docs.lightdash.com/guides/metrics-catalog/catalog#configuring-default-time-settings-in-yml"
-                                                >
-                                                    Learn more
-                                                </Anchor>
+                                                can be compared.
                                             </Text>
                                         ))}
                                 </Stack>

@@ -238,8 +238,8 @@ export const WriteBackToDbtModal: FC<Props> = ({ opened, onClose }) => {
                             </Text>
                         ) : (
                             <Callout variant="info">
-                                The pull request will be opened by the Lightdash
-                                bot.{' '}
+                                The pull request will be opened by the Kontala
+                                Analytics bot.{' '}
                                 <Anchor
                                     fz="sm"
                                     href={`${toBrowserPath(

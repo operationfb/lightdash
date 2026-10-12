@@ -509,7 +509,7 @@ export const MetricsTable: FC<MetricsTableProps> = ({
                             <Anchor
                                 inherit
                                 target="_blank"
-                                href="https://docs.lightdash.com/references/metrics/"
+                                href="https://www.kontala.com/docs/analytics/metrics"
                             >
                                 documentation
                             </Anchor>

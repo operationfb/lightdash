@@ -197,7 +197,7 @@ const DucklakeFields: FC<{ disabled: boolean }> = ({ disabled }) => {
                 catalogType === DucklakeCatalogType.DUCKDB) && (
                 <TextInput
                     label="Catalog file path"
-                    description="Path to the catalog database file on the Lightdash server."
+                    description="Path to the catalog database file on the Kontala Analytics server."
                     required
                     {...form.getInputProps('warehouse.catalog.path')}
                     disabled={disabled}

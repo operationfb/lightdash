@@ -21,14 +21,14 @@ const SupportImpersonationPanel: FC = () => {
         <Group justify="space-between" wrap="nowrap">
             <Stack gap="xxs">
                 <Text fw={500} fz="sm">
-                    Allow Lightdash support to impersonate users
+                    Allow Kontala support to impersonate users
                 </Text>
                 <Text fz="xs" c="dimmed">
-                    When enabled, the Lightdash support team can impersonate
-                    users in your organization while helping with a support
-                    request, so they can reproduce issues from your perspective
-                    without asking for permission each time. You can turn this
-                    off at any time.
+                    When enabled, the Kontala support team can impersonate users
+                    in your organization while helping with a support request,
+                    so they can reproduce issues from your perspective without
+                    asking for permission each time. You can turn this off at
+                    any time.
                 </Text>
             </Stack>
             <Switch

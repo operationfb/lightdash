@@ -229,7 +229,7 @@ describe('ChartTypeLibrarySection', () => {
         // Installed chart types — upgradable ones included — are hidden from
         // the library; they live in the installed tab.
         expect(screen.getByText('(2)')).toBeInTheDocument();
-        expect(screen.getAllByText('Built by Lightdash')).toHaveLength(2);
+        expect(screen.getAllByText('Built by Kontala')).toHaveLength(2);
 
         expect(screen.getByText('Not installed chart')).toBeInTheDocument();
         expect(screen.queryByText('Installed chart')).not.toBeInTheDocument();
@@ -335,7 +335,9 @@ describe('ChartTypeLibrarySection', () => {
         // chance to resolve, to prove this isn't just a race that beat the
         // (now-absent) permission gate.
         expect(
-            await screen.findByText('Requires Lightdash v99.0.0 or later'),
+            await screen.findByText(
+                'Requires Kontala Analytics v99.0.0 or later',
+            ),
         ).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Install' })).toBeDisabled();
     });

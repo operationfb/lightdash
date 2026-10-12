@@ -332,7 +332,7 @@ const SemanticLayerConnectionPanel: FC<Props> = ({ projectUuid }) => {
                                 index={1}
                                 active
                                 title="Token"
-                                description="Paste an existing Lightdash token or generate a new one for this integration. You can use a service account or personal access token."
+                                description="Paste an existing Kontala Analytics token or generate a new one for this integration. You can use a service account or personal access token."
                             >
                                 {generated ? (
                                     <TokenAddedCard

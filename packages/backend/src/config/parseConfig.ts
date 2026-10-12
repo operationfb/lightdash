@@ -3186,7 +3186,9 @@ export const parseConfig = (): LightdashConfig => {
                       accessToken: process.env.EMAIL_SMTP_ACCESS_TOKEN,
                   },
                   sender: {
-                      name: process.env.EMAIL_SMTP_SENDER_NAME || 'Lightdash',
+                      name:
+                          process.env.EMAIL_SMTP_SENDER_NAME ||
+                          'Kontala Analytics',
                       email: process.env.EMAIL_SMTP_SENDER_EMAIL || '',
                   },
                   inlineImageCid:

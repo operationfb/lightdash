@@ -33,8 +33,9 @@ const CreateProjectSettings: FC = () => {
 
                     <Text c="dimmed">
                         Before you start exploring your data, pick the dbt
-                        models you want to appear as tables in Lightdash. You
-                        can always adjust this in your project settings later.
+                        models you want to appear as tables in Kontala
+                        Analytics. You can always adjust this in your project
+                        settings later.
                     </Text>
                 </Stack>
 

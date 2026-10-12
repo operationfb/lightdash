@@ -234,7 +234,7 @@ const ProjectTablesConfiguration: FC<Props> = ({ projectUuid, onSuccess }) => {
                             <Radio
                                 value={TableSelectionType.ALL}
                                 label="Show entire project"
-                                description="Show all of the models in your dbt project in Lightdash."
+                                description="Show all of the models in your dbt project in Kontala Analytics."
                                 disabled={disabled}
                             />
 

@@ -63,8 +63,8 @@ const GitlabForm: FC<{ disabled: boolean }> = ({ disabled }) => {
                 description={
                     <>
                         <p>
-                            This is the branch in your Gitlab repo that
-                            Lightdash should sync to. e.g. <b>main</b>,{' '}
+                            This is the branch in your Gitlab repo that Kontala
+                            Analytics should sync to. e.g. <b>main</b>,{' '}
                             <b>master</b> or <b>dev</b>
                         </p>
                         <p>

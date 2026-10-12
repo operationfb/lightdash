@@ -193,7 +193,7 @@ export class MicrosoftTeamsClient {
                                 type: 'Image',
                                 url: image,
                                 size: 'Stretch',
-                                altText: 'Lightdash chart',
+                                altText: 'Kontala Analytics chart',
                                 selectAction: {
                                     type: 'Action.OpenUrl',
                                     tooltip: 'See image',
@@ -211,7 +211,7 @@ export class MicrosoftTeamsClient {
                         actions: [
                             {
                                 type: 'Action.OpenUrl',
-                                title: 'Open in Lightdash',
+                                title: 'Open in Kontala Analytics',
                                 url: ctaUrl,
                             },
                             ...(pdfUrl
@@ -305,7 +305,7 @@ export class MicrosoftTeamsClient {
                             },
                             {
                                 type: 'Action.OpenUrl',
-                                title: 'Open in Lightdash',
+                                title: 'Open in Kontala Analytics',
                                 url: ctaUrl,
                             },
                         ],
@@ -591,7 +591,7 @@ export class MicrosoftTeamsClient {
                         actions: [
                             {
                                 type: 'Action.OpenUrl',
-                                title: 'Open in Lightdash',
+                                title: 'Open in Kontala Analytics',
                                 url: ctaUrl,
                             },
                         ],
