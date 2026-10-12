@@ -4,14 +4,20 @@
     box-shadow: var(--mantine-shadow-subtle);
 }
 
-@mixin smaller-than $mantine-breakpoint-sm {
-    .toolbar,
+/* Wrap by the card's width rather than the viewport's, since the settings
+   sidebar takes part of the viewport. 800px fits one line with the search
+   expanded. */
+.toolbar {
+    container-type: inline-size;
+}
+
+@container (width < 800px) {
     .filters {
         flex-wrap: wrap;
     }
 
-    .filters {
-        flex-basis: 100%;
+    .divider {
+        display: none;
     }
 
     .search {

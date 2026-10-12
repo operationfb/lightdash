@@ -84,7 +84,7 @@ const GroupsTable: FC<GroupsTableProps> = ({ onEditGroup }) => {
                 accessorKey: 'name',
                 header: 'Group',
                 enableSorting: false,
-                size: 260,
+                size: 240,
                 Header: ({ column }) => (
                     <Group gap="two">
                         <MantineIcon icon={IconTextCaption} color="dimmed" />
@@ -113,7 +113,7 @@ const GroupsTable: FC<GroupsTableProps> = ({ onEditGroup }) => {
                 accessorKey: 'members',
                 header: 'Members',
                 enableSorting: false,
-                size: 400,
+                size: 360,
                 Header: ({ column }) => (
                     <Group gap="two">
                         <MantineIcon icon={IconUsers} color="dimmed" />
@@ -159,7 +159,9 @@ const GroupsTable: FC<GroupsTableProps> = ({ onEditGroup }) => {
                 id: 'actions',
                 header: '',
                 enableSorting: false,
-                size: 50,
+                // xl cell padding on both sides of the 28px action icon
+                size: 76,
+                grow: false,
                 Cell: ({ row }) => {
                     const group = row.original;
                     const disabled = !canManageGroups || flatData.length < 1;

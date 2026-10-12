@@ -384,7 +384,9 @@ const ProjectGroupAccessComponent: FC<ProjectGroupAccessProps> = ({
                 id: 'actions',
                 header: '',
                 enableSorting: false,
-                size: 50,
+                // xl cell padding on both sides of the 28px action icon
+                size: 76,
+                grow: false,
                 Cell: ({ row }) => (
                     <Box
                         component="div"
