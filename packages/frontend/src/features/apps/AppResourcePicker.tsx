@@ -58,6 +58,7 @@ import MantineModal from '../../components/common/MantineModal';
 import { ModelSelector } from '../../components/common/ModelSelector/ModelSelector';
 import { ChartIcon, IconBox } from '../../components/common/ResourceIcon';
 import { getChartIcon } from '../../components/common/ResourceIcon/utils';
+import { useCanAccessSettings } from '../../hooks/settings/useCanAccessSettings';
 import { useChartSummariesV2 } from '../../hooks/useChartSummariesV2';
 import { useInfiniteContent } from '../../hooks/useContent';
 import { useProject } from '../../hooks/useProject';
@@ -989,9 +990,11 @@ export const ConnectionPickerView: FC<{
             }),
         ) ??
             false);
-    const createConnectionUrl = projectUuid
-        ? `/generalSettings/projectManagement/${projectUuid}/dataAppConnections?create=1`
-        : undefined;
+    const canAccessSettings = useCanAccessSettings();
+    const createConnectionUrl =
+        projectUuid && canAccessSettings
+            ? `/generalSettings/projectManagement/${projectUuid}/dataAppConnections?create=1`
+            : undefined;
 
     const selectedUuids = useMemo(
         () => new Set(selectedConnections.map((c) => c.externalConnectionUuid)),

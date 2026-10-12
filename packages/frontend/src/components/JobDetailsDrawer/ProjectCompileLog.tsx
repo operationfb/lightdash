@@ -2,6 +2,7 @@ import { Box, Button } from '@mantine/core';
 import { IconExternalLink } from '@tabler/icons-react';
 import { type FC } from 'react';
 import ReactJson from 'react-json-view';
+import { useCanAccessSettings } from '../../hooks/settings/useCanAccessSettings';
 import { useProjectCompileLogByJob } from '../../hooks/useProjectCompileLogs';
 import { useRjvTheme } from '../../hooks/useRjvTheme';
 import { toBrowserPath } from '../../utils/url';
@@ -22,6 +23,7 @@ const ProjectCompileLog: FC<ProjectCompileLogProps> = ({
         jobUuid,
     });
     const theme = useRjvTheme();
+    const canAccessSettings = useCanAccessSettings();
 
     if (!compileLog) {
         return null;
@@ -31,19 +33,21 @@ const ProjectCompileLog: FC<ProjectCompileLogProps> = ({
         <CollapsablePaper
             title="Compilation log"
             rightAction={
-                <Button
-                    variant="subtle"
-                    color="gray"
-                    size="compact-xs"
-                    rightSection={<MantineIcon icon={IconExternalLink} />}
-                    component="a"
-                    target="_blank"
-                    href={toBrowserPath(
-                        `/generalSettings/projectManagement/${projectUuid}/compilationHistory`,
-                    )}
-                >
-                    See history
-                </Button>
+                canAccessSettings && (
+                    <Button
+                        variant="subtle"
+                        color="gray"
+                        size="compact-xs"
+                        rightSection={<MantineIcon icon={IconExternalLink} />}
+                        component="a"
+                        target="_blank"
+                        href={toBrowserPath(
+                            `/generalSettings/projectManagement/${projectUuid}/compilationHistory`,
+                        )}
+                    >
+                        See history
+                    </Button>
+                )
             }
         >
             <Box>

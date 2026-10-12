@@ -41,6 +41,7 @@ import React, {
 } from 'react';
 import { animals, colors, uniqueNamesGenerator } from 'unique-names-generator';
 import { lightdashApi } from '../../api';
+import { useCanAccessSettings } from '../../hooks/settings/useCanAccessSettings';
 import { useActiveProjectUuid } from '../../hooks/useActiveProject';
 import { useProject } from '../../hooks/useProject';
 import { useCreatePreviewMutation } from '../../hooks/useProjectPreview';
@@ -208,6 +209,7 @@ const CreatePreviewModal: FC<Props> = ({
     preselectedProjectUuid,
 }) => {
     const { user } = useApp();
+    const canAccessSettings = useCanAccessSettings();
 
     const { isInitialLoading: isLoadingProjects, data: projects } =
         useProjects();
@@ -609,15 +611,19 @@ const CreatePreviewModal: FC<Props> = ({
                             project will copy the same connection details as its
                             upstream project. To change the branch of the source
                             code, switch to Github or GitLab connection on{' '}
-                            <Anchor
-                                target="_blank"
-                                fz="sm"
-                                href={toBrowserPath(
-                                    `/generalSettings/projectManagement/${selectedProjectUuid}/settings`,
-                                )}
-                            >
-                                project settings
-                            </Anchor>
+                            {canAccessSettings ? (
+                                <Anchor
+                                    target="_blank"
+                                    fz="sm"
+                                    href={toBrowserPath(
+                                        `/generalSettings/projectManagement/${selectedProjectUuid}/settings`,
+                                    )}
+                                >
+                                    project settings
+                                </Anchor>
+                            ) : (
+                                'project settings'
+                            )}
                             .
                         </Text>
 

@@ -24,6 +24,7 @@ import { cartesianChartSelectors } from '../../../../components/DataViz/store/se
 import { EditableText } from '../../../../components/VisualizationConfigs/common/EditableText';
 import { useGitIntegration } from '../../../../hooks/gitIntegration/useGitIntegration';
 import useHealth from '../../../../hooks/health/useHealth';
+import { useCanAccessSettings } from '../../../../hooks/settings/useCanAccessSettings';
 import useToaster from '../../../../hooks/toaster/useToaster';
 import { useProject } from '../../../../hooks/useProject';
 import useCreateInAnySpaceAccess from '../../../../hooks/user/useCreateInAnySpaceAccess';
@@ -98,8 +99,13 @@ export const HeaderCreate: FC = () => {
     );
     const health = useHealth();
     const { data: gitIntegration } = useGitIntegration();
+    const canAccessSettings = useCanAccessSettings();
 
     const [writeBackDisabledMessage, writeBackOpenUrl] = useMemo(() => {
+        const settingsUrl = (path: string) =>
+            canAccessSettings
+                ? `${health?.data?.siteUrl}/generalSettings${path}`
+                : undefined;
         if (!canWriteBackToDbt) {
             return [
                 "You don't have permission to write back to dbt in this project.",
@@ -120,7 +126,7 @@ export const HeaderCreate: FC = () => {
                 ? [undefined, undefined]
                 : [
                       'SQL writeback supports Bitbucket Cloud only. Update the project connection.',
-                      `${health?.data?.siteUrl}/generalSettings/projectManagement/${projectUuid}/settings`,
+                      settingsUrl(`/projectManagement/${projectUuid}/settings`),
                   ];
         }
         const hasGithubEnabled = gitIntegration?.enabled;
@@ -138,8 +144,10 @@ export const HeaderCreate: FC = () => {
         }
         if (!hasGithubEnabled) {
             return [
-                `Github integration is not active on this organization, click here to open integrations page`,
-                `${health?.data?.siteUrl}/generalSettings/integrations`,
+                canAccessSettings
+                    ? `Github integration is not active on this organization, click here to open integrations page`
+                    : 'Github integration is not active on this organization',
+                settingsUrl('/integrations'),
             ];
         }
         if (!hasGitProject) {
@@ -150,13 +158,16 @@ export const HeaderCreate: FC = () => {
                         {project?.name}
                     </Text>{' '}
                     is not connected to a GitHub, GitLab or Bitbucket Cloud
-                    repository, click here to open project settings page
+                    repository
+                    {canAccessSettings &&
+                        ', click here to open project settings page'}
                 </Text>,
-                `${health?.data?.siteUrl}/generalSettings/projectManagement/${projectUuid}/settings`,
+                settingsUrl(`/projectManagement/${projectUuid}/settings`),
             ];
         }
         return [undefined, undefined];
     }, [
+        canAccessSettings,
         canWriteBackToDbt,
         gitIntegration?.enabled,
         health?.data?.hasGithub,

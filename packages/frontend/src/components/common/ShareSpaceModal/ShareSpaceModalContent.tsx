@@ -29,6 +29,7 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { useNavigate } from 'react-router';
+import { useCanAccessSettings } from '../../../hooks/settings/useCanAccessSettings';
 import useToaster from '../../../hooks/toaster/useToaster';
 import { useOptionalProjectRoute } from '../../../hooks/useProjectRoute';
 import useSearchParams from '../../../hooks/useSearchParams';
@@ -187,6 +188,7 @@ const ShareSpaceModalContent: FC<ShareSpaceProps> = ({
         projectRoute?.projectUrlIdentifier ?? projectUuid;
     const shareSpaceModalSearchParam = useSearchParams('shareSpaceModal');
     const { user: sessionUser } = useApp();
+    const canAccessSettings = useCanAccessSettings();
     const { showToastError } = useToaster();
 
     const isControlled = externalOpened !== undefined;
@@ -513,7 +515,8 @@ const ShareSpaceModalContent: FC<ShareSpaceProps> = ({
                                         projectUuid={projectUuid}
                                     />
 
-                                    {directTotalResults >= 5 &&
+                                    {canAccessSettings &&
+                                        directTotalResults >= 5 &&
                                         effectiveGroupsAccess.length === 0 &&
                                         !isGroupsHintDismissed && (
                                             <Callout

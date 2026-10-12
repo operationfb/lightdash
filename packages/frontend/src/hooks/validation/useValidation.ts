@@ -24,6 +24,7 @@ import { useState } from 'react';
 import useLocalStorageState from 'use-local-storage-state';
 import { lightdashApi } from '../../api';
 import { pollJobStatus } from '../../features/scheduler/hooks/useScheduler';
+import { useCanAccessSettings } from '../settings/useCanAccessSettings';
 import useToaster from '../toaster/useToaster';
 import { useProject } from '../useProject';
 import useUser, { type UserWithAbility } from '../user/useUser';
@@ -85,6 +86,8 @@ export const useValidation = (
     const [lastValidationNotification, setLastValidationNotification] =
         useLocalStorageState<string>(LAST_VALIDATION_NOTIFICATION_KEY);
     const organizationUuid = user.data?.organizationUuid;
+    // KONTALA: the validator lives in Settings, so nobody else is told of errors.
+    const canAccessSettings = useCanAccessSettings();
 
     // Check if the user can manage validation feature
     const canManageValidation = user.data?.ability.can(
@@ -96,7 +99,7 @@ export const useValidation = (
     );
 
     return useQuery<ValidationResponse[], ApiError>({
-        enabled: canManageValidation,
+        enabled: canManageValidation && canAccessSettings,
         queryKey: ['validation', fromSettings],
         queryFn: () => getValidation(projectUuid, fromSettings),
         retry: (_, error) => error.error.statusCode !== 403,
@@ -339,7 +342,10 @@ export const useValidationMutation = (
 export const useValidationUserAbility = (projectUuid?: string) => {
     const { data: user } = useUser(true);
     const { data: project } = useProject(projectUuid);
+    // KONTALA: the validator lives in Settings, so nobody else is pointed at it.
+    const canAccessSettings = useCanAccessSettings();
     const canUserSeeValidationErrorsNotifications =
+        canAccessSettings &&
         !!user &&
         !!project &&
         user.ability?.can(

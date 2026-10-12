@@ -30,6 +30,7 @@ import { useNavigate } from 'react-router';
 import { lightdashApi } from '../../api';
 import { pollJobStatus } from '../../features/scheduler/hooks/useScheduler';
 import useApp from '../../providers/App/useApp';
+import { useCanAccessSettings } from '../settings/useCanAccessSettings';
 import useToaster from '../toaster/useToaster';
 import { invalidateContent } from '../useContent';
 import { useProjectUuid } from '../useProjectUuid';
@@ -712,7 +713,10 @@ export const useDashboardDeleteMutation = (projectUuid?: string) => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const { health } = useApp();
-    const isSoftDeleteEnabled = health.data?.softDelete.enabled ?? false;
+    // KONTALA: recently deleted lives in Settings.
+    const canAccessSettings = useCanAccessSettings();
+    const canGoToRecentlyDeleted =
+        (health.data?.softDelete.enabled ?? false) && canAccessSettings;
     const { showToastSuccess, showToastApiError } = useToaster();
     return useMutation<null, ApiError, string>(
         (id) => {
@@ -731,7 +735,7 @@ export const useDashboardDeleteMutation = (projectUuid?: string) => {
                 await queryClient.invalidateQueries(['deletedContent']);
                 showToastSuccess({
                     title: `Deleted! Dashboard was deleted.`,
-                    action: isSoftDeleteEnabled
+                    action: canGoToRecentlyDeleted
                         ? {
                               children: 'Go to recently deleted',
                               icon: IconArrowRight,

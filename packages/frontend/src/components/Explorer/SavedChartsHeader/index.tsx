@@ -41,6 +41,7 @@ import { useChartViewStats } from '../../../hooks/chart/useChartViewStats';
 import useDashboardStorage from '../../../hooks/dashboard/useDashboardStorage';
 import { useFavoriteMutation } from '../../../hooks/favorites/useFavoriteMutation';
 import { useFavorites } from '../../../hooks/favorites/useFavorites';
+import { useCanAccessSettings } from '../../../hooks/settings/useCanAccessSettings';
 import { useChartPermissions } from '../../../hooks/useChartPermissions';
 import { useContentAuthoringEnabled } from '../../../hooks/useContentAuthoringEnabled';
 import { useProjectUrlIdentifier } from '../../../hooks/useProjectRoute';
@@ -215,6 +216,9 @@ const SavedChartsHeader: FC = () => {
         spaceUuid: savedChart?.spaceUuid,
     });
     const { user } = useApp();
+    const canAccessSettings = useCanAccessSettings();
+    const hasDraftsToReview =
+        canAccessSettings && !!savedChart?.draftsAwaitingReview;
     const updateSavedChart = useUpdateMutation(
         dashboardUuid ? dashboardUuid : undefined,
         savedChart?.uuid,
@@ -457,7 +461,7 @@ const SavedChartsHeader: FC = () => {
                                         </Badge>
                                     </Tooltip>
                                 )}
-                                {!!savedChart.draftsAwaitingReview && (
+                                {hasDraftsToReview && (
                                     <Badge
                                         component={Link}
                                         to={`/generalSettings/projectManagement/${savedChart.projectUuid}/contentReview`}

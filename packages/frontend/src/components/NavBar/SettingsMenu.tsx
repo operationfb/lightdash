@@ -7,6 +7,7 @@ import {
 } from '@tabler/icons-react';
 import { type FC } from 'react';
 import { Link } from 'react-router';
+import { useCanAccessSettings } from '../../hooks/settings/useCanAccessSettings';
 import { useActiveProjectUuid } from '../../hooks/useActiveProject';
 import useApp from '../../providers/App/useApp';
 import MantineIcon from '../common/MantineIcon';
@@ -18,8 +19,9 @@ const SettingsMenu: FC<{ withLabel?: boolean }> = ({ withLabel = false }) => {
         user: { data: user },
     } = useApp();
     const { activeProjectUuid } = useActiveProjectUuid();
+    const canAccessSettings = useCanAccessSettings();
 
-    if (!user || !activeProjectUuid) return null;
+    if (!user || !activeProjectUuid || !canAccessSettings) return null;
 
     const userCanViewOrganization = user.ability.can(
         'update',
