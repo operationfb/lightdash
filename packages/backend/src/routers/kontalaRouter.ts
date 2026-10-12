@@ -58,6 +58,12 @@ import {
     type ParsedDocument,
 } from './kontala/content';
 import {
+    asPinnedDashboards,
+    lockPublishedSpaces,
+    pinPublishedDashboards,
+    type ManagedContentDependencies,
+} from './kontala/managed';
+import {
     compilePostedSemanticLayer,
     parsePostedModels,
 } from './kontala/semanticLayer';
@@ -129,7 +135,7 @@ type KontalaRouterDependencies = {
     projectModel: ProjectModel;
     projectService: ProjectServiceInterface;
     coderService: CoderServiceInterface;
-};
+} & ManagedContentDependencies;
 
 type MemberBody = {
     organizationUuid?: unknown;
@@ -171,6 +177,9 @@ export const kontalaRouter = ({
     projectModel,
     projectService,
     coderService,
+    spaceModel,
+    dashboardModel,
+    pinnedListModel,
 }: KontalaRouterDependencies) => {
     const router = express.Router();
 
@@ -436,6 +445,7 @@ export const kontalaRouter = ({
                     files?: unknown;
                     spaceNames?: unknown;
                     force?: unknown;
+                    pinnedDashboards?: unknown;
                 };
                 if (
                     body.spaceNames !== undefined &&
@@ -463,6 +473,10 @@ export const kontalaRouter = ({
                 // costs no database round trip. Everything that can fail on the
                 // documents themselves has failed by the end of this line.
                 const documents = parsePostedContent(body.files);
+                const pinnedDashboards = asPinnedDashboards(
+                    body.pinnedDashboards,
+                    documents,
+                );
 
                 const project = await projectModel.get(projectUuid);
 
@@ -553,6 +567,21 @@ export const kontalaRouter = ({
                 }
                 /* eslint-enable no-await-in-loop */
 
+                // After every write, so a space the publish created is locked
+                // in the same request, and every publish repairs a space or a
+                // home page somebody changed. See routers/kontala/managed.ts.
+                const managed = { spaceModel, dashboardModel, pinnedListModel };
+                const lockedSpaces = await lockPublishedSpaces(
+                    managed,
+                    projectUuid,
+                    documents,
+                );
+                await pinPublishedDashboards(
+                    managed,
+                    projectUuid,
+                    pinnedDashboards,
+                );
+
                 Logger.info(
                     `kontala: published ${written.length} content documents to project ${projectUuid}`,
                 );
@@ -567,6 +596,8 @@ export const kontalaRouter = ({
                         // an atomicity this endpoint does not have.
                         written,
                         warnings,
+                        lockedSpaces,
+                        pinnedDashboards,
                     },
                 });
             } catch (error) {

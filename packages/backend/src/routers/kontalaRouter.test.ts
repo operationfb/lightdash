@@ -57,6 +57,21 @@ type Models = {
     projectModel: Record<string, ReturnType<typeof vi.fn>>;
     projectService: Record<string, ReturnType<typeof vi.fn>>;
     coderService: Record<string, ReturnType<typeof vi.fn>>;
+    spaceModel: Record<string, ReturnType<typeof vi.fn>>;
+    dashboardModel: Record<string, ReturnType<typeof vi.fn>>;
+    pinnedListModel: Record<string, ReturnType<typeof vi.fn>>;
+};
+
+const kontalaSpace = {
+    projectUuid: PROJECT,
+    uuid: 'space-uuid-kontala',
+    name: 'Kontala',
+    slug: 'kontala',
+    path: 'kontala',
+    parentSpaceUuid: null,
+    inheritParentPermissions: true,
+    projectMemberAccessRole: null,
+    isDefaultUserSpace: false,
 };
 
 const bigqueryProject = {
@@ -119,6 +134,18 @@ const buildModels = (overrides: Partial<Models> = {}): Models => ({
         upsertSqlChart: vi.fn().mockResolvedValue({}),
         upsertDashboard: vi.fn().mockResolvedValue({}),
     },
+    spaceModel: {
+        findByProjectAndPath: vi.fn().mockResolvedValue([kontalaSpace]),
+        update: vi.fn().mockResolvedValue(undefined),
+    },
+    dashboardModel: {
+        getByIdOrSlug: vi.fn(async (slug: string) => ({
+            uuid: `dashboard-uuid-${slug}`,
+        })),
+    },
+    pinnedListModel: {
+        pinDashboardsFirst: vi.fn().mockResolvedValue(undefined),
+    },
     ...overrides,
 });
 
@@ -150,6 +177,9 @@ const start = (models: Models, config: Record<string, unknown>) => {
             projectModel: models.projectModel as never,
             projectService: models.projectService as never,
             coderService: models.coderService as never,
+            spaceModel: models.spaceModel as never,
+            dashboardModel: models.dashboardModel as never,
+            pinnedListModel: models.pinnedListModel as never,
         }),
     );
     // ⚠ WITHOUT THIS EVERY ASSERTION BELOW COLLAPSES TO ">= 400". App.ts maps a
@@ -627,10 +657,10 @@ config:
   columns: {}
 `;
 
-const dashboardYaml = (tileChartSlug: string) => `
+const dashboardYaml = (tileChartSlug: string, slug = 'overview') => `
 contentType: dashboard
 version: 1
-slug: overview
+slug: ${slug}
 spaceSlug: kontala
 name: "Overview"
 tabs: []
@@ -744,6 +774,134 @@ describe('kontala content', () => {
         expect(options.spaceNames).toEqual({ kontala: 'Kontala' });
         expect(options.filePath).toBe('c.yml');
     });
+
+    it('makes every space it publishes into read-only for project members', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        const res = await publish(port, {
+            files: [{ path: 'c.yml', content: chartYaml('kpi-sessions') }],
+        });
+
+        expect(res.status).toBe(200);
+        expect(models.spaceModel.findByProjectAndPath).toHaveBeenCalledWith(
+            PROJECT,
+            'kontala',
+        );
+        // Not inheriting the project's editor role, and every project member
+        // a viewer: a customer can open and duplicate, never edit or delete,
+        // what the next publish would overwrite anyway.
+        expect(models.spaceModel.update).toHaveBeenCalledWith(
+            'space-uuid-kontala',
+            {
+                name: 'Kontala',
+                inheritParentPermissions: false,
+                projectMemberAccessRole: 'viewer',
+            },
+        );
+        expect(JSON.parse(res.body).results.lockedSpaces).toEqual([
+            'space-uuid-kontala',
+        ]);
+    });
+
+    it('leaves a space that is already locked alone', async () => {
+        const models = buildModels();
+        models.spaceModel.findByProjectAndPath.mockResolvedValue([
+            {
+                ...kontalaSpace,
+                inheritParentPermissions: false,
+                projectMemberAccessRole: 'viewer',
+            },
+        ]);
+        const port = start(models, configWith());
+
+        await publish(port, {
+            files: [{ path: 'c.yml', content: chartYaml('kpi-sessions') }],
+        });
+
+        expect(models.spaceModel.update).not.toHaveBeenCalled();
+    });
+
+    it('pins the dashboards it names first, in the order it names them', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+        const order: string[] = [];
+        models.coderService.upsertDashboard.mockImplementation(async () => {
+            order.push('dashboard');
+            return {};
+        });
+        models.pinnedListModel.pinDashboardsFirst.mockImplementation(
+            async () => {
+                order.push('pin');
+            },
+        );
+
+        const res = await publish(port, {
+            files: [
+                { path: 'c.yml', content: chartYaml('kpi-sessions') },
+                {
+                    path: 'a.yml',
+                    content: dashboardYaml('kpi-sessions', 'acquisition'),
+                },
+                {
+                    path: 'e.yml',
+                    content: dashboardYaml('kpi-sessions', 'engagement'),
+                },
+            ],
+            pinnedDashboards: ['engagement', 'acquisition'],
+        });
+
+        expect(res.status).toBe(200);
+        expect(order).toEqual(['dashboard', 'dashboard', 'pin']);
+        expect(models.dashboardModel.getByIdOrSlug).toHaveBeenCalledWith(
+            'engagement',
+            { projectUuid: PROJECT },
+        );
+        expect(models.pinnedListModel.pinDashboardsFirst).toHaveBeenCalledWith(
+            PROJECT,
+            ['dashboard-uuid-engagement', 'dashboard-uuid-acquisition'],
+        );
+    });
+
+    it('pins nothing when it is asked to pin nothing', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        await publish(port, {
+            files: [{ path: 'c.yml', content: chartYaml('kpi-sessions') }],
+        });
+
+        expect(
+            models.pinnedListModel.pinDashboardsFirst,
+        ).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        ['not an array', 'overview'],
+        ['a dashboard the payload does not publish', ['somebody-elses']],
+        ['a dashboard twice', ['overview', 'overview']],
+        ['something that is not a slug', ['Overview']],
+    ])(
+        'refuses pinnedDashboards naming %s before writing anything',
+        async (_, pinnedDashboards) => {
+            const models = buildModels();
+            const port = start(models, configWith());
+
+            const res = await publish(port, {
+                files: [
+                    { path: 'c.yml', content: chartYaml('kpi-sessions') },
+                    { path: 'd.yml', content: dashboardYaml('kpi-sessions') },
+                ],
+                pinnedDashboards,
+            });
+
+            expect(res.status).toBe(400);
+            wroteNothing(models);
+            expect(
+                models.pinnedListModel.pinDashboardsFirst,
+            ).not.toHaveBeenCalled();
+        },
+    );
 
     it('reports a tile whose chart is not in the payload', async () => {
         const models = buildModels();

@@ -70,26 +70,11 @@ const PinnedAndFavoritesSection: FC<Props> = ({
                 items={mergedItems}
                 view={ResourceViewType.GRID}
                 hasReorder={userCanManage}
-                defaultActiveTab={hasFavorites ? 'favorites' : 'pinned'}
+                // KONTALA: Pinned first and open by default, since that is where the
+                // dashboards Kontala publishes are; favorites only when nothing
+                // is pinned.
+                defaultActiveTab={hasPinned ? 'pinned' : 'favorites'}
                 tabs={[
-                    {
-                        id: 'favorites',
-                        name: 'My favorites',
-                        icon: <MantineIcon icon={IconStar} size="sm" />,
-                        infoTooltipText:
-                            'Your personally favorited spaces, dashboards, charts, data apps, and documents.',
-                        hasReorder: false,
-                        sort: sortByType,
-                        filter: (item) =>
-                            'category' in item &&
-                            item.category === ResourceItemCategory.FAVORITES,
-                        emptyStateProps: {
-                            icon: <MantineIcon icon={IconStar} size={24} />,
-                            title: 'No favorites yet',
-                            description:
-                                'Star items to add them to your personal favorites.',
-                        },
-                    },
                     {
                         id: 'pinned',
                         name: userCanManage ? 'Pinned items' : 'Pinned for you',
@@ -107,6 +92,24 @@ const PinnedAndFavoritesSection: FC<Props> = ({
                             description: userCanManage
                                 ? 'Pin items to the top of the homepage to guide users to relevant content.'
                                 : 'Your data team has not pinned any items yet.',
+                        },
+                    },
+                    {
+                        id: 'favorites',
+                        name: 'My favorites',
+                        icon: <MantineIcon icon={IconStar} size="sm" />,
+                        infoTooltipText:
+                            'Your personally favorited spaces, dashboards, charts, data apps, and documents.',
+                        hasReorder: false,
+                        sort: sortByType,
+                        filter: (item) =>
+                            'category' in item &&
+                            item.category === ResourceItemCategory.FAVORITES,
+                        emptyStateProps: {
+                            icon: <MantineIcon icon={IconStar} size={24} />,
+                            title: 'No favorites yet',
+                            description:
+                                'Star items to add them to your personal favorites.',
                         },
                     },
                 ]}
