@@ -55,6 +55,7 @@ type Models = {
     emailModel: Record<string, ReturnType<typeof vi.fn>>;
     organizationMemberProfileModel: Record<string, ReturnType<typeof vi.fn>>;
     projectModel: Record<string, ReturnType<typeof vi.fn>>;
+    projectParametersModel: Record<string, ReturnType<typeof vi.fn>>;
     projectService: Record<string, ReturnType<typeof vi.fn>>;
     coderService: Record<string, ReturnType<typeof vi.fn>>;
     spaceModel: Record<string, ReturnType<typeof vi.fn>>;
@@ -124,6 +125,9 @@ const buildModels = (overrides: Partial<Models> = {}): Models => ({
     projectModel: {
         get: vi.fn().mockResolvedValue(bigqueryProject),
     },
+    projectParametersModel: {
+        replace: vi.fn().mockResolvedValue([]),
+    },
     projectService: {
         saveExploresToCacheAndIndexCatalog: vi
             .fn()
@@ -175,6 +179,7 @@ const start = (models: Models, config: Record<string, unknown>) => {
             organizationMemberProfileModel:
                 models.organizationMemberProfileModel as never,
             projectModel: models.projectModel as never,
+            projectParametersModel: models.projectParametersModel as never,
             projectService: models.projectService as never,
             coderService: models.coderService as never,
             spaceModel: models.spaceModel as never,
@@ -557,6 +562,70 @@ describe('kontala semantic layer', () => {
 
         expect(res.status).toBe(400);
         savedNothing(models);
+    });
+
+    it("replaces the project's parameters with the ones the posted config declares", async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        const res = await deploy(port, {
+            ...oneModel(),
+            config: [
+                'warehouse:',
+                '  type: bigquery',
+                'parameters:',
+                '  attribution_organic:',
+                '    label: "Organic"',
+                '    options: ["Included", "Excluded"]',
+                '    default: "Included"',
+                '',
+            ].join('\n'),
+        });
+
+        expect(res.status).toBe(200);
+        expect(
+            models.projectParametersModel.replace,
+        ).toHaveBeenCalledExactlyOnceWith(PROJECT, {
+            attribution_organic: {
+                label: 'Organic',
+                options: ['Included', 'Excluded'],
+                default: 'Included',
+            },
+        });
+    });
+
+    it('leaves a project no parameters when the deploy posts no config', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        const res = await deploy(port, oneModel());
+
+        expect(res.status).toBe(200);
+        expect(
+            models.projectParametersModel.replace,
+        ).toHaveBeenCalledExactlyOnceWith(PROJECT, {});
+    });
+
+    it('refuses a parameter the config schema refuses, and saves nothing', async () => {
+        const models = buildModels();
+        const port = start(models, configWith());
+
+        const res = await deploy(port, {
+            ...oneModel(),
+            config: [
+                'warehouse:',
+                '  type: bigquery',
+                'parameters:',
+                '  attribution_organic:',
+                '    label: "Organic"',
+                '    type: boolean',
+                '',
+            ].join('\n'),
+        });
+
+        expect(res.status).toBeGreaterThanOrEqual(400);
+        savedNothing(models);
+        expect(models.projectParametersModel.replace).not.toHaveBeenCalled();
     });
 
     it('refuses a config that names a different warehouse than the project', async () => {

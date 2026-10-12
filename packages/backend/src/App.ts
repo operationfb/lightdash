@@ -838,6 +838,7 @@ export default class App {
                 organizationMemberProfileModel:
                     this.models.getOrganizationMemberProfileModel(),
                 projectModel: this.models.getProjectModel(),
+                projectParametersModel: this.models.getProjectParametersModel(),
                 projectService: this.serviceRepository.getProjectService(),
                 coderService: this.serviceRepository.getCoderService(),
                 spaceModel: this.models.getSpaceModel(),
