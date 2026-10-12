@@ -840,6 +840,9 @@ export default class App {
                 projectModel: this.models.getProjectModel(),
                 projectService: this.serviceRepository.getProjectService(),
                 coderService: this.serviceRepository.getCoderService(),
+                spaceModel: this.models.getSpaceModel(),
+                dashboardModel: this.models.getDashboardModel(),
+                pinnedListModel: this.models.getPinnedListModel(),
             }),
         );
 

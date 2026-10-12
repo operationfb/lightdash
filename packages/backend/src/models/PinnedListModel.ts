@@ -248,4 +248,85 @@ export class PinnedListModel {
             return Promise.all(promises);
         });
     }
+    /**
+     * KONTALA: pins the dashboards given first, in that order, and keeps every
+     * other pinned item after them in the order it already had.
+     *
+     * One transaction, so the home page never shows a half-reordered list, and
+     * idempotent, because Kontala calls it on every content publish.
+     */
+    async pinDashboardsFirst(
+        projectUuid: string,
+        dashboardUuids: string[],
+    ): Promise<void> {
+        const { pinnedListUuid } = await this.upsertPinnedList(projectUuid);
+        await this.database.transaction(async (trx) => {
+            if (dashboardUuids.length > 0) {
+                await trx(PinnedDashboardTableName)
+                    .insert(
+                        dashboardUuids.map((dashboardUuid) => ({
+                            pinned_list_uuid: pinnedListUuid,
+                            dashboard_uuid: dashboardUuid,
+                        })),
+                    )
+                    .onConflict(['pinned_list_uuid', 'dashboard_uuid'])
+                    .ignore();
+            }
+            const tables = [
+                { table: PinnedChartTableName, column: 'saved_chart_uuid' },
+                { table: PinnedDashboardTableName, column: 'dashboard_uuid' },
+                { table: PinnedSpaceTableName, column: 'space_uuid' },
+                { table: PinnedAppTableName, column: 'app_uuid' },
+            ] as const;
+            const rows = (
+                await Promise.all(
+                    tables.map(async ({ table, column }) =>
+                        (
+                            await trx(table)
+                                .select<
+                                    {
+                                        pinned_item_uuid: string;
+                                        uuid: string;
+                                        order: number | null;
+                                        created_at: Date;
+                                    }[]
+                                >(
+                                    'pinned_item_uuid',
+                                    `${column} as uuid`,
+                                    'order',
+                                    'created_at',
+                                )
+                                .where('pinned_list_uuid', pinnedListUuid)
+                        ).map((row) => ({ ...row, table })),
+                    ),
+                )
+            ).flat();
+            const first = (row: (typeof rows)[number]) =>
+                row.table === PinnedDashboardTableName
+                    ? dashboardUuids.indexOf(row.uuid)
+                    : -1;
+            const rest = rows
+                .filter((row) => first(row) === -1)
+                .sort(
+                    (a, b) =>
+                        (a.order ?? Number.MAX_SAFE_INTEGER) -
+                            (b.order ?? Number.MAX_SAFE_INTEGER) ||
+                        a.created_at.getTime() - b.created_at.getTime(),
+                );
+            await Promise.all([
+                ...rows
+                    .filter((row) => first(row) !== -1)
+                    .map((row) =>
+                        trx(row.table)
+                            .update('order', first(row))
+                            .where('pinned_item_uuid', row.pinned_item_uuid),
+                    ),
+                ...rest.map((row, index) =>
+                    trx(row.table)
+                        .update('order', dashboardUuids.length + index)
+                        .where('pinned_item_uuid', row.pinned_item_uuid),
+                ),
+            ]);
+        });
+    }
 }
