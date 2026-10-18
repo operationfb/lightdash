@@ -7481,6 +7481,69 @@ describe('saved chart query result access', () => {
             ).rejects.toThrow(ForbiddenError);
         },
     );
+
+    // Kontala: a statistics row is counted in every chart and never listed
+    // one by one (kontalaUnlisted.ts).
+    it('runs underlying data without the rows a dimension tagged kontala-unlisted marks', async () => {
+        const { account, service, history } = buildFixture();
+        history.requestParameters = { query: metricQueryMock };
+        history.context = QueryExecutionContext.EXPLORE;
+        const base = validExplore.tables[validExplore.baseTable];
+        const tagged: Explore = {
+            ...validExplore,
+            tables: {
+                ...validExplore.tables,
+                [validExplore.baseTable]: {
+                    ...base,
+                    dimensions: {
+                        ...base.dimensions,
+                        statistics_row: {
+                            ...base.dimensions.dim1,
+                            type: DimensionType.BOOLEAN,
+                            name: 'statistics_row',
+                            hidden: true,
+                            compiledSql: 'IFNULL("a".statistics, FALSE)',
+                            tags: ['kontala-unlisted'],
+                        },
+                    },
+                },
+            },
+        };
+        const execution = service as unknown as {
+            getExploreWithUserAccessControls: () => Promise<unknown>;
+            prepareMetricQueryAsyncQueryArgs: (args: {
+                explore: Explore;
+            }) => Promise<QueryComposer>;
+            executeAsyncQuery: () => Promise<{
+                queryUuid: string;
+                cacheMetadata: {};
+            }>;
+        };
+        vi.spyOn(
+            execution,
+            'getExploreWithUserAccessControls',
+        ).mockResolvedValue({ explore: tagged });
+        const prepare = vi
+            .spyOn(execution, 'prepareMetricQueryAsyncQueryArgs')
+            .mockResolvedValue(createQueryComposerMock());
+        vi.spyOn(execution, 'executeAsyncQuery').mockResolvedValue({
+            queryUuid: 'underlying-query-uuid',
+            cacheMetadata: {},
+        });
+        await service.executeAsyncUnderlyingDataQuery({
+            account,
+            projectUuid,
+            underlyingDataSourceQueryUuid: history.queryUuid,
+            filters: {},
+            context: QueryExecutionContext.VIEW_UNDERLYING_DATA,
+        });
+        expect(prepare).toHaveBeenCalledTimes(1);
+        const { explore } = prepare.mock.calls[0][0];
+        expect(explore.tables[validExplore.baseTable].sqlWhere).toBe(
+            'NOT COALESCE((IFNULL("a".statistics, FALSE)), FALSE)',
+        );
+        expect(tagged.tables[validExplore.baseTable].sqlWhere).toBeUndefined();
+    });
 });
 
 describe('getQueryHistoryList', () => {

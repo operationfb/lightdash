@@ -274,6 +274,7 @@ import {
     getColumnsFromItemsMap,
     getUnpivotedColumns,
 } from './getUnpivotedColumns';
+import { exploreWithoutUnlistedRows } from './kontalaUnlisted';
 import {
     applyDashboardFiltersToMergeQuery,
     applyFilterOverridesToMergeQuery,
@@ -7235,13 +7236,18 @@ export class AsyncQueryService extends ProjectService {
 
         const { exploreName } = metricQuery;
 
-        const { explore, userAccessControls: preloadedUserAccessControls } =
-            await this.getExploreWithUserAccessControls(
-                account,
-                projectUuid,
-                exploreName,
-                organizationUuid,
-            );
+        const {
+            explore: exploreWithAllRows,
+            userAccessControls: preloadedUserAccessControls,
+        } = await this.getExploreWithUserAccessControls(
+            account,
+            projectUuid,
+            exploreName,
+            organizationUuid,
+        );
+        // Kontala: a statistics row is counted in every chart and never
+        // listed here (kontalaUnlisted.ts).
+        const explore = exploreWithoutUnlistedRows(exploreWithAllRows);
 
         const warehouseSqlBuilder = getSqlBuilderForExplore(
             explore,
