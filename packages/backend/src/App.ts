@@ -1,112 +1,112 @@
-import './tracing/bootstrap'; // Must run before modules that can load Knex
+import "./tracing/bootstrap"; // Must run before modules that can load Knex
 import {
-    AnyType,
-    ApiError,
-    getErrorMessage,
-    isExpectedError,
-    LightdashBuildHashHeader,
-    LightdashError,
-    LightdashMode,
-    LightdashVersionHeader,
-    MissingConfigError,
-    OauthAuthenticationError,
-    UnexpectedServerError,
-    UPLOAD_GSHEET_FROM_ROWS_MAX_BYTES,
-} from '@lightdash/common';
-import { MotherduckInstanceCache } from '@lightdash/warehouses';
-import { trace } from '@opentelemetry/api';
-import * as Sentry from '@sentry/node';
-import flash from 'connect-flash';
-import connectSessionKnex from 'connect-session-knex';
-import cors from 'cors';
-import { EventEmitter } from 'events';
-import express, { Express, NextFunction, Request, Response } from 'express';
-import expressSession from 'express-session';
-import expressStaticGzip from 'express-static-gzip';
-import helmet from 'helmet';
-import { produce } from 'immer';
-import knex, { Knex } from 'knex';
-import passport from 'passport';
-import refresh from 'passport-oauth2-refresh';
-import path from 'path';
-import qs from 'qs';
-import reDoc from 'redoc-express';
-import { URL } from 'url';
-import { registerAiUsageTracker } from './analytics/aiUsage';
-import { BufferedEventStreamWriter } from './analytics/eventStream/BufferedEventStreamWriter';
-import { createEventStreamWriter } from './analytics/eventStream/createEventStreamWriter';
-import { EventStreamSink } from './analytics/eventStream/EventStreamSink';
-import { eventStreamRegistry } from './analytics/eventStream/registry';
-import { LightdashAnalytics } from './analytics/LightdashAnalytics';
-import { getFrontendBuildHash } from './buildHash';
+  AnyType,
+  ApiError,
+  getErrorMessage,
+  isExpectedError,
+  LightdashBuildHashHeader,
+  LightdashError,
+  LightdashMode,
+  LightdashVersionHeader,
+  MissingConfigError,
+  OauthAuthenticationError,
+  UnexpectedServerError,
+  UPLOAD_GSHEET_FROM_ROWS_MAX_BYTES,
+} from "@lightdash/common";
+import { MotherduckInstanceCache } from "@lightdash/warehouses";
+import { trace } from "@opentelemetry/api";
+import * as Sentry from "@sentry/node";
+import flash from "connect-flash";
+import connectSessionKnex from "connect-session-knex";
+import cors from "cors";
+import { EventEmitter } from "events";
+import express, { Express, NextFunction, Request, Response } from "express";
+import expressSession from "express-session";
+import expressStaticGzip from "express-static-gzip";
+import helmet from "helmet";
+import { produce } from "immer";
+import knex, { Knex } from "knex";
+import passport from "passport";
+import refresh from "passport-oauth2-refresh";
+import path from "path";
+import qs from "qs";
+import reDoc from "redoc-express";
+import { URL } from "url";
+import { registerAiUsageTracker } from "./analytics/aiUsage";
+import { BufferedEventStreamWriter } from "./analytics/eventStream/BufferedEventStreamWriter";
+import { createEventStreamWriter } from "./analytics/eventStream/createEventStreamWriter";
+import { EventStreamSink } from "./analytics/eventStream/EventStreamSink";
+import { eventStreamRegistry } from "./analytics/eventStream/registry";
+import { LightdashAnalytics } from "./analytics/LightdashAnalytics";
+import { getFrontendBuildHash } from "./buildHash";
 import {
-    ClientProviderMap,
-    ClientRepository,
-} from './clients/ClientRepository';
-import { setGithubRateLimitObserver } from './clients/github/Github';
-import { SlackClient } from './clients/Slack/SlackClient';
-import { createStaticAssetsFallbackHandler } from './clients/StaticAssets/staticAssetsFallbackMiddleware';
-import { StaticAssetsS3Client } from './clients/StaticAssets/StaticAssetsS3Client';
-import { LightdashConfig } from './config/parseConfig';
+  ClientProviderMap,
+  ClientRepository,
+} from "./clients/ClientRepository";
+import { setGithubRateLimitObserver } from "./clients/github/Github";
+import { SlackClient } from "./clients/Slack/SlackClient";
+import { createStaticAssetsFallbackHandler } from "./clients/StaticAssets/staticAssetsFallbackMiddleware";
+import { StaticAssetsS3Client } from "./clients/StaticAssets/StaticAssetsS3Client";
+import { LightdashConfig } from "./config/parseConfig";
 import {
-    apiKeyPassportStrategy,
-    createAzureAdPassportStrategy,
-    createGenericOidcPassportStrategy,
-    DeferredPassportStrategy,
-    googlePassportStrategy,
-    invalidUserErrorHandler,
-    isAzureAdPassportStrategyAvailableToUse,
-    isGenericOidcPassportStrategyAvailableToUse,
-    localPassportStrategy,
-    oneLoginPassportStrategy,
-    OpenIDClientOktaStrategy,
-} from './controllers/authentication';
-import { createSsoPageRedirect } from './controllers/authentication/ssoPageRedirect';
-import { databricksPassportStrategy } from './controllers/authentication/strategies/databricksStrategy';
-import { slackPassportStrategy } from './controllers/authentication/strategies/slackStrategy';
-import { snowflakePassportStrategy } from './controllers/authentication/strategies/snowflakeStrategy';
-import { MigrationLeaseManager } from './database/migrationLease';
-import { errorHandler, scimErrorHandler } from './errors';
-import { buildExpressSessionOptions } from './expressSessionOptions';
-import { RegisterRoutes } from './generated/routes';
-import apiSpec from './generated/swagger.json';
-import Logger from './logging/logger';
+  apiKeyPassportStrategy,
+  createAzureAdPassportStrategy,
+  createGenericOidcPassportStrategy,
+  DeferredPassportStrategy,
+  googlePassportStrategy,
+  invalidUserErrorHandler,
+  isAzureAdPassportStrategyAvailableToUse,
+  isGenericOidcPassportStrategyAvailableToUse,
+  localPassportStrategy,
+  oneLoginPassportStrategy,
+  OpenIDClientOktaStrategy,
+} from "./controllers/authentication";
+import { createSsoPageRedirect } from "./controllers/authentication/ssoPageRedirect";
+import { databricksPassportStrategy } from "./controllers/authentication/strategies/databricksStrategy";
+import { slackPassportStrategy } from "./controllers/authentication/strategies/slackStrategy";
+import { snowflakePassportStrategy } from "./controllers/authentication/strategies/snowflakeStrategy";
+import { MigrationLeaseManager } from "./database/migrationLease";
+import { errorHandler, scimErrorHandler } from "./errors";
+import { buildExpressSessionOptions } from "./expressSessionOptions";
+import { RegisterRoutes } from "./generated/routes";
+import apiSpec from "./generated/swagger.json";
+import Logger from "./logging/logger";
 import {
-    expressWinstonMiddleware,
-    expressWinstonPreResponseMiddleware,
-    requestExecutionContextMiddleware,
-} from './logging/winston';
-import { sessionAccountMiddleware } from './middlewares/accountMiddleware';
-import { jwtAuthMiddleware } from './middlewares/jwtAuthMiddleware';
-import { flush as flushFeatureFlagChecks } from './models/FeatureFlagModel/flagCheckAggregator';
-import { ModelProviderMap, ModelRepository } from './models/ModelRepository';
-import PrometheusMetrics from './prometheus/PrometheusMetrics';
-import { apiV1Router } from './routers/apiV1Router';
-import { createAppPreviewRouter } from './routers/appPreviewRouter';
-import { kontalaRouter } from './routers/kontalaRouter';
+  expressWinstonMiddleware,
+  expressWinstonPreResponseMiddleware,
+  requestExecutionContextMiddleware,
+} from "./logging/winston";
+import { sessionAccountMiddleware } from "./middlewares/accountMiddleware";
+import { jwtAuthMiddleware } from "./middlewares/jwtAuthMiddleware";
+import { flush as flushFeatureFlagChecks } from "./models/FeatureFlagModel/flagCheckAggregator";
+import { ModelProviderMap, ModelRepository } from "./models/ModelRepository";
+import PrometheusMetrics from "./prometheus/PrometheusMetrics";
+import { apiV1Router } from "./routers/apiV1Router";
+import { createAppPreviewRouter } from "./routers/appPreviewRouter";
+import { kontalaRouter } from "./routers/kontalaRouter";
 import {
-    createAndroidAssetLinksHandler,
-    createAppleAppSiteAssociationHandler,
-} from './routers/mobileAppAssociation';
+  createAndroidAssetLinksHandler,
+  createAppleAppSiteAssociationHandler,
+} from "./routers/mobileAppAssociation";
 import {
-    oauthAuthorizationServerHandler,
-    oauthProtectedResourceHandler,
-} from './routers/oauthRouter';
-import { createProbeRouter } from './routers/probeRouter';
-import { SchedulerWorker } from './scheduler/SchedulerWorker';
-import { SchedulerWorkerHealth } from './scheduler/SchedulerWorkerHealth';
-import { createOrganizationNameResolver } from './sentry/organizationNameResolver';
-import { InstanceConfigurationService } from './services/InstanceConfigurationService/InstanceConfigurationService';
-import { createCorsOptionsDelegate } from './services/OrganizationSettingsService/CorsPolicy';
-import { ReadinessService } from './services/ReadinessService/ReadinessService';
+  oauthAuthorizationServerHandler,
+  oauthProtectedResourceHandler,
+} from "./routers/oauthRouter";
+import { createProbeRouter } from "./routers/probeRouter";
+import { SchedulerWorker } from "./scheduler/SchedulerWorker";
+import { SchedulerWorkerHealth } from "./scheduler/SchedulerWorkerHealth";
+import { createOrganizationNameResolver } from "./sentry/organizationNameResolver";
+import { InstanceConfigurationService } from "./services/InstanceConfigurationService/InstanceConfigurationService";
+import { createCorsOptionsDelegate } from "./services/OrganizationSettingsService/CorsPolicy";
+import { ReadinessService } from "./services/ReadinessService/ReadinessService";
 import {
-    OperationContext,
-    ServiceProviderMap,
-    ServiceRepository,
-} from './services/ServiceRepository';
-import { initOtelTracing, shutdownOtelTracing } from './tracing/tracing';
-import { UtilProviderMap, UtilRepository } from './utils/UtilRepository';
-import { VERSION } from './version';
+  OperationContext,
+  ServiceProviderMap,
+  ServiceRepository,
+} from "./services/ServiceRepository";
+import { initOtelTracing, shutdownOtelTracing } from "./tracing/tracing";
+import { UtilProviderMap, UtilRepository } from "./utils/UtilRepository";
+import { VERSION } from "./version";
 
 // Express Request/User type augmentations live in src/@types/express.d.ts
 // so they're picked up as ambient declarations regardless of which file is
@@ -117,58 +117,56 @@ initOtelTracing();
 const FEATURE_FLAG_CHECK_FLUSH_INTERVAL_MS = 15 * 60 * 1000;
 
 const schedulerWorkerFactory = (context: {
-    lightdashConfig: LightdashConfig;
-    analytics: LightdashAnalytics;
-    serviceRepository: ServiceRepository;
-    models: ModelRepository;
-    clients: ClientRepository;
-    utils: UtilRepository;
-    // Optional only so the EE factory override (which reads context.workerHealth) typechecks against this shape.
-    workerHealth?: SchedulerWorkerHealth;
-    prometheusMetrics?: PrometheusMetrics;
+  lightdashConfig: LightdashConfig;
+  analytics: LightdashAnalytics;
+  serviceRepository: ServiceRepository;
+  models: ModelRepository;
+  clients: ClientRepository;
+  utils: UtilRepository;
+  // Optional only so the EE factory override (which reads context.workerHealth) typechecks against this shape.
+  workerHealth?: SchedulerWorkerHealth;
+  prometheusMetrics?: PrometheusMetrics;
 }) =>
-    new SchedulerWorker({
-        usageDimensionsModel: context.models.getUsageDimensionsModel(),
-        lightdashConfig: context.lightdashConfig,
-        analytics: context.analytics,
-        // SlackClient should initialize before UnfurlService and AiAgentService
-        slackClient: context.clients.getSlackClient(),
-        unfurlService: context.serviceRepository.getUnfurlService(),
-        csvService: context.serviceRepository.getCsvService(),
-        dashboardService: context.serviceRepository.getDashboardService(),
-        deployService: context.serviceRepository.getDeployService(),
-        projectService: context.serviceRepository.getProjectService(),
-        contentAsCodeWritebackService:
-            context.serviceRepository.getContentAsCodeWritebackService(),
-        schedulerService: context.serviceRepository.getSchedulerService(),
-        validationService: context.serviceRepository.getValidationService(),
-        userService: context.serviceRepository.getUserService(),
-        emailClient: context.clients.getEmailClient(),
-        googleDriveClient: context.clients.getGoogleDriveClient(),
-        fileStorageClient: context.clients.getFileStorageClient(),
-        schedulerClient: context.clients.getSchedulerClient(),
-        msTeamsClient: context.clients.getMsTeamsClient(),
-        googleChatClient: context.clients.getGoogleChatClient(),
-        catalogService: context.serviceRepository.getCatalogService(),
-        encryptionUtil: context.utils.getEncryptionUtil(),
-        renameService: context.serviceRepository.getRenameService(),
-        asyncQueryService: context.serviceRepository.getAsyncQueryService(),
-        persistentDownloadFileService:
-            context.serviceRepository.getPersistentDownloadFileService(),
-        preAggregateModel: context.models.getPreAggregateModel(),
-        preAggregateMaterializationService:
-            context.serviceRepository.getPreAggregateMaterializationService(),
-        organizationSettingsModel:
-            context.models.getOrganizationSettingsModel(),
-        emailWhitelabelService:
-            context.serviceRepository.getEmailWhitelabelService(),
-        warehouseConnectCodeModel:
-            context.models.getWarehouseConnectCodeModel(),
-        resolveOrganizationName: createOrganizationNameResolver(
-            context.models.getOrganizationModel(),
-        ),
-        prometheusMetrics: context.prometheusMetrics,
-    });
+  new SchedulerWorker({
+    usageDimensionsModel: context.models.getUsageDimensionsModel(),
+    lightdashConfig: context.lightdashConfig,
+    analytics: context.analytics,
+    // SlackClient should initialize before UnfurlService and AiAgentService
+    slackClient: context.clients.getSlackClient(),
+    unfurlService: context.serviceRepository.getUnfurlService(),
+    csvService: context.serviceRepository.getCsvService(),
+    dashboardService: context.serviceRepository.getDashboardService(),
+    deployService: context.serviceRepository.getDeployService(),
+    projectService: context.serviceRepository.getProjectService(),
+    contentAsCodeWritebackService:
+      context.serviceRepository.getContentAsCodeWritebackService(),
+    schedulerService: context.serviceRepository.getSchedulerService(),
+    validationService: context.serviceRepository.getValidationService(),
+    userService: context.serviceRepository.getUserService(),
+    emailClient: context.clients.getEmailClient(),
+    googleDriveClient: context.clients.getGoogleDriveClient(),
+    fileStorageClient: context.clients.getFileStorageClient(),
+    schedulerClient: context.clients.getSchedulerClient(),
+    msTeamsClient: context.clients.getMsTeamsClient(),
+    googleChatClient: context.clients.getGoogleChatClient(),
+    catalogService: context.serviceRepository.getCatalogService(),
+    encryptionUtil: context.utils.getEncryptionUtil(),
+    renameService: context.serviceRepository.getRenameService(),
+    asyncQueryService: context.serviceRepository.getAsyncQueryService(),
+    persistentDownloadFileService:
+      context.serviceRepository.getPersistentDownloadFileService(),
+    preAggregateModel: context.models.getPreAggregateModel(),
+    preAggregateMaterializationService:
+      context.serviceRepository.getPreAggregateMaterializationService(),
+    organizationSettingsModel: context.models.getOrganizationSettingsModel(),
+    emailWhitelabelService:
+      context.serviceRepository.getEmailWhitelabelService(),
+    warehouseConnectCodeModel: context.models.getWarehouseConnectCodeModel(),
+    resolveOrganizationName: createOrganizationNameResolver(
+      context.models.getOrganizationModel(),
+    ),
+    prometheusMetrics: context.prometheusMetrics,
+  });
 
 /**
  * Minimal lifecycle contract for a TCP server the App can start/stop without
@@ -177,1105 +175,1048 @@ const schedulerWorkerFactory = (context: {
  * the enterprise codebase and is only wired up under a valid license.
  */
 export interface PgWireServerInstance {
-    listen(port: number, host?: string): Promise<void>;
-    close(): Promise<void>;
+  listen(port: number, host?: string): Promise<void>;
+  close(): Promise<void>;
 }
 
 export type AppArguments = {
-    lightdashConfig: LightdashConfig;
-    port: string | number;
-    environment?: 'production' | 'development';
-    serviceProviders?: ServiceProviderMap;
-    knexConfig: {
-        production: Knex.Config<Knex.PgConnectionConfig>;
-        development: Knex.Config<Knex.PgConnectionConfig>;
-    };
-    clientProviders?: ClientProviderMap;
-    modelProviders?: ModelProviderMap;
-    utilProviders?: UtilProviderMap;
-    schedulerWorkerFactory?: typeof schedulerWorkerFactory;
-    customExpressMiddlewares?: Array<(app: Express) => void>; // Array of custom middleware functions
-    pgWireServerFactory?: (
-        serviceRepository: ServiceRepository,
-    ) => PgWireServerInstance;
-    beforeShutdown?: (serviceRepository: ServiceRepository) => Promise<void>;
+  lightdashConfig: LightdashConfig;
+  port: string | number;
+  environment?: "production" | "development";
+  serviceProviders?: ServiceProviderMap;
+  knexConfig: {
+    production: Knex.Config<Knex.PgConnectionConfig>;
+    development: Knex.Config<Knex.PgConnectionConfig>;
+  };
+  clientProviders?: ClientProviderMap;
+  modelProviders?: ModelProviderMap;
+  utilProviders?: UtilProviderMap;
+  schedulerWorkerFactory?: typeof schedulerWorkerFactory;
+  customExpressMiddlewares?: Array<(app: Express) => void>; // Array of custom middleware functions
+  pgWireServerFactory?: (
+    serviceRepository: ServiceRepository,
+  ) => PgWireServerInstance;
+  beforeShutdown?: (serviceRepository: ServiceRepository) => Promise<void>;
 };
 
 export default class App {
-    private readonly serviceRepository: ServiceRepository;
+  private readonly serviceRepository: ServiceRepository;
 
-    private readonly lightdashConfig: LightdashConfig;
+  private readonly lightdashConfig: LightdashConfig;
 
-    private readonly analytics: LightdashAnalytics;
+  private readonly analytics: LightdashAnalytics;
 
-    private readonly port: string | number;
+  private readonly port: string | number;
 
-    private readonly environment: 'production' | 'development';
+  private readonly environment: "production" | "development";
 
-    private schedulerWorker: SchedulerWorker | undefined;
+  private schedulerWorker: SchedulerWorker | undefined;
 
-    private pgWireServer: PgWireServerInstance | undefined;
+  private pgWireServer: PgWireServerInstance | undefined;
 
-    private readonly pgWireServerFactory:
-        | ((serviceRepository: ServiceRepository) => PgWireServerInstance)
-        | undefined;
+  private readonly pgWireServerFactory:
+    | ((serviceRepository: ServiceRepository) => PgWireServerInstance)
+    | undefined;
 
-    private readonly beforeShutdown:
-        | ((serviceRepository: ServiceRepository) => Promise<void>)
-        | undefined;
+  private readonly beforeShutdown:
+    | ((serviceRepository: ServiceRepository) => Promise<void>)
+    | undefined;
 
-    private readonly clients: ClientRepository;
+  private readonly clients: ClientRepository;
 
-    private readonly utils: UtilRepository;
+  private readonly utils: UtilRepository;
 
-    private readonly models: ModelRepository;
+  private readonly models: ModelRepository;
 
-    private readonly database: Knex;
+  private readonly database: Knex;
 
-    private readonly schedulerWorkerFactory: typeof schedulerWorkerFactory;
+  private readonly schedulerWorkerFactory: typeof schedulerWorkerFactory;
 
-    private readonly prometheusMetrics: PrometheusMetrics;
+  private readonly prometheusMetrics: PrometheusMetrics;
 
-    private readonly eventStreamWriter: BufferedEventStreamWriter | null;
+  private readonly eventStreamWriter: BufferedEventStreamWriter | null;
 
-    private readonly customExpressMiddlewares: Array<(app: Express) => void>;
+  private readonly customExpressMiddlewares: Array<(app: Express) => void>;
 
-    private readonly analyticsEventEmitter: EventEmitter;
+  private readonly analyticsEventEmitter: EventEmitter;
 
-    private readonly readinessService: ReadinessService;
+  private readonly readinessService: ReadinessService;
 
-    private featureFlagCheckFlushInterval: NodeJS.Timeout | undefined;
+  private featureFlagCheckFlushInterval: NodeJS.Timeout | undefined;
 
-    private schedulerStartTimeout: NodeJS.Timeout | undefined;
+  private schedulerStartTimeout: NodeJS.Timeout | undefined;
 
-    constructor(args: AppArguments) {
-        this.lightdashConfig = args.lightdashConfig;
-        this.port = args.port;
-        this.environment = args.environment || 'production';
-        this.analyticsEventEmitter = new EventEmitter();
-        this.prometheusMetrics = new PrometheusMetrics(
-            this.lightdashConfig.prometheus,
-        );
-        this.eventStreamWriter = createEventStreamWriter(
-            this.lightdashConfig,
-            this.prometheusMetrics,
-        );
-        this.analytics = new LightdashAnalytics({
-            lightdashConfig: this.lightdashConfig,
-            eventEmitter: this.analyticsEventEmitter,
-            eventStreamSink: this.eventStreamWriter
-                ? new EventStreamSink(
-                      eventStreamRegistry,
-                      this.eventStreamWriter,
-                  )
-                : undefined,
-        });
-        registerAiUsageTracker((event) => this.analytics.track(event));
-        this.database = knex(
-            this.environment === 'production'
-                ? args.knexConfig.production
-                : args.knexConfig.development,
-        );
-        this.utils = new UtilRepository({
-            utilProviders: args.utilProviders,
-            lightdashConfig: this.lightdashConfig,
-        });
-        this.models = new ModelRepository({
-            modelProviders: args.modelProviders,
-            lightdashConfig: this.lightdashConfig,
-            database: this.database,
-            utils: this.utils,
-        });
-        this.readinessService = new ReadinessService({
-            migrationModel: this.models.getMigrationModel(),
-            migrationRunLedger: new MigrationLeaseManager({
-                database: this.database,
-            }),
-            ttlMs: this.lightdashConfig.database.readinessProbeTtlMs,
-        });
-        this.clients = new ClientRepository({
-            clientProviders: args.clientProviders,
-            context: new OperationContext({
-                operationId: 'App#ctor',
-                lightdashAnalytics: this.analytics,
-                lightdashConfig: this.lightdashConfig,
-            }),
-            models: this.models,
-        });
-        this.serviceRepository = new ServiceRepository({
-            serviceProviders: args.serviceProviders,
-            context: new OperationContext({
-                operationId: 'App#ctor',
-                lightdashAnalytics: this.analytics,
-                lightdashConfig: this.lightdashConfig,
-            }),
-            clients: this.clients,
-            models: this.models,
-            utils: this.utils,
-            prometheusMetrics: this.prometheusMetrics,
-            readinessService: this.readinessService,
-        });
-        this.schedulerWorkerFactory =
-            args.schedulerWorkerFactory || schedulerWorkerFactory;
-        this.customExpressMiddlewares = args.customExpressMiddlewares || [];
-        this.pgWireServerFactory = args.pgWireServerFactory;
-        this.beforeShutdown = args.beforeShutdown;
+  constructor(args: AppArguments) {
+    this.lightdashConfig = args.lightdashConfig;
+    this.port = args.port;
+    this.environment = args.environment || "production";
+    this.analyticsEventEmitter = new EventEmitter();
+    this.prometheusMetrics = new PrometheusMetrics(
+      this.lightdashConfig.prometheus,
+    );
+    this.eventStreamWriter = createEventStreamWriter(
+      this.lightdashConfig,
+      this.prometheusMetrics,
+    );
+    this.analytics = new LightdashAnalytics({
+      lightdashConfig: this.lightdashConfig,
+      eventEmitter: this.analyticsEventEmitter,
+      eventStreamSink: this.eventStreamWriter
+        ? new EventStreamSink(eventStreamRegistry, this.eventStreamWriter)
+        : undefined,
+    });
+    registerAiUsageTracker((event) => this.analytics.track(event));
+    this.database = knex(
+      this.environment === "production"
+        ? args.knexConfig.production
+        : args.knexConfig.development,
+    );
+    this.utils = new UtilRepository({
+      utilProviders: args.utilProviders,
+      lightdashConfig: this.lightdashConfig,
+    });
+    this.models = new ModelRepository({
+      modelProviders: args.modelProviders,
+      lightdashConfig: this.lightdashConfig,
+      database: this.database,
+      utils: this.utils,
+    });
+    this.readinessService = new ReadinessService({
+      migrationModel: this.models.getMigrationModel(),
+      migrationRunLedger: new MigrationLeaseManager({
+        database: this.database,
+      }),
+      ttlMs: this.lightdashConfig.database.readinessProbeTtlMs,
+    });
+    this.clients = new ClientRepository({
+      clientProviders: args.clientProviders,
+      context: new OperationContext({
+        operationId: "App#ctor",
+        lightdashAnalytics: this.analytics,
+        lightdashConfig: this.lightdashConfig,
+      }),
+      models: this.models,
+    });
+    this.serviceRepository = new ServiceRepository({
+      serviceProviders: args.serviceProviders,
+      context: new OperationContext({
+        operationId: "App#ctor",
+        lightdashAnalytics: this.analytics,
+        lightdashConfig: this.lightdashConfig,
+      }),
+      clients: this.clients,
+      models: this.models,
+      utils: this.utils,
+      prometheusMetrics: this.prometheusMetrics,
+      readinessService: this.readinessService,
+    });
+    this.schedulerWorkerFactory =
+      args.schedulerWorkerFactory || schedulerWorkerFactory;
+    this.customExpressMiddlewares = args.customExpressMiddlewares || [];
+    this.pgWireServerFactory = args.pgWireServerFactory;
+    this.beforeShutdown = args.beforeShutdown;
+  }
+
+  async start() {
+    this.featureFlagCheckFlushInterval = setInterval(() => {
+      try {
+        this.analytics.trackFeatureFlagChecks(flushFeatureFlagChecks(), "api");
+      } catch {
+        // telemetry must never break the app
+      }
+    }, FEATURE_FLAG_CHECK_FLUSH_INTERVAL_MS);
+    this.featureFlagCheckFlushInterval.unref();
+
+    this.prometheusMetrics.start();
+    MotherduckInstanceCache.configure(
+      this.lightdashConfig.motherduckInstanceCache,
+    );
+    MotherduckInstanceCache.setObserver((event) =>
+      this.prometheusMetrics.observeMotherduckCacheEvent(event),
+    );
+    setGithubRateLimitObserver((rl) =>
+      this.prometheusMetrics.observeGithubRateLimit(rl),
+    );
+    this.prometheusMetrics.monitorDatabase(this.database);
+    this.prometheusMetrics.monitorPreAggregates(this.database);
+    this.prometheusMetrics.monitorEventMetrics(this.analyticsEventEmitter);
+    // @ts-ignore
+    // eslint-disable-next-line no-extend-native, func-names
+    BigInt.prototype.toJSON = function () {
+      return this.toString();
+    };
+
+    const expressApp = express();
+
+    // Increase query string array limit from default (20) to 1000
+    // to support endpoints that accept large arrays (e.g. chart IDs for
+    // dashboards with many tiles). Without this, qs silently converts
+    // overflowing arrays into indexed-key objects, breaking TSOA
+    // validation for `string[]` query params.
+    expressApp.set("query parser", (str: string) =>
+      qs.parse(str, { arrayLimit: 1000 }),
+    );
+
+    expressApp.use("/api/v1", createProbeRouter(this.readinessService));
+
+    // Slack must be initialized before our own middleware / routes, which cause the slack app to fail
+    // KONTALA: only when Slack is configured, which is the same test
+    // SlackClient.start() makes. Without it every boot logged "Error
+    // starting slack bot" (setupEventListeners() found no app), and getting
+    // the client started a scheduler client the boot does not need.
+    if (this.lightdashConfig.slack?.clientId) {
+      this.initSlack(expressApp).catch((e) => {
+        Logger.error("Error starting slack bot", e);
+      });
     }
 
-    async start() {
-        this.featureFlagCheckFlushInterval = setInterval(() => {
-            try {
-                this.analytics.trackFeatureFlagChecks(
-                    flushFeatureFlagChecks(),
-                    'api',
-                );
-            } catch {
-                // telemetry must never break the app
-            }
-        }, FEATURE_FLAG_CHECK_FLUSH_INTERVAL_MS);
-        this.featureFlagCheckFlushInterval.unref();
+    Sentry.setTags({
+      k8s_pod_name: this.lightdashConfig.k8s.podName,
+      k8s_pod_namespace: this.lightdashConfig.k8s.podNamespace,
+      k8s_node_name: this.lightdashConfig.k8s.nodeName,
+      lightdash_cloud_instance: this.lightdashConfig.lightdashCloudInstance,
+    });
 
-        this.prometheusMetrics.start();
-        MotherduckInstanceCache.configure(
-            this.lightdashConfig.motherduckInstanceCache,
+    // Load Lightdash middleware/routes last
+    await this.initExpress(expressApp);
+
+    // Postgres wire protocol endpoint for the semantic layer (experimental,
+    // enterprise-only). The factory is supplied by the EE bootstrap under a
+    // valid license; without it the endpoint stays disabled.
+    const pgWirePort = this.lightdashConfig.pgWire.port;
+    if (pgWirePort && this.pgWireServerFactory) {
+      this.pgWireServer = this.pgWireServerFactory(this.serviceRepository);
+      await this.pgWireServer.listen(pgWirePort);
+      Logger.info(
+        `Postgres wire protocol server listening on port ${pgWirePort}`,
+      );
+    } else if (pgWirePort) {
+      Logger.warn(
+        "PGWIRE_PORT is set but the Postgres wire protocol server is an enterprise feature; set a valid license key to enable it.",
+      );
+    }
+
+    if (this.lightdashConfig.scheduler?.enabled) {
+      const startScheduler = () => {
+        this.schedulerStartTimeout = undefined;
+        this.initSchedulerWorker();
+        this.prometheusMetrics.monitorQueues(this.clients.getSchedulerClient());
+      };
+      // KONTALA: optionally after the first requests rather than during
+      // them; see scheduler.startDelay. Jobs queued meanwhile wait in the
+      // table and run once the worker starts.
+      const { startDelay } = this.lightdashConfig.scheduler;
+      if (startDelay > 0) {
+        this.schedulerStartTimeout = setTimeout(startScheduler, startDelay);
+      } else {
+        startScheduler();
+      }
+    }
+
+    try {
+      const instanceConfigurationService =
+        this.serviceRepository.getInstanceConfigurationService<InstanceConfigurationService>();
+      await instanceConfigurationService.initializeInstance();
+      await instanceConfigurationService.updateInstanceConfiguration();
+    } catch (e) {
+      if (e instanceof MissingConfigError) {
+        Logger.debug(
+          `No instance configuration service found: ${getErrorMessage(e)}`,
         );
-        MotherduckInstanceCache.setObserver((event) =>
-            this.prometheusMetrics.observeMotherduckCacheEvent(event),
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  private async initExpress(expressApp: Express) {
+    // Short-circuit CORS preflights for data-app iframe asset fetches.
+    //
+    // The data-app preview iframe uses `sandbox="allow-scripts allow-modals"`
+    // (no `allow-same-origin`), so subresource fetches originate from the
+    // opaque origin `null`. The global `cors()` middleware below ends those
+    // preflights with 204 but, because `null` doesn't match the configured
+    // allow-list, omits `Access-Control-Allow-Origin` — which blocks the
+    // subsequent asset GET and renders the iframe (and any scheduled
+    // screenshot of it) as a blank page. The appPreviewRouter has its own
+    // permissive CORS handler for these URLs, but it never runs because
+    // `cors()` short-circuits the preflight first. Handling OPTIONS here
+    // restores the intended behaviour without widening CORS for any other
+    // route. The matching GET handler remains auth-gated by `requireToken`.
+    if (this.lightdashConfig.appRuntime.s3) {
+      expressApp.options(
+        "/api/apps/:appUuid/versions/:version/t/:token/assets/:filename",
+        (_req, res) => {
+          res.setHeader("Access-Control-Allow-Origin", "*");
+          res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+          res.setHeader("Access-Control-Allow-Headers", "*");
+          res.setHeader("Access-Control-Max-Age", "86400");
+          res.status(204).end();
+        },
+      );
+    }
+
+    // Cross-Origin Resource Sharing policy (CORS)
+    // WARNING: this middleware should be mounted before the helmet middleware
+    // (ideally at the top of the middleware stack)
+    expressApp.use(
+      cors(
+        createCorsOptionsDelegate({
+          lightdashConfig: this.lightdashConfig,
+          organizationSettingsModel: this.models.getOrganizationSettingsModel(),
+        }),
+      ),
+    );
+
+    const KnexSessionStore = connectSessionKnex(expressSession);
+
+    const store = new KnexSessionStore({
+      knex: this.database as AnyType,
+      createtable: false,
+      tablename: "sessions",
+      sidfieldname: "sid",
+      // KONTALA: sweep expired sessions hourly rather than every minute
+      // (the library default). A session is refused once expired either
+      // way; the sweep only reclaims rows.
+      clearInterval: 60 * 60 * 1000,
+    });
+
+    // Use custom middlewares if provided
+    this.customExpressMiddlewares.forEach((middleware) =>
+      middleware(expressApp),
+    );
+
+    if (this.lightdashConfig.prometheus.extendedMetricsEnabled) {
+      expressApp.use(
+        this.prometheusMetrics.httpServerRequestMetricsMiddleware(),
+      );
+    }
+
+    // Raise body-parser limit for the data-apps gsheet export route only.
+    // Must run BEFORE the global parser below — `express.json()` is a no-op
+    // when `req.body` is already populated, so whichever parser sees the
+    // request first wins.
+    expressApp.use(
+      "/api/v1/gdrive/upload-gsheet-from-rows",
+      express.json({ limit: UPLOAD_GSHEET_FROM_ROWS_MAX_BYTES }),
+    );
+    // Capture the raw request body for the dbt Cloud webhook so its HMAC
+    // signature can be verified against the exact bytes that were signed.
+    expressApp.use((req, res, next) => {
+      if (req.path.endsWith("/dbt-cloud/webhook")) {
+        express.json({
+          limit: this.lightdashConfig.maxPayloadSize,
+          verify: (request, _res, buf) => {
+            (request as Request).rawBody = buf;
+          },
+        })(req, res, next);
+      } else {
+        next();
+      }
+    });
+    expressApp.use(
+      express.json({ limit: this.lightdashConfig.maxPayloadSize }),
+    );
+
+    const reportUris: URL[] = [];
+    try {
+      if (this.lightdashConfig.sentry.backend.securityReportUri) {
+        const sentryReportUri = new URL(
+          this.lightdashConfig.sentry.backend.securityReportUri,
         );
-        setGithubRateLimitObserver((rl) =>
-            this.prometheusMetrics.observeGithubRateLimit(rl),
+        sentryReportUri.searchParams.set(
+          "sentry_environment",
+          this.environment === "development"
+            ? "development"
+            : this.lightdashConfig.mode,
         );
-        this.prometheusMetrics.monitorDatabase(this.database);
-        this.prometheusMetrics.monitorPreAggregates(this.database);
-        this.prometheusMetrics.monitorEventMetrics(this.analyticsEventEmitter);
-        // @ts-ignore
-        // eslint-disable-next-line no-extend-native, func-names
-        BigInt.prototype.toJSON = function () {
-            return this.toString();
+        sentryReportUri.searchParams.set("sentry_release", VERSION);
+        reportUris.push(sentryReportUri);
+      }
+      if (this.lightdashConfig.security.contentSecurityPolicy.reportUri) {
+        reportUris.push(
+          new URL(
+            this.lightdashConfig.security.contentSecurityPolicy.reportUri,
+          ),
+        );
+      }
+    } catch (e) {
+      Logger.warn("Invalid security report URI", e);
+    }
+
+    const contentSecurityPolicyAllowedDomains: string[] = [
+      "https://*.sentry.io",
+      "https://*.usepylon.com",
+      "https://*.pusher.com", // used by pylon
+      "wss://*.pusher.com", // used by pylon
+      "https://www.googleapis.com",
+      "https://apis.google.com",
+      "https://accounts.google.com",
+      "https://vega.github.io",
+      "https://*.lightdash.cloud",
+      ...this.lightdashConfig.security.contentSecurityPolicy.allowedDomains,
+    ];
+
+    const helmetConfig = {
+      contentSecurityPolicy: {
+        directives: {
+          "default-src": ["'self'", ...contentSecurityPolicyAllowedDomains],
+          "img-src": ["'self'", "data:", "blob:", "https://*"],
+          "frame-src": ["'self'", "https://*"],
+          "frame-ancestors": ["'self'"] as string[],
+          "worker-src": [
+            "'self'",
+            "blob:",
+            ...contentSecurityPolicyAllowedDomains,
+          ],
+          "child-src": [
+            // Fallback of worker-src for safari older than 15.5
+            "'self'",
+            "blob:",
+            ...contentSecurityPolicyAllowedDomains,
+          ],
+          "script-src": [
+            "'self'",
+            "'unsafe-eval'",
+            ...contentSecurityPolicyAllowedDomains,
+          ],
+          "script-src-elem": [
+            "'self'",
+            "'unsafe-inline'",
+            ...contentSecurityPolicyAllowedDomains,
+          ],
+          "form-action": ["'self'", ...contentSecurityPolicyAllowedDomains],
+          "report-uri": reportUris.map((uri) => uri.href),
+          // KONTALA: a report-only policy cannot upgrade requests,
+          // and Chrome logs that as a console error on every page.
+          // An enforced policy keeps helmet's default.
+          "upgrade-insecure-requests": this.lightdashConfig.security
+            .contentSecurityPolicy.reportOnly
+            ? null
+            : [],
+        },
+        reportOnly:
+          this.lightdashConfig.security.contentSecurityPolicy.reportOnly,
+      },
+      strictTransportSecurity: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      },
+      referrerPolicy: {
+        policy: "strict-origin-when-cross-origin",
+      },
+      noSniff: true,
+      xFrameOptions: false,
+      crossOriginOpenerPolicy: {
+        policy: [LightdashMode.DEMO, LightdashMode.PR].includes(
+          this.lightdashConfig.mode,
+        )
+          ? "unsafe-none"
+          : "same-origin",
+      },
+    } as const;
+
+    expressApp.use(helmet(helmetConfig));
+
+    // Allow MCP-related icons to be embedded cross-origin so MCP hosts
+    // (e.g. claude.ai) can display them in connector listings.
+    expressApp.use(
+      ["/logo-icon.svg", "/favicon-32x32.png", "/apple-touch-icon.png"],
+      helmet.crossOriginResourcePolicy({ policy: "cross-origin" }),
+    );
+
+    const { frameAncestors } =
+      this.lightdashConfig.security.contentSecurityPolicy;
+    const embedFrameAncestors = [
+      "'self'",
+      ...(frameAncestors.length > 0 ? frameAncestors : ["https://*"]),
+    ];
+    const helmetConfigForEmbeds = produce(helmetConfig, (draft) => {
+      // eslint-disable-next-line no-param-reassign
+      draft.contentSecurityPolicy.directives["frame-ancestors"] =
+        embedFrameAncestors;
+    });
+
+    expressApp.use("/embed/*", helmet(helmetConfigForEmbeds));
+
+    expressApp.use("/api/v1/file/*", (_req, res, next) => {
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      next();
+    });
+
+    const frontendBuildHash = getFrontendBuildHash();
+
+    expressApp.use((req, res, next) => {
+      // Permissions-Policy header that is not yet supported by helmet. More details here: https://github.com/helmetjs/helmet/issues/234
+      res.setHeader("Permissions-Policy", "camera=(), microphone=()");
+      res.setHeader(LightdashVersionHeader, VERSION);
+      if (frontendBuildHash) {
+        res.setHeader(LightdashBuildHashHeader, frontendBuildHash);
+      }
+      next();
+    });
+
+    // App runtime preview routes — stateless, no session/auth.
+    // Registered before session middleware so preview requests
+    // never touch the DB for session lookups.
+    // Always registered when S3 is configured so the preview router
+    // is available regardless of whether the feature is enabled via
+    // APPS_RUNTIME_ENABLED env var or the enable-data-apps feature flag.
+    if (this.lightdashConfig.appRuntime.s3) {
+      const analyticsModel = this.models.getAnalyticsModel();
+      expressApp.use(
+        "/api/apps",
+        createAppPreviewRouter(
+          this.lightdashConfig.appRuntime,
+          this.lightdashConfig.lightdashSecrets,
+          embedFrameAncestors,
+          (p) => {
+            void analyticsModel.addAppViewEvent(p.appUuid, p.userUuid);
+            this.analytics.track({
+              event: "data_app.view",
+              userId: p.userUuid,
+              properties: {
+                organizationId: p.organizationUuid,
+                projectId: p.projectUuid,
+                appUuid: p.appUuid,
+              },
+            });
+          },
+        ),
+      );
+    }
+
+    expressApp.use(express.json());
+    expressApp.use(express.urlencoded({ extended: false }));
+
+    // KONTALA: sessions for the API only. Pages, assets and the
+    // .well-known routes never read one, yet every request that reached
+    // them with a session cookie paid a session read, a user rebuild and
+    // a session write first: about five database round trips for each of
+    // the ~70 files the first page preloads. Every router and every TSOA
+    // route is under /api/, and express-session matches its cookie path
+    // against req.originalUrl, so the base path still applies.
+    const sessionOptions = buildExpressSessionOptions(
+      this.lightdashConfig,
+      store,
+      this.port,
+    );
+    expressApp.use("/api", [
+      expressSession(sessionOptions),
+      flash(),
+      passport.initialize(),
+      passport.session(),
+    ]);
+
+    expressApp.use(expressWinstonPreResponseMiddleware); // log request before response is sent
+    expressApp.use(expressWinstonMiddleware); // log request + response
+
+    // KONTALA: a signed-out page visit goes straight to SSO when that is
+    // the only way in; see controllers/authentication/ssoPageRedirect.ts.
+    expressApp.use(
+      createSsoPageRedirect({
+        sessionCookieName: sessionOptions.name ?? "connect.sid",
+        cookiePath: this.lightdashConfig.basePath || "/",
+        secureCookies: this.lightdashConfig.secureCookies,
+        getForcedSsoLoginUrl: () =>
+          this.serviceRepository.getUserService().getForcedSsoLoginUrl(),
+      }),
+    );
+
+    expressApp.get("/", (req, res) => {
+      res.sendFile(path.join(__dirname, "../../frontend/build", "index.html"), {
+        headers: { "Cache-Control": "no-cache, private" },
+      });
+    });
+
+    /**
+     * Service Container
+     *
+     * In a future iteration, the service repository will be aware of the surrounding
+     * request context - for now we simply proxy the existing service repository singleton.
+     */
+    expressApp.use((req, res, next) => {
+      req.services = this.serviceRepository;
+      next();
+    });
+
+    // Add JWT parsing here so we can get services off the request
+    // We'll also be able to add the user to Sentry for embedded users.
+    expressApp.use(jwtAuthMiddleware);
+    expressApp.use(sessionAccountMiddleware);
+    // Must run after auth so req.user is populated. Stamps every downstream
+    // log line with organization_uuid + organization_name via ExecutionContext.
+    expressApp.use(requestExecutionContextMiddleware);
+
+    expressApp.use((req, res, next) => {
+      if (req.user) {
+        Sentry.setUser({
+          id: req.user.userUuid,
+          organization: req.user.organizationUuid,
+          email: req.user.email,
+          username: req.user.email,
+        });
+        if (req.user.organizationUuid) {
+          Sentry.setTag("organization.uuid", req.user.organizationUuid);
+        }
+        if (req.user.organizationName) {
+          Sentry.setTag("organization.name", req.user.organizationName);
+        }
+        // Sentry tags are error-scope only; stamp the same attribution
+        // on the request span so it's queryable in the trace backend.
+        trace.getActiveSpan()?.setAttributes({
+          "user.uuid": req.user.userUuid,
+          ...(req.user.organizationUuid && {
+            "organization.uuid": req.user.organizationUuid,
+          }),
+          ...(req.user.organizationName && {
+            "organization.name": req.user.organizationName,
+          }),
+        });
+      }
+      next();
+    });
+
+    // api router
+    // KONTALA: the member-reconciliation, semantic-layer and content
+    // endpoints, mounted beside the stock API rather than inside it. Their
+    // own router because they are authenticated by a shared secret rather
+    // than by a session, and keeping them apart is what makes that
+    // impossible to confuse.
+    expressApp.use(
+      "/api/v1/kontala",
+      kontalaRouter({
+        lightdashConfig: this.lightdashConfig,
+        userModel: this.models.getUserModel(),
+        emailModel: this.models.getEmailModel(),
+        organizationMemberProfileModel:
+          this.models.getOrganizationMemberProfileModel(),
+        projectModel: this.models.getProjectModel(),
+        projectParametersModel: this.models.getProjectParametersModel(),
+        projectService: this.serviceRepository.getProjectService(),
+        coderService: this.serviceRepository.getCoderService(),
+        spaceModel: this.models.getSpaceModel(),
+        dashboardModel: this.models.getDashboardModel(),
+        pinnedListModel: this.models.getPinnedListModel(),
+        savedChartModel: this.models.getSavedChartModel(),
+        savedSqlModel: this.models.getSavedSqlModel(),
+      }),
+    );
+
+    expressApp.use("/api/v1", apiV1Router);
+    RegisterRoutes(expressApp);
+    // Api docs
+    if (
+      this.lightdashConfig.mode === LightdashMode.PR ||
+      this.environment !== "production"
+    ) {
+      expressApp.get("/api/docs/openapi.json", (req, res) => {
+        res.send(apiSpec);
+      });
+      expressApp.get(
+        "/api/docs",
+        reDoc({
+          title: "Kontala Analytics API Docs",
+          specUrl: "/api/docs/openapi.json",
+        }),
+      );
+    }
+
+    // frontend assets - immutable because vite appends hash to filenames
+    // browser caches for 1 year
+    // public - CDN can cache
+    expressApp.use(
+      "/assets",
+      expressStaticGzip(path.join(__dirname, "../../frontend/build/assets"), {
+        index: false,
+        // KONTALA: the frontend build writes a .br beside each
+        // .gzip; brotli is preferred when the browser accepts it.
+        enableBrotli: true,
+        orderPreference: ["br", "gzip"],
+        customCompressions: [
+          {
+            encodingName: "gzip",
+            fileExtension: "gzip",
+          },
+        ],
+        serveStatic: {
+          setHeaders: (res) => {
+            res.setHeader(
+              "Cache-Control",
+              "public, max-age=31536000, immutable",
+            );
+          },
+        },
+      }),
+    );
+
+    expressApp.get(
+      "/assets/*",
+      createStaticAssetsFallbackHandler(
+        new StaticAssetsS3Client({
+          lightdashConfig: this.lightdashConfig,
+        }),
+      ),
+    );
+
+    // Return 404 for missing assets (don't fall through index.html)
+    // This ensures chunks are not serving the index.html file.
+    expressApp.use("/assets/*", (req, res) => {
+      res.status(404).send("Not found");
+    });
+
+    // Root-level .well-known endpoints for OAuth discovery (required by many MCP clients)
+    // Use the same handlers as the API-level endpoints to ensure consistency
+    expressApp.get(
+      "/.well-known/oauth-authorization-server",
+      oauthAuthorizationServerHandler,
+    );
+    expressApp.get(
+      "/.well-known/oauth-authorization-server/api/v1/mcp",
+      oauthAuthorizationServerHandler,
+    );
+
+    expressApp.get(
+      "/.well-known/oauth-protected-resource",
+      oauthProtectedResourceHandler,
+    );
+    expressApp.get(
+      "/.well-known/oauth-protected-resource/api/v1/mcp",
+      oauthProtectedResourceHandler,
+    );
+
+    const appleAppSiteAssociationHandler = createAppleAppSiteAssociationHandler(
+      this.lightdashConfig.mobileAppAssociation,
+    );
+    expressApp.get(
+      "/.well-known/apple-app-site-association",
+      appleAppSiteAssociationHandler,
+    );
+    expressApp.get(
+      "/apple-app-site-association",
+      appleAppSiteAssociationHandler,
+    );
+    expressApp.get(
+      "/.well-known/assetlinks.json",
+      createAndroidAssetLinksHandler(this.lightdashConfig.mobileAppAssociation),
+    );
+
+    // OpenAI Apps domain verification: serves the portal-issued token so
+    // OpenAI can confirm we control the domain hosting the MCP server
+    const { openaiAppsChallengeToken } = this.lightdashConfig;
+    if (openaiAppsChallengeToken) {
+      expressApp.get("/.well-known/openai-apps-challenge", (req, res) => {
+        res.type("text/plain").send(openaiAppsChallengeToken);
+      });
+    }
+
+    // frontend static files - no cache
+    expressApp.use(
+      express.static(path.join(__dirname, "../../frontend/build"), {
+        setHeaders: () => ({
+          // private - browsers can cache but not CDNs
+          // no-cache - caches must revalidate with the origin server before using a cached copy
+          "Cache-Control": "no-cache, private",
+        }),
+      }),
+    );
+
+    // handling api 404s before frontend catch all
+    expressApp.use("/api/*", (req, res) => {
+      const apiErrorResponse = {
+        status: "error",
+        error: {
+          statusCode: 404,
+          name: "NotFoundError",
+          message: `API endpoint not found`,
+          data: {},
+        },
+      } satisfies ApiError;
+      res.status(404).json(apiErrorResponse);
+    });
+
+    // no-cache - browsers revalidate on every request but can cache
+    // private - no cdn caching
+    expressApp.get("*", (req, res) => {
+      res.sendFile(path.join(__dirname, "../../frontend/build", "index.html"), {
+        headers: { "Cache-Control": "no-cache, private" },
+      });
+    });
+
+    // KONTALA: serve the whole app under SITE_URL's path.
+    //
+    // Mounting once here rather than prefixing every route is what keeps
+    // this diff small enough to carry across upstream releases: express
+    // strips the prefix before the inner app sees a request, so every
+    // route, router and middleware below is untouched and still reasons
+    // about '/api/v1'. The frontend is built with the same prefix as
+    // vite's base, so the two halves cannot disagree about it.
+    //
+    // What this does NOT fix is code that writes an absolute path of its
+    // own (res.redirect('/login'), a redirect_uri built with new URL from
+    // a leading slash). Those escape the mount and have to be found and
+    // fixed one at a time; see the oidcStrategy change in this series.
+    const { basePath } = this.lightdashConfig;
+    const listener = basePath
+      ? express().use(basePath, expressApp)
+      : expressApp;
+
+    // Start the server
+    const server = listener.listen(this.port, () => {
+      if (this.environment === "production") {
+        Logger.info(
+          `\n   |     |     |     |     |     |     |\n   |     |     |     |     |     |     |\n   |     |     |     |     |     |     |  \n \\ | / \\ | / \\ | / \\ | / \\ | / \\ | / \\ | /\n  \\|/   \\|/   \\|/   \\|/   \\|/   \\|/   \\|/\n------------------------------------------\nLaunch lightdash at http://localhost:${this.port}\n------------------------------------------\n  /|\\   /|\\   /|\\   /|\\   /|\\   /|\\   /|\\\n / | \\ / | \\ / | \\ / | \\ / | \\ / | \\ / | \\\n   |     |     |     |     |     |     |\n   |     |     |     |     |     |     |\n   |     |     |     |     |     |     |`,
+        );
+      }
+      // KONTALA: how long this process took to listen, which on a
+      // scale-to-zero deployment is most of what a cold start costs.
+      Logger.info(`Listening after ${Math.round(process.uptime() * 1000)}ms`);
+    });
+    server.keepAliveTimeout =
+      this.lightdashConfig.httpServer.keepAliveTimeoutMs;
+
+    // Errors
+    Sentry.setupExpressErrorHandler(expressApp);
+    expressApp.use(scimErrorHandler); // SCIM error check before general error handler
+    expressApp.use(invalidUserErrorHandler);
+    expressApp.use(
+      (error: Error, req: Request, res: Response, _: NextFunction) => {
+        const errorResponse = errorHandler(error);
+        if (
+          error instanceof UnexpectedServerError ||
+          !(error instanceof LightdashError)
+        ) {
+          // This intentionally uses console vs. winston because of problems from some error/JSON payloads.
+          console.error(error);
+        }
+        if (!isExpectedError(errorResponse)) {
+          Logger.error(
+            `Handled error of type ${errorResponse.name} on [${req.method}] ${req.path}`,
+            errorResponse,
+          );
+
+          if (process.env.NODE_ENV === "development") {
+            Logger.error(error.stack);
+          }
+
+          this.analytics.track({
+            event: "api.error",
+            userId: req.user?.userUuid,
+            anonymousId: !req.user?.userUuid
+              ? LightdashAnalytics.anonymousId
+              : undefined,
+            properties: {
+              name: errorResponse.name,
+              statusCode: errorResponse.statusCode,
+              route: req.path,
+              method: req.method,
+            },
+          });
+        }
+
+        // Check if this is an OAuth endpoint and return OAuth2-compliant error response
+        if (error instanceof OauthAuthenticationError) {
+          const oauthErrorResponse = {
+            error: errorResponse.data?.error || "server_error",
+            error_description: errorResponse.message,
+          };
+          res.status(errorResponse.statusCode).send(oauthErrorResponse);
+          return;
+        }
+
+        const apiErrorResponse: ApiError = {
+          status: "error",
+          error: {
+            statusCode: errorResponse.statusCode,
+            name: errorResponse.name,
+            message: errorResponse.message,
+            data: errorResponse.data,
+            sentryTraceId:
+              // Only return the Sentry trace ID for unexpected server errors
+              errorResponse.statusCode === 500
+                ? Sentry.getActiveSpan()?.spanContext().traceId
+                : undefined,
+            sentryEventId:
+              // Only return the Sentry event ID for unexpected server errors
+              errorResponse.statusCode === 500
+                ? Sentry.lastEventId()
+                : undefined,
+          },
         };
 
-        const expressApp = express();
+        res.status(errorResponse.statusCode).send(apiErrorResponse);
+      },
+    );
 
-        // Increase query string array limit from default (20) to 1000
-        // to support endpoints that accept large arrays (e.g. chart IDs for
-        // dashboards with many tiles). Without this, qs silently converts
-        // overflowing arrays into indexed-key objects, breaking TSOA
-        // validation for `string[]` query params.
-        expressApp.set('query parser', (str: string) =>
-            qs.parse(str, { arrayLimit: 1000 }),
-        );
+    // Authentication
+    const userService = this.serviceRepository.getUserService();
 
-        expressApp.use('/api/v1', createProbeRouter(this.readinessService));
+    passport.use(apiKeyPassportStrategy({ userService }));
+    passport.use(
+      localPassportStrategy({
+        userService,
+      }),
+    );
 
-        // Slack must be initialized before our own middleware / routes, which cause the slack app to fail
-        // KONTALA: only when Slack is configured, which is the same test
-        // SlackClient.start() makes. Without it every boot logged "Error
-        // starting slack bot" (setupEventListeners() found no app), and getting
-        // the client started a scheduler client the boot does not need.
-        if (this.lightdashConfig.slack?.clientId) {
-            this.initSlack(expressApp).catch((e) => {
-                Logger.error('Error starting slack bot', e);
-            });
-        }
+    // Refresh strategies also need to be registered on SchedulerApp
+    if (googlePassportStrategy) {
+      passport.use(googlePassportStrategy);
+      refresh.use(googlePassportStrategy);
+    }
+    // Always register the Okta strategy: it resolves its config per
+    // request (per-org DB config by email, else instance env config), so
+    // it must be available even when no instance-level Okta env config is
+    // set.
+    passport.use("okta", new OpenIDClientOktaStrategy());
+    if (oneLoginPassportStrategy) {
+      passport.use("oneLogin", oneLoginPassportStrategy);
+    }
+    if (isAzureAdPassportStrategyAvailableToUse) {
+      passport.use("azuread", await createAzureAdPassportStrategy());
+    }
+    if (isGenericOidcPassportStrategyAvailableToUse) {
+      const oidcStrategy = new DeferredPassportStrategy(
+        createGenericOidcPassportStrategy,
+      );
+      passport.use("oidc", oidcStrategy);
+      // KONTALA: this runs just after listen(), so discovery overlaps
+      // the first request instead of sitting in front of the first
+      // sign-in.
+      oidcStrategy.warm();
+    }
+    if (snowflakePassportStrategy) {
+      passport.use("snowflake", snowflakePassportStrategy);
+      refresh.use("snowflake", snowflakePassportStrategy);
+    }
+    if (databricksPassportStrategy) {
+      passport.use("databricks", databricksPassportStrategy);
+      refresh.use("databricks", databricksPassportStrategy);
+    }
+    if (slackPassportStrategy) {
+      passport.use("slack", slackPassportStrategy);
+    }
 
-        Sentry.setTags({
-            k8s_pod_name: this.lightdashConfig.k8s.podName,
-            k8s_pod_namespace: this.lightdashConfig.k8s.podNamespace,
-            k8s_node_name: this.lightdashConfig.k8s.nodeName,
-            lightdash_cloud_instance:
-                this.lightdashConfig.lightdashCloudInstance,
-        });
+    passport.serializeUser((user, done) => {
+      // On login (user changes), user.userUuid is written to the session store in the `sess.passport.data` field
+      done(null, {
+        id: user.userUuid,
+        organization: user.organizationUuid,
+      });
 
-        // Load Lightdash middleware/routes last
-        await this.initExpress(expressApp);
+      // Fire-and-forget: run once-per-login setup tasks
+      void userService.onLogin(user).catch((err) => {
+        Logger.error("Failed to run onLogin tasks", err);
+      });
+    });
 
-        // Postgres wire protocol endpoint for the semantic layer (experimental,
-        // enterprise-only). The factory is supplied by the EE bootstrap under a
-        // valid license; without it the endpoint stays disabled.
-        const pgWirePort = this.lightdashConfig.pgWire.port;
-        if (pgWirePort && this.pgWireServerFactory) {
-            this.pgWireServer = this.pgWireServerFactory(
-                this.serviceRepository,
-            );
-            await this.pgWireServer.listen(pgWirePort);
-            Logger.info(
-                `Postgres wire protocol server listening on port ${pgWirePort}`,
-            );
-        } else if (pgWirePort) {
-            Logger.warn(
-                'PGWIRE_PORT is set but the Postgres wire protocol server is an enterprise feature; set a valid license key to enable it.',
-            );
-        }
-
-        if (this.lightdashConfig.scheduler?.enabled) {
-            const startScheduler = () => {
-                this.schedulerStartTimeout = undefined;
-                this.initSchedulerWorker();
-                this.prometheusMetrics.monitorQueues(
-                    this.clients.getSchedulerClient(),
-                );
-            };
-            // KONTALA: optionally after the first requests rather than during
-            // them; see scheduler.startDelay. Jobs queued meanwhile wait in the
-            // table and run once the worker starts.
-            const { startDelay } = this.lightdashConfig.scheduler;
-            if (startDelay > 0) {
-                this.schedulerStartTimeout = setTimeout(
-                    startScheduler,
-                    startDelay,
-                );
-            } else {
-                startScheduler();
-            }
-        }
-
+    // Before each request handler we read `sess.passport.user` from the session store
+    passport.deserializeUser(
+      async (
+        req: express.Request,
+        passportUser: { id: string; organization: string },
+        done: (err: unknown, user?: Express.User | false) => void,
+      ) => {
         try {
-            const instanceConfigurationService =
-                this.serviceRepository.getInstanceConfigurationService<InstanceConfigurationService>();
-            await instanceConfigurationService.initializeInstance();
-            await instanceConfigurationService.updateInstanceConfiguration();
+          const sessionUser = await userService.resolveSessionUser(
+            passportUser,
+            req.session?.impersonation,
+            () => {
+              delete req.session.impersonation;
+            },
+          );
+          done(null, sessionUser);
         } catch (e) {
-            if (e instanceof MissingConfigError) {
-                Logger.debug(
-                    `No instance configuration service found: ${getErrorMessage(
-                        e,
-                    )}`,
-                );
-            } else {
-                throw e;
-            }
+          done(e);
         }
+      },
+    );
+
+    return expressApp;
+  }
+
+  private async initSlack(expressApp: Express) {
+    const slackClient = this.clients.getSlackClient();
+    await slackClient.start(expressApp);
+
+    const slackService = this.serviceRepository.getSlackService();
+    slackService.setupEventListeners();
+  }
+
+  private initSchedulerWorker() {
+    this.schedulerWorker = this.schedulerWorkerFactory({
+      lightdashConfig: this.lightdashConfig,
+      analytics: this.analytics,
+      serviceRepository: this.serviceRepository,
+      models: this.models,
+      clients: this.clients,
+      utils: this.utils,
+      prometheusMetrics: this.prometheusMetrics,
+    });
+
+    this.schedulerWorker.run().catch((e) => {
+      Logger.error("Error starting scheduler worker", e);
+    });
+  }
+
+  async stop() {
+    try {
+      await this.beforeShutdown?.(this.serviceRepository);
+    } catch (error) {
+      Logger.error("Error running pre-shutdown hook", error);
     }
 
-    private async initExpress(expressApp: Express) {
-        // Short-circuit CORS preflights for data-app iframe asset fetches.
-        //
-        // The data-app preview iframe uses `sandbox="allow-scripts allow-modals"`
-        // (no `allow-same-origin`), so subresource fetches originate from the
-        // opaque origin `null`. The global `cors()` middleware below ends those
-        // preflights with 204 but, because `null` doesn't match the configured
-        // allow-list, omits `Access-Control-Allow-Origin` — which blocks the
-        // subsequent asset GET and renders the iframe (and any scheduled
-        // screenshot of it) as a blank page. The appPreviewRouter has its own
-        // permissive CORS handler for these URLs, but it never runs because
-        // `cors()` short-circuits the preflight first. Handling OPTIONS here
-        // restores the intended behaviour without widening CORS for any other
-        // route. The matching GET handler remains auth-gated by `requireToken`.
-        if (this.lightdashConfig.appRuntime.s3) {
-            expressApp.options(
-                '/api/apps/:appUuid/versions/:version/t/:token/assets/:filename',
-                (_req, res) => {
-                    res.setHeader('Access-Control-Allow-Origin', '*');
-                    res.setHeader(
-                        'Access-Control-Allow-Methods',
-                        'GET, OPTIONS',
-                    );
-                    res.setHeader('Access-Control-Allow-Headers', '*');
-                    res.setHeader('Access-Control-Max-Age', '86400');
-                    res.status(204).end();
-                },
-            );
-        }
-
-        // Cross-Origin Resource Sharing policy (CORS)
-        // WARNING: this middleware should be mounted before the helmet middleware
-        // (ideally at the top of the middleware stack)
-        expressApp.use(
-            cors(
-                createCorsOptionsDelegate({
-                    lightdashConfig: this.lightdashConfig,
-                    organizationSettingsModel:
-                        this.models.getOrganizationSettingsModel(),
-                }),
-            ),
-        );
-
-        const KnexSessionStore = connectSessionKnex(expressSession);
-
-        const store = new KnexSessionStore({
-            knex: this.database as AnyType,
-            createtable: false,
-            tablename: 'sessions',
-            sidfieldname: 'sid',
-            // KONTALA: sweep expired sessions hourly rather than every minute
-            // (the library default). A session is refused once expired either
-            // way; the sweep only reclaims rows.
-            clearInterval: 60 * 60 * 1000,
-        });
-
-        // Use custom middlewares if provided
-        this.customExpressMiddlewares.forEach((middleware) =>
-            middleware(expressApp),
-        );
-
-        if (this.lightdashConfig.prometheus.extendedMetricsEnabled) {
-            expressApp.use(
-                this.prometheusMetrics.httpServerRequestMetricsMiddleware(),
-            );
-        }
-
-        // Raise body-parser limit for the data-apps gsheet export route only.
-        // Must run BEFORE the global parser below — `express.json()` is a no-op
-        // when `req.body` is already populated, so whichever parser sees the
-        // request first wins.
-        expressApp.use(
-            '/api/v1/gdrive/upload-gsheet-from-rows',
-            express.json({ limit: UPLOAD_GSHEET_FROM_ROWS_MAX_BYTES }),
-        );
-        // Capture the raw request body for the dbt Cloud webhook so its HMAC
-        // signature can be verified against the exact bytes that were signed.
-        expressApp.use((req, res, next) => {
-            if (req.path.endsWith('/dbt-cloud/webhook')) {
-                express.json({
-                    limit: this.lightdashConfig.maxPayloadSize,
-                    verify: (request, _res, buf) => {
-                        (request as Request).rawBody = buf;
-                    },
-                })(req, res, next);
-            } else {
-                next();
-            }
-        });
-        expressApp.use(
-            express.json({ limit: this.lightdashConfig.maxPayloadSize }),
-        );
-
-        const reportUris: URL[] = [];
-        try {
-            if (this.lightdashConfig.sentry.backend.securityReportUri) {
-                const sentryReportUri = new URL(
-                    this.lightdashConfig.sentry.backend.securityReportUri,
-                );
-                sentryReportUri.searchParams.set(
-                    'sentry_environment',
-                    this.environment === 'development'
-                        ? 'development'
-                        : this.lightdashConfig.mode,
-                );
-                sentryReportUri.searchParams.set('sentry_release', VERSION);
-                reportUris.push(sentryReportUri);
-            }
-            if (this.lightdashConfig.security.contentSecurityPolicy.reportUri) {
-                reportUris.push(
-                    new URL(
-                        this.lightdashConfig.security.contentSecurityPolicy
-                            .reportUri,
-                    ),
-                );
-            }
-        } catch (e) {
-            Logger.warn('Invalid security report URI', e);
-        }
-
-        const contentSecurityPolicyAllowedDomains: string[] = [
-            'https://*.sentry.io',
-            'https://*.usepylon.com',
-            'https://*.pusher.com', // used by pylon
-            'wss://*.pusher.com', // used by pylon
-            'https://www.googleapis.com',
-            'https://apis.google.com',
-            'https://accounts.google.com',
-            'https://vega.github.io',
-            'https://*.lightdash.cloud',
-            ...this.lightdashConfig.security.contentSecurityPolicy
-                .allowedDomains,
-        ];
-
-        const helmetConfig = {
-            contentSecurityPolicy: {
-                directives: {
-                    'default-src': [
-                        "'self'",
-                        ...contentSecurityPolicyAllowedDomains,
-                    ],
-                    'img-src': ["'self'", 'data:', 'blob:', 'https://*'],
-                    'frame-src': ["'self'", 'https://*'],
-                    'frame-ancestors': ["'self'"] as string[],
-                    'worker-src': [
-                        "'self'",
-                        'blob:',
-                        ...contentSecurityPolicyAllowedDomains,
-                    ],
-                    'child-src': [
-                        // Fallback of worker-src for safari older than 15.5
-                        "'self'",
-                        'blob:',
-                        ...contentSecurityPolicyAllowedDomains,
-                    ],
-                    'script-src': [
-                        "'self'",
-                        "'unsafe-eval'",
-                        ...contentSecurityPolicyAllowedDomains,
-                    ],
-                    'script-src-elem': [
-                        "'self'",
-                        "'unsafe-inline'",
-                        ...contentSecurityPolicyAllowedDomains,
-                    ],
-                    'form-action': [
-                        "'self'",
-                        ...contentSecurityPolicyAllowedDomains,
-                    ],
-                    'report-uri': reportUris.map((uri) => uri.href),
-                    // KONTALA: a report-only policy cannot upgrade requests,
-                    // and Chrome logs that as a console error on every page.
-                    // An enforced policy keeps helmet's default.
-                    'upgrade-insecure-requests': this.lightdashConfig.security
-                        .contentSecurityPolicy.reportOnly
-                        ? null
-                        : [],
-                },
-                reportOnly:
-                    this.lightdashConfig.security.contentSecurityPolicy
-                        .reportOnly,
-            },
-            strictTransportSecurity: {
-                maxAge: 31536000,
-                includeSubDomains: true,
-                preload: true,
-            },
-            referrerPolicy: {
-                policy: 'strict-origin-when-cross-origin',
-            },
-            noSniff: true,
-            xFrameOptions: false,
-            crossOriginOpenerPolicy: {
-                policy: [LightdashMode.DEMO, LightdashMode.PR].includes(
-                    this.lightdashConfig.mode,
-                )
-                    ? 'unsafe-none'
-                    : 'same-origin',
-            },
-        } as const;
-
-        expressApp.use(helmet(helmetConfig));
-
-        // Allow MCP-related icons to be embedded cross-origin so MCP hosts
-        // (e.g. claude.ai) can display them in connector listings.
-        expressApp.use(
-            ['/logo-icon.svg', '/favicon-32x32.png', '/apple-touch-icon.png'],
-            helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }),
-        );
-
-        const { frameAncestors } =
-            this.lightdashConfig.security.contentSecurityPolicy;
-        const embedFrameAncestors = [
-            "'self'",
-            ...(frameAncestors.length > 0 ? frameAncestors : ['https://*']),
-        ];
-        const helmetConfigForEmbeds = produce(helmetConfig, (draft) => {
-            // eslint-disable-next-line no-param-reassign
-            draft.contentSecurityPolicy.directives['frame-ancestors'] =
-                embedFrameAncestors;
-        });
-
-        expressApp.use('/embed/*', helmet(helmetConfigForEmbeds));
-
-        expressApp.use('/api/v1/file/*', (_req, res, next) => {
-            res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-            next();
-        });
-
-        const frontendBuildHash = getFrontendBuildHash();
-
-        expressApp.use((req, res, next) => {
-            // Permissions-Policy header that is not yet supported by helmet. More details here: https://github.com/helmetjs/helmet/issues/234
-            res.setHeader('Permissions-Policy', 'camera=(), microphone=()');
-            res.setHeader(LightdashVersionHeader, VERSION);
-            if (frontendBuildHash) {
-                res.setHeader(LightdashBuildHashHeader, frontendBuildHash);
-            }
-            next();
-        });
-
-        // App runtime preview routes — stateless, no session/auth.
-        // Registered before session middleware so preview requests
-        // never touch the DB for session lookups.
-        // Always registered when S3 is configured so the preview router
-        // is available regardless of whether the feature is enabled via
-        // APPS_RUNTIME_ENABLED env var or the enable-data-apps feature flag.
-        if (this.lightdashConfig.appRuntime.s3) {
-            const analyticsModel = this.models.getAnalyticsModel();
-            expressApp.use(
-                '/api/apps',
-                createAppPreviewRouter(
-                    this.lightdashConfig.appRuntime,
-                    this.lightdashConfig.lightdashSecrets,
-                    embedFrameAncestors,
-                    (p) => {
-                        void analyticsModel.addAppViewEvent(
-                            p.appUuid,
-                            p.userUuid,
-                        );
-                        this.analytics.track({
-                            event: 'data_app.view',
-                            userId: p.userUuid,
-                            properties: {
-                                organizationId: p.organizationUuid,
-                                projectId: p.projectUuid,
-                                appUuid: p.appUuid,
-                            },
-                        });
-                    },
-                ),
-            );
-        }
-
-        expressApp.use(express.json());
-        expressApp.use(express.urlencoded({ extended: false }));
-
-        // KONTALA: sessions for the API only. Pages, assets and the
-        // .well-known routes never read one, yet every request that reached
-        // them with a session cookie paid a session read, a user rebuild and
-        // a session write first: about five database round trips for each of
-        // the ~70 files the first page preloads. Every router and every TSOA
-        // route is under /api/, and express-session matches its cookie path
-        // against req.originalUrl, so the base path still applies.
-        const sessionOptions = buildExpressSessionOptions(
-            this.lightdashConfig,
-            store,
-            this.port,
-        );
-        expressApp.use('/api', [
-            expressSession(sessionOptions),
-            flash(),
-            passport.initialize(),
-            passport.session(),
-        ]);
-
-        expressApp.use(expressWinstonPreResponseMiddleware); // log request before response is sent
-        expressApp.use(expressWinstonMiddleware); // log request + response
-
-        // KONTALA: a signed-out page visit goes straight to SSO when that is
-        // the only way in; see controllers/authentication/ssoPageRedirect.ts.
-        expressApp.use(
-            createSsoPageRedirect({
-                sessionCookieName: sessionOptions.name ?? 'connect.sid',
-                cookiePath: this.lightdashConfig.basePath || '/',
-                secureCookies: this.lightdashConfig.secureCookies,
-                getForcedSsoLoginUrl: () =>
-                    this.serviceRepository
-                        .getUserService()
-                        .getForcedSsoLoginUrl(),
-            }),
-        );
-
-        expressApp.get('/', (req, res) => {
-            res.sendFile(
-                path.join(__dirname, '../../frontend/build', 'index.html'),
-                {
-                    headers: { 'Cache-Control': 'no-cache, private' },
-                },
-            );
-        });
-
-        /**
-         * Service Container
-         *
-         * In a future iteration, the service repository will be aware of the surrounding
-         * request context - for now we simply proxy the existing service repository singleton.
-         */
-        expressApp.use((req, res, next) => {
-            req.services = this.serviceRepository;
-            next();
-        });
-
-        // Add JWT parsing here so we can get services off the request
-        // We'll also be able to add the user to Sentry for embedded users.
-        expressApp.use(jwtAuthMiddleware);
-        expressApp.use(sessionAccountMiddleware);
-        // Must run after auth so req.user is populated. Stamps every downstream
-        // log line with organization_uuid + organization_name via ExecutionContext.
-        expressApp.use(requestExecutionContextMiddleware);
-
-        expressApp.use((req, res, next) => {
-            if (req.user) {
-                Sentry.setUser({
-                    id: req.user.userUuid,
-                    organization: req.user.organizationUuid,
-                    email: req.user.email,
-                    username: req.user.email,
-                });
-                if (req.user.organizationUuid) {
-                    Sentry.setTag(
-                        'organization.uuid',
-                        req.user.organizationUuid,
-                    );
-                }
-                if (req.user.organizationName) {
-                    Sentry.setTag(
-                        'organization.name',
-                        req.user.organizationName,
-                    );
-                }
-                // Sentry tags are error-scope only; stamp the same attribution
-                // on the request span so it's queryable in the trace backend.
-                trace.getActiveSpan()?.setAttributes({
-                    'user.uuid': req.user.userUuid,
-                    ...(req.user.organizationUuid && {
-                        'organization.uuid': req.user.organizationUuid,
-                    }),
-                    ...(req.user.organizationName && {
-                        'organization.name': req.user.organizationName,
-                    }),
-                });
-            }
-            next();
-        });
-
-        // api router
-        // KONTALA: the member-reconciliation, semantic-layer and content
-        // endpoints, mounted beside the stock API rather than inside it. Their
-        // own router because they are authenticated by a shared secret rather
-        // than by a session, and keeping them apart is what makes that
-        // impossible to confuse.
-        expressApp.use(
-            '/api/v1/kontala',
-            kontalaRouter({
-                lightdashConfig: this.lightdashConfig,
-                userModel: this.models.getUserModel(),
-                emailModel: this.models.getEmailModel(),
-                organizationMemberProfileModel:
-                    this.models.getOrganizationMemberProfileModel(),
-                projectModel: this.models.getProjectModel(),
-                projectParametersModel: this.models.getProjectParametersModel(),
-                projectService: this.serviceRepository.getProjectService(),
-                coderService: this.serviceRepository.getCoderService(),
-                spaceModel: this.models.getSpaceModel(),
-                dashboardModel: this.models.getDashboardModel(),
-                pinnedListModel: this.models.getPinnedListModel(),
-            }),
-        );
-
-        expressApp.use('/api/v1', apiV1Router);
-        RegisterRoutes(expressApp);
-        // Api docs
-        if (
-            this.lightdashConfig.mode === LightdashMode.PR ||
-            this.environment !== 'production'
-        ) {
-            expressApp.get('/api/docs/openapi.json', (req, res) => {
-                res.send(apiSpec);
-            });
-            expressApp.get(
-                '/api/docs',
-                reDoc({
-                    title: 'Kontala Analytics API Docs',
-                    specUrl: '/api/docs/openapi.json',
-                }),
-            );
-        }
-
-        // frontend assets - immutable because vite appends hash to filenames
-        // browser caches for 1 year
-        // public - CDN can cache
-        expressApp.use(
-            '/assets',
-            expressStaticGzip(
-                path.join(__dirname, '../../frontend/build/assets'),
-                {
-                    index: false,
-                    // KONTALA: the frontend build writes a .br beside each
-                    // .gzip; brotli is preferred when the browser accepts it.
-                    enableBrotli: true,
-                    orderPreference: ['br', 'gzip'],
-                    customCompressions: [
-                        {
-                            encodingName: 'gzip',
-                            fileExtension: 'gzip',
-                        },
-                    ],
-                    serveStatic: {
-                        setHeaders: (res) => {
-                            res.setHeader(
-                                'Cache-Control',
-                                'public, max-age=31536000, immutable',
-                            );
-                        },
-                    },
-                },
-            ),
-        );
-
-        expressApp.get(
-            '/assets/*',
-            createStaticAssetsFallbackHandler(
-                new StaticAssetsS3Client({
-                    lightdashConfig: this.lightdashConfig,
-                }),
-            ),
-        );
-
-        // Return 404 for missing assets (don't fall through index.html)
-        // This ensures chunks are not serving the index.html file.
-        expressApp.use('/assets/*', (req, res) => {
-            res.status(404).send('Not found');
-        });
-
-        // Root-level .well-known endpoints for OAuth discovery (required by many MCP clients)
-        // Use the same handlers as the API-level endpoints to ensure consistency
-        expressApp.get(
-            '/.well-known/oauth-authorization-server',
-            oauthAuthorizationServerHandler,
-        );
-        expressApp.get(
-            '/.well-known/oauth-authorization-server/api/v1/mcp',
-            oauthAuthorizationServerHandler,
-        );
-
-        expressApp.get(
-            '/.well-known/oauth-protected-resource',
-            oauthProtectedResourceHandler,
-        );
-        expressApp.get(
-            '/.well-known/oauth-protected-resource/api/v1/mcp',
-            oauthProtectedResourceHandler,
-        );
-
-        const appleAppSiteAssociationHandler =
-            createAppleAppSiteAssociationHandler(
-                this.lightdashConfig.mobileAppAssociation,
-            );
-        expressApp.get(
-            '/.well-known/apple-app-site-association',
-            appleAppSiteAssociationHandler,
-        );
-        expressApp.get(
-            '/apple-app-site-association',
-            appleAppSiteAssociationHandler,
-        );
-        expressApp.get(
-            '/.well-known/assetlinks.json',
-            createAndroidAssetLinksHandler(
-                this.lightdashConfig.mobileAppAssociation,
-            ),
-        );
-
-        // OpenAI Apps domain verification: serves the portal-issued token so
-        // OpenAI can confirm we control the domain hosting the MCP server
-        const { openaiAppsChallengeToken } = this.lightdashConfig;
-        if (openaiAppsChallengeToken) {
-            expressApp.get('/.well-known/openai-apps-challenge', (req, res) => {
-                res.type('text/plain').send(openaiAppsChallengeToken);
-            });
-        }
-
-        // frontend static files - no cache
-        expressApp.use(
-            express.static(path.join(__dirname, '../../frontend/build'), {
-                setHeaders: () => ({
-                    // private - browsers can cache but not CDNs
-                    // no-cache - caches must revalidate with the origin server before using a cached copy
-                    'Cache-Control': 'no-cache, private',
-                }),
-            }),
-        );
-
-        // handling api 404s before frontend catch all
-        expressApp.use('/api/*', (req, res) => {
-            const apiErrorResponse = {
-                status: 'error',
-                error: {
-                    statusCode: 404,
-                    name: 'NotFoundError',
-                    message: `API endpoint not found`,
-                    data: {},
-                },
-            } satisfies ApiError;
-            res.status(404).json(apiErrorResponse);
-        });
-
-        // no-cache - browsers revalidate on every request but can cache
-        // private - no cdn caching
-        expressApp.get('*', (req, res) => {
-            res.sendFile(
-                path.join(__dirname, '../../frontend/build', 'index.html'),
-                {
-                    headers: { 'Cache-Control': 'no-cache, private' },
-                },
-            );
-        });
-
-        // KONTALA: serve the whole app under SITE_URL's path.
-        //
-        // Mounting once here rather than prefixing every route is what keeps
-        // this diff small enough to carry across upstream releases: express
-        // strips the prefix before the inner app sees a request, so every
-        // route, router and middleware below is untouched and still reasons
-        // about '/api/v1'. The frontend is built with the same prefix as
-        // vite's base, so the two halves cannot disagree about it.
-        //
-        // What this does NOT fix is code that writes an absolute path of its
-        // own (res.redirect('/login'), a redirect_uri built with new URL from
-        // a leading slash). Those escape the mount and have to be found and
-        // fixed one at a time; see the oidcStrategy change in this series.
-        const { basePath } = this.lightdashConfig;
-        const listener = basePath
-            ? express().use(basePath, expressApp)
-            : expressApp;
-
-        // Start the server
-        const server = listener.listen(this.port, () => {
-            if (this.environment === 'production') {
-                Logger.info(
-                    `\n   |     |     |     |     |     |     |\n   |     |     |     |     |     |     |\n   |     |     |     |     |     |     |  \n \\ | / \\ | / \\ | / \\ | / \\ | / \\ | / \\ | /\n  \\|/   \\|/   \\|/   \\|/   \\|/   \\|/   \\|/\n------------------------------------------\nLaunch lightdash at http://localhost:${this.port}\n------------------------------------------\n  /|\\   /|\\   /|\\   /|\\   /|\\   /|\\   /|\\\n / | \\ / | \\ / | \\ / | \\ / | \\ / | \\ / | \\\n   |     |     |     |     |     |     |\n   |     |     |     |     |     |     |\n   |     |     |     |     |     |     |`,
-                );
-            }
-            // KONTALA: how long this process took to listen, which on a
-            // scale-to-zero deployment is most of what a cold start costs.
-            Logger.info(
-                `Listening after ${Math.round(process.uptime() * 1000)}ms`,
-            );
-        });
-        server.keepAliveTimeout =
-            this.lightdashConfig.httpServer.keepAliveTimeoutMs;
-
-        // Errors
-        Sentry.setupExpressErrorHandler(expressApp);
-        expressApp.use(scimErrorHandler); // SCIM error check before general error handler
-        expressApp.use(invalidUserErrorHandler);
-        expressApp.use(
-            (error: Error, req: Request, res: Response, _: NextFunction) => {
-                const errorResponse = errorHandler(error);
-                if (
-                    error instanceof UnexpectedServerError ||
-                    !(error instanceof LightdashError)
-                ) {
-                    // This intentionally uses console vs. winston because of problems from some error/JSON payloads.
-                    console.error(error);
-                }
-                if (!isExpectedError(errorResponse)) {
-                    Logger.error(
-                        `Handled error of type ${errorResponse.name} on [${req.method}] ${req.path}`,
-                        errorResponse,
-                    );
-
-                    if (process.env.NODE_ENV === 'development') {
-                        Logger.error(error.stack);
-                    }
-
-                    this.analytics.track({
-                        event: 'api.error',
-                        userId: req.user?.userUuid,
-                        anonymousId: !req.user?.userUuid
-                            ? LightdashAnalytics.anonymousId
-                            : undefined,
-                        properties: {
-                            name: errorResponse.name,
-                            statusCode: errorResponse.statusCode,
-                            route: req.path,
-                            method: req.method,
-                        },
-                    });
-                }
-
-                // Check if this is an OAuth endpoint and return OAuth2-compliant error response
-                if (error instanceof OauthAuthenticationError) {
-                    const oauthErrorResponse = {
-                        error: errorResponse.data?.error || 'server_error',
-                        error_description: errorResponse.message,
-                    };
-                    res.status(errorResponse.statusCode).send(
-                        oauthErrorResponse,
-                    );
-                    return;
-                }
-
-                const apiErrorResponse: ApiError = {
-                    status: 'error',
-                    error: {
-                        statusCode: errorResponse.statusCode,
-                        name: errorResponse.name,
-                        message: errorResponse.message,
-                        data: errorResponse.data,
-                        sentryTraceId:
-                            // Only return the Sentry trace ID for unexpected server errors
-                            errorResponse.statusCode === 500
-                                ? Sentry.getActiveSpan()?.spanContext().traceId
-                                : undefined,
-                        sentryEventId:
-                            // Only return the Sentry event ID for unexpected server errors
-                            errorResponse.statusCode === 500
-                                ? Sentry.lastEventId()
-                                : undefined,
-                    },
-                };
-
-                res.status(errorResponse.statusCode).send(apiErrorResponse);
-            },
-        );
-
-        // Authentication
-        const userService = this.serviceRepository.getUserService();
-
-        passport.use(apiKeyPassportStrategy({ userService }));
-        passport.use(
-            localPassportStrategy({
-                userService,
-            }),
-        );
-
-        // Refresh strategies also need to be registered on SchedulerApp
-        if (googlePassportStrategy) {
-            passport.use(googlePassportStrategy);
-            refresh.use(googlePassportStrategy);
-        }
-        // Always register the Okta strategy: it resolves its config per
-        // request (per-org DB config by email, else instance env config), so
-        // it must be available even when no instance-level Okta env config is
-        // set.
-        passport.use('okta', new OpenIDClientOktaStrategy());
-        if (oneLoginPassportStrategy) {
-            passport.use('oneLogin', oneLoginPassportStrategy);
-        }
-        if (isAzureAdPassportStrategyAvailableToUse) {
-            passport.use('azuread', await createAzureAdPassportStrategy());
-        }
-        if (isGenericOidcPassportStrategyAvailableToUse) {
-            const oidcStrategy = new DeferredPassportStrategy(
-                createGenericOidcPassportStrategy,
-            );
-            passport.use('oidc', oidcStrategy);
-            // KONTALA: this runs just after listen(), so discovery overlaps
-            // the first request instead of sitting in front of the first
-            // sign-in.
-            oidcStrategy.warm();
-        }
-        if (snowflakePassportStrategy) {
-            passport.use('snowflake', snowflakePassportStrategy);
-            refresh.use('snowflake', snowflakePassportStrategy);
-        }
-        if (databricksPassportStrategy) {
-            passport.use('databricks', databricksPassportStrategy);
-            refresh.use('databricks', databricksPassportStrategy);
-        }
-        if (slackPassportStrategy) {
-            passport.use('slack', slackPassportStrategy);
-        }
-
-        passport.serializeUser((user, done) => {
-            // On login (user changes), user.userUuid is written to the session store in the `sess.passport.data` field
-            done(null, {
-                id: user.userUuid,
-                organization: user.organizationUuid,
-            });
-
-            // Fire-and-forget: run once-per-login setup tasks
-            void userService.onLogin(user).catch((err) => {
-                Logger.error('Failed to run onLogin tasks', err);
-            });
-        });
-
-        // Before each request handler we read `sess.passport.user` from the session store
-        passport.deserializeUser(
-            async (
-                req: express.Request,
-                passportUser: { id: string; organization: string },
-                done: (err: unknown, user?: Express.User | false) => void,
-            ) => {
-                try {
-                    const sessionUser = await userService.resolveSessionUser(
-                        passportUser,
-                        req.session?.impersonation,
-                        () => {
-                            delete req.session.impersonation;
-                        },
-                    );
-                    done(null, sessionUser);
-                } catch (e) {
-                    done(e);
-                }
-            },
-        );
-
-        return expressApp;
+    if (this.featureFlagCheckFlushInterval) {
+      clearInterval(this.featureFlagCheckFlushInterval);
+      this.featureFlagCheckFlushInterval = undefined;
     }
-
-    private async initSlack(expressApp: Express) {
-        const slackClient = this.clients.getSlackClient();
-        await slackClient.start(expressApp);
-
-        const slackService = this.serviceRepository.getSlackService();
-        slackService.setupEventListeners();
+    try {
+      this.analytics.trackFeatureFlagChecks(flushFeatureFlagChecks(), "api");
+    } catch {
+      // telemetry must never break shutdown
     }
-
-    private initSchedulerWorker() {
-        this.schedulerWorker = this.schedulerWorkerFactory({
-            lightdashConfig: this.lightdashConfig,
-            analytics: this.analytics,
-            serviceRepository: this.serviceRepository,
-            models: this.models,
-            clients: this.clients,
-            utils: this.utils,
-            prometheusMetrics: this.prometheusMetrics,
-        });
-
-        this.schedulerWorker.run().catch((e) => {
-            Logger.error('Error starting scheduler worker', e);
-        });
+    if (this.pgWireServer) {
+      await this.pgWireServer.close();
+      Logger.info("Stopped Postgres wire protocol server");
     }
-
-    async stop() {
-        try {
-            await this.beforeShutdown?.(this.serviceRepository);
-        } catch (error) {
-            Logger.error('Error running pre-shutdown hook', error);
-        }
-
-        if (this.featureFlagCheckFlushInterval) {
-            clearInterval(this.featureFlagCheckFlushInterval);
-            this.featureFlagCheckFlushInterval = undefined;
-        }
-        try {
-            this.analytics.trackFeatureFlagChecks(
-                flushFeatureFlagChecks(),
-                'api',
-            );
-        } catch {
-            // telemetry must never break shutdown
-        }
-        if (this.pgWireServer) {
-            await this.pgWireServer.close();
-            Logger.info('Stopped Postgres wire protocol server');
-        }
-        if (this.eventStreamWriter) {
-            await this.eventStreamWriter.close();
-            Logger.info('Flushed usage event stream writer');
-        }
-        await MotherduckInstanceCache.closeAll('shutdown');
-        await this.prometheusMetrics.stop();
-        await shutdownOtelTracing();
-        if (this.schedulerStartTimeout) {
-            clearTimeout(this.schedulerStartTimeout);
-            this.schedulerStartTimeout = undefined;
-        }
-        if (this.schedulerWorker) {
-            try {
-                await this.schedulerWorker.stop();
-                Logger.info('Stopped scheduler worker');
-            } catch (e) {
-                Logger.error('Error stopping scheduler worker', e);
-            }
-        }
+    if (this.eventStreamWriter) {
+      await this.eventStreamWriter.close();
+      Logger.info("Flushed usage event stream writer");
     }
-
-    getServiceRepository() {
-        return this.serviceRepository;
+    await MotherduckInstanceCache.closeAll("shutdown");
+    await this.prometheusMetrics.stop();
+    await shutdownOtelTracing();
+    if (this.schedulerStartTimeout) {
+      clearTimeout(this.schedulerStartTimeout);
+      this.schedulerStartTimeout = undefined;
     }
-
-    getModels() {
-        return this.models;
+    if (this.schedulerWorker) {
+      try {
+        await this.schedulerWorker.stop();
+        Logger.info("Stopped scheduler worker");
+      } catch (e) {
+        Logger.error("Error stopping scheduler worker", e);
+      }
     }
+  }
 
-    getClients() {
-        return this.clients;
-    }
+  getServiceRepository() {
+    return this.serviceRepository;
+  }
 
-    getDatabase() {
-        return this.database;
-    }
+  getModels() {
+    return this.models;
+  }
 
-    getEventStreamWriter() {
-        return this.eventStreamWriter;
-    }
+  getClients() {
+    return this.clients;
+  }
+
+  getDatabase() {
+    return this.database;
+  }
+
+  getEventStreamWriter() {
+    return this.eventStreamWriter;
+  }
 }
